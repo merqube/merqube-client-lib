@@ -1,11 +1,11 @@
 [tool.poetry]
 name = "merqube-client-lib"
-version = "0.2.0"
+version = "0.2.1"
 description = "MerQube IndexAPI + SecAPI client library"
 authors = ["Merqube"]
 
 [tool.poetry.dependencies]
-python = "^3.11"
+python = "^3.10,<4.0"
 requests = "*"
 pydantic = {"version" = "^1.10.5"}
 numpy = "1.24.1"
