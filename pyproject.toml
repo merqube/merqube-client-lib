@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "merqube-client-lib"
-version = "0.2.1"
+version = "0.2.2"
 description = "MerQube IndexAPI + SecAPI client library"
 authors = ["Merqube"]
 
@@ -8,11 +8,10 @@ authors = ["Merqube"]
 python = "^3.10,<4.0"
 requests = "*"
 pydantic = {"version" = "^1.10.5"}
-numpy = "1.24.1"
-pandas = "1.5.2"
-Flask = "2.2.2"
-Flask-Cors = "3.0.10"
-cachetools = "5.2.1"
+pandas = "^1.3.0"
+Flask = "~2"
+Flask-Cors = "~3"
+cachetools = "^5.2.0"
 
 [tool.poetry.dev-dependencies]
 coverage =  {version="*"}

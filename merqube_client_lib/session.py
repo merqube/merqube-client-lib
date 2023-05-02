@@ -202,7 +202,7 @@ class _BaseAPISession:
         return self.request(httpm.DELETE, url, **kwargs)
 
 
-# Public methods
+# Public
 
 
 class MerqubeAPISession(_BaseAPISession):
