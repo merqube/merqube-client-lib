@@ -1,8 +1,14 @@
 [tool.poetry]
 name = "merqube-client-lib"
-version = "0.2.2"
+version = "0.2.3"
 description = "MerQube IndexAPI + SecAPI client library"
 authors = ["Merqube"]
+readme = "README.md"
+license = "APACHE-2.0"
+homepage = "https://github.com/merqube/merqube-client-lib"
+include = [
+    "LICENSE",
+]
 
 [tool.poetry.dependencies]
 python = "^3.10,<4.0"
