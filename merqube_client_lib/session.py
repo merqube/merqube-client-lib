@@ -4,7 +4,6 @@ Merqube API Session - subcomponent of the client library wrapper
 
 
 import json
-import logging
 import os
 import uuid
 from typing import Any, Optional, Union, cast
@@ -22,11 +21,11 @@ from merqube_client_lib.constants import (
     REQUEST_ID_HEADER,
 )
 from merqube_client_lib.exceptions import APIError
+from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.types import HTTP_METHODS
 from merqube_client_lib.types import HTTPMethod as httpm
 
-logger = logging.getLogger(__name__)
-logger.setLevel(logging.DEBUG)
+logger = get_module_logger(__name__)
 
 
 class TimeoutHTTPAdapter(HTTPAdapter):
