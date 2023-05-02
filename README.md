@@ -1,7 +1,7 @@
 # merqube-client-lib
 Merqube API Client Library (Python)
 
-# Status
+# Overview
 This is a WIP release of an internal client library. This README will be updated when it is ready.
 
 # CircleCI
