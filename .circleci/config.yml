@@ -40,13 +40,18 @@ jobs:
               command: poetry install
           - run:
               name: Publish package to PyPI
-              command: poetry publish --build -u __token__ -p $POETRY_PYPI_TOKEN
+              command: poetry publish --build -u __token__ -p $PYPI_API_TOKEN
 
 # Helpful:
 # https://circleci.com/docs/variables
 # https://circleci.com/docs/configuration-reference
 workflows:
   pr-tox:
+    when:
+      not:
+        # run tox on all branches except main since we require linear history
+        equal: [ main, << pipeline.git.branch >> ]
+
     jobs:
       - tox
 
