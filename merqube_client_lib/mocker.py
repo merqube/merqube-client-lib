@@ -33,10 +33,6 @@ def mock_secapi_builder(
     """
     Builds the `mock_secapi` function used for the API for its tests.
 
-    It should be defined in a helper or in conftest, this way, in order to define the related
-    `get_session_function_path`, `get_client_function_path` and cache (if it uses), since this should be
-    the variable values which should change through apis, as you can see below:
-
     ```
     mock_secapi = mock_secapi_builder(
         get_session_function_path="dataapi.runners.sec_client._get_dataapi_session",
@@ -45,7 +41,7 @@ def mock_secapi_builder(
     )
     ```
 
-    Then in your tests, you can use `mock_secapi` in the following way:
+    Then in your tests, you can use `mock_secapi`
 
     ```
     mock_secapi(

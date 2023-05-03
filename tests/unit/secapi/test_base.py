@@ -30,10 +30,15 @@ def test_options(options, expected):
         ({"sec_type": "nooo"}, "_validate_secapi_type", False),
         ({"sec_type": "sectype1"}, "_validate_secapi_type", True),
         ({"sec_type": "sectype1"}, "_validate_single", False),
+        ({"sec_type": "nooo", "sec_id": "1234"}, "_validate_single", False),
         ({"sec_type": "sectype1", "sec_id": None}, "_validate_single", False),
         ({"sec_type": "sectype1", "sec_id": "1234"}, "_validate_single", True),
         ({"sec_type": "sectype1", "sec_id": "1234", "sec_name": "myname"}, "_validate_single", False),
         ({"sec_type": "sectype1", "sec_id": None, "sec_name": "myname"}, "_validate_single", True),
+        ({"sec_type": "sectype1"}, "_validate_multiple", False),
+        ({"sec_type": "nooo", "sec_ids": "1234"}, "_validate_multiple", False),
+        ({"sec_type": "sectype2", "sec_ids": "1234"}, "_validate_multiple", True),
+        ({"sec_type": "sectype2", "sec_ids": ["1234", "234"]}, "_validate_multiple", True),
     ],
 )
 def test_arg_validation(params, func, should_work):
