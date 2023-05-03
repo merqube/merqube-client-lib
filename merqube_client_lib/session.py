@@ -281,6 +281,14 @@ class MerqubeAPISession(_BaseAPISession):
         return res[0]
 
 
+@cached(cache=LRUCache(maxsize=256))
+def get_merqube_session(token: str | None = None, **session_args: Any) -> MerqubeAPISession:
+    """
+    Cached; returns a session with the given token
+    """
+    return MerqubeAPISession(token=token, **session_args)
+
+
 @cached(cache=LRUCache(maxsize=1))
 def get_public_merqube_session() -> MerqubeAPISession:
     """
