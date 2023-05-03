@@ -6,7 +6,7 @@ from typing import Any, Iterable, Optional
 
 from cachetools import LRUCache, TTLCache, cached, cachedmethod
 
-from merqube_client_lib.constants import DEFAULT_TTL_CACHE
+from merqube_client_lib.constants import DEFAULT_CACHE_TTL
 from merqube_client_lib.session import MerqubeAPISession, get_merqube_session
 from merqube_client_lib.types.secapi import (
     AddlSecapiOptions,
@@ -28,7 +28,7 @@ class _ClientBase:
         **session_kwargs: Any,
     ):
         self.session = session or get_merqube_session(token=token, **session_kwargs)
-        self.type_cache = TTLCache(1, ttl=DEFAULT_TTL_CACHE)  # type: ignore
+        self.type_cache = TTLCache(1, ttl=DEFAULT_CACHE_TTL)  # type: ignore
 
     def _collection_helper(
         self,
@@ -83,10 +83,6 @@ class SecAPIClient(_ClientBase):
         token: Optional[str] = None,
         **session_kwargs: Any,
     ):
-        """
-        We use partials to preserve types, see my SO post here
-        https://stackoverflow.com/questions/73145008/python-is-there-a-version-of-functools-wraps-that-preserves-mypy-strict
-        """
         super().__init__(session=session, token=token, **session_kwargs)
 
     def get_metrics_for_security(
