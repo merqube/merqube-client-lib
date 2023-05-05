@@ -80,7 +80,6 @@ class _ClientBase:
         """Validate the input for functions that query for one or more securities"""
         self._validate_secapi_type(sec_type=sec_type)
 
-        assert sec_ids or sec_names, "Must provide either sec_ids or sec_names"
         assert not (sec_ids and sec_names), "Must provide either sec_ids or sec_names, not both"
 
         for param in [sec_ids, sec_names, metrics]:

@@ -152,7 +152,7 @@ def test_multi_ids_multi_metrics_chunked_bad_values(monkeypatch):
             securities_chunk_size=3,
         )
 
-    with pytest.raises(AssertionError):
+    with pytest.raises(ValueError):
         sm(
             metrics=TEST_METRICS,
             securities_chunk_size=3,
