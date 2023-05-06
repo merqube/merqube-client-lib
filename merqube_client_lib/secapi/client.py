@@ -138,50 +138,6 @@ class SecAPIClient(_ClientBase):
     ):
         super().__init__(session=session, token=token, **session_kwargs)
 
-    def get_metrics_for_security(
-        self,
-        *,
-        sec_type: str,
-        sec_id: str | None = None,
-        sec_name: str | None = None,
-    ) -> list[SecapiMetricDefinition]:
-        """
-        Get the list of metrics that are currently available for a security
-        Can query by id or name
-        """
-        self._validate_single(sec_type=sec_type, sec_id=sec_id, sec_name=sec_name)
-
-        return self.session.get_collection(
-            f"/security/{sec_type}/{sec_id}/metrics" if sec_id else f"/security/{sec_type}/metrics?name={sec_name}"
-        )
-
-    def get_security_definitions_mapping_table(
-        self,
-        *,
-        sec_type: str,
-        sec_names: str | Iterable[str] | None = None,
-        sec_ids: str | Iterable[str] | None = None,
-        addl_options: AddlSecapiOptions | None = None,
-    ) -> MappingTable:
-        """
-        Lists defined (and permissioned) securities for a type.
-        Optionally filters by a list of securities.
-        Returns a mapping table; either name -> id, or id -> name
-        """
-        # this function can be called with no ids/names to get a list of all permissioned securities
-        self._validate_secapi_type(sec_type=sec_type)
-
-        query_options: dict[str, str | Iterable[str] | None] = {"names": sec_names, "ids": sec_ids}
-        if addl_options is not None:
-            query_options.update(addl_options)
-
-        rec_data = self._collection_helper(
-            url=f"/security/{sec_type}",
-            query_options=query_options,
-        )
-
-        return {c["id"]: c["name"] for c in rec_data} if sec_ids else {c["name"]: c["id"] for c in rec_data}
-
     def _get_security_metrics_helper(
         self,
         *,
@@ -215,9 +171,50 @@ class SecAPIClient(_ClientBase):
 
         return self._collection_helper(url=f"/security/{sec_type}", query_options=query_options)
 
+    def get_metrics_for_security(
+        self,
+        sec_type: str,
+        sec_id: str | None = None,
+        sec_name: str | None = None,
+    ) -> list[SecapiMetricDefinition]:
+        """
+        Get the list of metrics that are currently available for a security
+        Can query by id or name
+        """
+        self._validate_single(sec_type=sec_type, sec_id=sec_id, sec_name=sec_name)
+
+        return self.session.get_collection(
+            f"/security/{sec_type}/{sec_id}/metrics" if sec_id else f"/security/{sec_type}/metrics?name={sec_name}"
+        )
+
+    def get_security_definitions_mapping_table(
+        self,
+        sec_type: str,
+        sec_names: str | Iterable[str] | None = None,
+        sec_ids: str | Iterable[str] | None = None,
+        addl_options: AddlSecapiOptions | None = None,
+    ) -> MappingTable:
+        """
+        Lists defined (and permissioned) securities for a type.
+        Optionally filters by a list of securities.
+        Returns a mapping table; either name -> id, or id -> name
+        """
+        # this function can be called with no ids/names to get a list of all permissioned securities
+        self._validate_secapi_type(sec_type=sec_type)
+
+        query_options: dict[str, str | Iterable[str] | None] = {"names": sec_names, "ids": sec_ids}
+        if addl_options is not None:
+            query_options.update(addl_options)
+
+        rec_data = self._collection_helper(
+            url=f"/security/{sec_type}",
+            query_options=query_options,
+        )
+
+        return {c["id"]: c["name"] for c in rec_data} if sec_ids else {c["name"]: c["id"] for c in rec_data}
+
     def get_security_metrics(
         self,
-        *,
         sec_type: str,
         metrics: str | Iterable[str],  # Secapi doesnt support fetching all metrics yet; cant be None
         sec_names: str | Iterable[str] | None = None,
