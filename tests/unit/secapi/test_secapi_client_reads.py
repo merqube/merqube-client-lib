@@ -63,7 +63,7 @@ def test_get_metrics_for_security(security_type):
                 return metrics
             raise Exception()
 
-    result = get_client(session=FakeSession()).get_metrics_for_security(sec_type=security_type, sec_id="fake-id")
+    result = get_client(user_session=FakeSession()).get_metrics_for_security(sec_type=security_type, sec_id="fake-id")
     assert result == metrics
 
 
