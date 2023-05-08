@@ -58,16 +58,15 @@ class _RetrySession(Session):
     ):
         super().__init__()
         """
-        By default, this session only retries on GET
+        By default, this session only retries on GET, but you may enable for DELETE, POST, and PUT as well. 
+        Note that when considering idempotency, only the server state is considered, not the client state.
+        See https://developer.mozilla.org/en-US/docs/Glossary/Idempotent
 
-        DELETE and POST are idempotent, and should be safe to add to the allowed methods list (note though, lost ACKs could change the status code - eg a lost ack on a 200 POST may result in a 409 DUPLICATE being eventually returned, however return codes are not a part of idempotency)
+        In our APIs, DELETE, POST, and PUT are all idempotent with respect to the server state.
 
-        PUT is sometimes idempotent, but not in some of our APIs; for example we often have a "status" key that must be supplied - two subsequent PUTs will not work
-        in our APIs, to "update twice", you must do PUT GET PUT
-
-        see https://developer.mozilla.org/en-US/docs/Glossary/Idempotent
-        https://urllib3.readthedocs.io/en/latest/reference/urllib3.util.html#urllib3.util.Retry.DEFAULT_ALLOWED_METHODS
-        https://restfulapi.net/idempotent-rest-apis/
+        However, from the client side, e.g., a lost ACK on a POST may result in a 409 DUPLICATE being returned.
+        Similarly, a lost ACK on DELETE may result in a 404 NOT FOUND being returned.
+        Finally, from the client side, for the majority of our APIs, two subsequent PUTs will not work due to the status key; you must do PUT GET PUT
         """
         for allowed in allowed_methods:
             assert allowed in HTTP_METHODS, f"Should be a valid http method: {', '.join(HTTP_METHODS)}"
