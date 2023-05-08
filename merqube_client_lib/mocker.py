@@ -83,7 +83,7 @@ def mock_secapi_builder(
                 raise ValueError("Trying to patch a function that doesnt exist in the client")
             setattr(client, method_name, func)
 
-        def get_client(key: str = "unused"):
+        def get_client(*args: Any, **kwargs: Any):
             return client
 
         # now a get_client call from the main code will return this mocked client:

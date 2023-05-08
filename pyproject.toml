@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "merqube-client-lib"
-version = "0.5.2"
+version = "0.5.3"
 description = "MerQube IndexAPI + SecAPI client library"
 authors = ["Merqube"]
 readme = "README.md"

@@ -26,11 +26,11 @@ class _ClientBase:
 
     def __init__(
         self,
-        session: Optional[MerqubeAPISession] = None,
+        user_session: Optional[MerqubeAPISession] = None,
         token: Optional[str] = None,
         **session_kwargs: Any,
     ):
-        self.session = session or get_merqube_session(token=token, **session_kwargs)
+        self.session = user_session or get_merqube_session(token=token, **session_kwargs)
         self.type_cache = TTLCache(1, ttl=DEFAULT_CACHE_TTL)  # type: ignore
 
     def _collection_helper(
@@ -132,11 +132,11 @@ class SecAPIClient(_ClientBase):
 
     def __init__(
         self,
-        session: Optional[MerqubeAPISession] = None,
+        user_session: Optional[MerqubeAPISession] = None,
         token: Optional[str] = None,
         **session_kwargs: Any,
     ):
-        super().__init__(session=session, token=token, **session_kwargs)
+        super().__init__(user_session=user_session, token=token, **session_kwargs)
 
     def _get_security_metrics_helper(
         self,
@@ -313,9 +313,9 @@ secapi_client_cache: LRUCache = LRUCache(maxsize=256)  # type: ignore
 
 @cached(cache=secapi_client_cache)
 def get_client(
-    session: Optional[MerqubeAPISession] = None, token: Optional[str] = None, **session_kwargs: Any
+    user_session: Optional[MerqubeAPISession] = None, token: Optional[str] = None, **session_kwargs: Any
 ) -> SecAPIClient:
     """
     Cached; returns a secapi client for token
     """
-    return SecAPIClient(session=session, token=token, **session_kwargs)
+    return SecAPIClient(user_session=user_session, token=token, **session_kwargs)
