@@ -6,7 +6,7 @@ Merqube API Session - subcomponent of the client library wrapper
 import json
 import os
 import uuid
-from typing import Any, Optional, Union, cast
+from typing import Any, Optional, cast
 from urllib.parse import urljoin
 
 from cachetools import LRUCache, cached
@@ -136,7 +136,7 @@ class _BaseAPISession:
     def request(
         self,
         method: httpm,
-        url: Union[str, bytes],
+        url: str,
         params: dict[str, Any] | None = None,
         data: Any = None,
         headers: dict[str, str] | None = None,
@@ -146,8 +146,26 @@ class _BaseAPISession:
         """
         Perform an http request with this session
         request session helpers sess.put, sess.get, etc, call this
+
+        Note: urljoin has some perhaps non obvious behavior:
+
+            In [2]: from urllib.parse import urljoin
+
+            In [3]: urljoin("https://localhost:8080", "resource")
+            Out[3]: 'https://localhost:8080/resource'
+
+            In [4]: urljoin("https://localhost:8080", "/resource")
+            Out[4]: 'https://localhost:8080/resource'
+
+            In [5]: urljoin("https://localhost:8080/", "/resource")
+            Out[5]: 'https://localhost:8080/resource'
+
+            In [6]: urljoin("https://localhost:8080", "//resource")
+            Out[6]: 'https://resource' # ??
         """
         assert params is None or options is None, "both params and options cannot be passed"
+        if url.startswith("//"):
+            logger.warning(f"URL {url} starts with //, this is probably a mistake")
 
         headers = dict(headers) if headers is not None else {}
 
@@ -162,8 +180,9 @@ class _BaseAPISession:
         if self.token:
             headers["Authorization"] = f"{self.token_type} {self.token}"
 
-        url = urljoin(self._prefix_url, cast(str, url))
-
+        options_st = "" if not options else ("?" + "&".join([f"{k}={v}" for k, v in options.items()]))
+        url = urljoin(self._prefix_url, url)
+        logger.debug(f"Performing {method} on {url}{options_st}")
         options_dict: dict[str, str] = options or {}
         return self.http_session.request(
             method=method.value, url=url, params=options_dict or params, data=data, headers=headers, **kwargs
@@ -230,9 +249,6 @@ class MerqubeAPISession(_BaseAPISession):
 
     def request_raise(self, method: httpm, url: str, **kwargs: Any) -> Response:
         """request method that logs the status code and raises on non 2XX"""
-        options = kwargs.get("options")
-        options_st = "?" + "&".join([f"{k}={v}" for k, v in options.items()]) if options else ""
-        logger.debug(f"Performing {method} on {self._prefix_url}{url}{options_st}")
         res = self.request(method, url, **kwargs)
         try:
             res.raise_for_status()
