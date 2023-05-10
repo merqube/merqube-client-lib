@@ -1,12 +1,16 @@
 """
 Module for mocking secapi, mostly for unit testing, but also for other components testing against secapi
 """
-
 import importlib
+import logging
 from typing import Any, Callable, Optional
 from unittest.mock import MagicMock
 
 from cachetools import Cache
+
+from merqube_client_lib.logging import get_module_logger
+
+logger = get_module_logger(__name__, level=logging.DEBUG)
 
 
 def _sec_types() -> list[dict[str, str]]:
@@ -66,9 +70,13 @@ def mock_secapi_builder(
         get a client with some methods patched with swapout functions
         """
         if secapi_client_cache is not None:
+            logger.debug("Clearing client cache")
             secapi_client_cache.clear()
+        else:
+            logger.debug("No client cache to clear")
 
         sess = MagicMock()
+        logger.debug(f"Mocking session at {get_session_function_path}")
         monkeypatch.setattr(get_session_function_path, MagicMock(return_value=sess))
 
         client = client_module.get_client()
@@ -81,12 +89,14 @@ def mock_secapi_builder(
         for method_name, func in method_name_function_map.items():
             if getattr(client, method_name) is None:
                 raise ValueError("Trying to patch a function that doesnt exist in the client")
+            logger.debug(f"Mocking method {method_name}")
             setattr(client, method_name, func)
 
         def get_client(*args: Any, **kwargs: Any):
             return client
 
         # now a get_client call from the main code will return this mocked client:
+        logger.debug(f"Mocking client at {get_client_function_path}")
         monkeypatch.setattr(get_client_function_path, get_client)
 
     return mock_secapi
