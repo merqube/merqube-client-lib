@@ -2,7 +2,7 @@
 Merqube custom types
 """
 from enum import Enum, unique
-from typing import Final
+from typing import Any, Final
 
 HTTP_METHODS: Final[list[str]] = ["GET", "DELETE", "POST", "GET", "PUT", "OPTIONS", "PATCH"]
 
@@ -16,3 +16,7 @@ class HTTPMethod(str, Enum):
     OPTIONS = "OPTIONS"
     POST = "POST"
     HEAD = "HEAD"
+
+
+Manifest = dict[str, Any]
+ManifestList = list[Manifest]

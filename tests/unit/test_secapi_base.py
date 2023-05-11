@@ -1,10 +1,11 @@
 """
-Tests for _ClientBase
+Tests for _SecapiClientBase
 """
 from unittest.mock import MagicMock, call
 
 import pytest
 
+from merqube_client_lib.api_client import base
 from merqube_client_lib.secapi import client
 
 
@@ -18,7 +19,7 @@ def test_options(options, expected):
         def __init__(self):
             self.get_collection = ch
 
-    cl = client._ClientBase(user_session=mock_session())
+    cl = base.MerqubeApiClientBase(user_session=mock_session())
 
     assert cl._collection_helper(url="test_url", query_options=options) == [{"foo1": "bar1"}, {"foo2": "bar2"}]
     assert ch.call_args_list == [call(url="test_url", options=expected)]
@@ -48,7 +49,7 @@ def test_arg_validation(params, func, should_work):
         def __init__(self):
             self.get_collection = ch
 
-    cl = client._ClientBase(user_session=mock_session())
+    cl = client.SecAPIClient(user_session=mock_session())
 
     if should_work:
         getattr(cl, func)(**params)
