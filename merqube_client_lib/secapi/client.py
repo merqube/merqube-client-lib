@@ -1,5 +1,7 @@
 """
 Main SecAPI client class
+
+MerqubeAPIClient is a superset of this and the other clients.
 """
 import operator
 from collections import abc
@@ -8,8 +10,9 @@ from typing import Any, Iterable, Optional
 import pandas as pd
 from cachetools import LRUCache, TTLCache, cached, cachedmethod
 
+from merqube_client_lib.api_client.base import MerqubeApiClientBase
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
-from merqube_client_lib.session import MerqubeAPISession, get_merqube_session
+from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types.secapi import (
     AddlSecapiOptions,
     MappingTable,
@@ -19,9 +22,9 @@ from merqube_client_lib.types.secapi import (
 from merqube_client_lib.util import batch_post_payload
 
 
-class _ClientBase:
+class SecAPIClient(MerqubeApiClientBase):
     """
-    base class that contains validation functions
+    Secapi client class
     """
 
     def __init__(
@@ -30,25 +33,9 @@ class _ClientBase:
         token: Optional[str] = None,
         **session_kwargs: Any,
     ):
-        self.session = user_session or get_merqube_session(token=token, **session_kwargs)
+        super().__init__(user_session=user_session, token=token, **session_kwargs)
+
         self.type_cache = TTLCache(1, ttl=DEFAULT_CACHE_TTL)  # type: ignore
-
-    def _collection_helper(
-        self,
-        *,
-        url: str,
-        query_options: dict[str, str | Iterable[str] | None] | None = None,
-    ) -> SecAPIRecordsResponse:
-        """
-        common function to /security metrics and definitions
-        """
-        options: dict[str, str | list[str]] = {}
-
-        for qo, v in (query_options or {}).items():
-            if v is not None:
-                options[qo] = v if isinstance(v, str) else ",".join(v)
-
-        return self.session.get_collection(url=url, options=options)
 
     def get_supported_secapi_types(self) -> list[dict[str, str]]:
         """
@@ -123,20 +110,6 @@ class _ClientBase:
 
             if isinstance(sec_ids, str):
                 raise ValueError("Cannot use chunk size when sec_ids is a single string")
-
-
-class SecAPIClient(_ClientBase):
-    """
-    Secapi client class
-    """
-
-    def __init__(
-        self,
-        user_session: Optional[MerqubeAPISession] = None,
-        token: Optional[str] = None,
-        **session_kwargs: Any,
-    ):
-        super().__init__(user_session=user_session, token=token, **session_kwargs)
 
     def _get_security_metrics_helper(
         self,

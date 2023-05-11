@@ -1,7 +1,6 @@
 """
 Tests for the secapi client
 """
-
 from merqube_client_lib.secapi.client import get_client
 
 
