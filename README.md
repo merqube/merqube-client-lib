@@ -58,7 +58,7 @@ These securities, located on the SecAPI (`/security/index` and `/security/intrad
 They all move in unison; if the index name or namespace is changed, the name and namespace of its linked securities also change to match.
 
 
-### Tyoes
+### Types
 
 MerQube makes heavy use of [pydantic](https://docs.pydantic.dev/latest/)
 
