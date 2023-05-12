@@ -2,6 +2,7 @@
 Unit tests for indexapi
 There are more in the integration tests
 """
+
 import pytest
 
 from merqube_client_lib.api_client.merqube_client import get_client

@@ -32,6 +32,14 @@ from tests.unit.fixtures.gsm_fixtures import (
 )
 
 
+def test_public_client():
+    """test instantiating without credentials"""
+    # twice to trigger cache
+    public = get_client()
+    public2 = get_client()
+    assert public is public2
+
+
 @pytest.mark.parametrize(
     "security_type",
     [("custom"), ("futures_contract"), ("futures_root"), ("index"), ("intraday_index"), ("fx"), ("interest_rate")],
@@ -292,3 +300,31 @@ def test_chunked_names(monkeypatch):
     ]
 
     assert_frame_equal(left=mult_mult, right=chunked, check_like=True)
+
+
+def test_mapping_table():
+    """Tests mapping table of ids to names / names to ids"""
+
+    class FakeSession:
+        def get_collection(self, url, options=None):
+            if url == "/security":
+                return [
+                    {"name": "index"},
+                ]
+            if url == "/security/index":
+                return [{"name": "name1", "id": "id1"}, {"name": "name2", "id": "id2"}, {"name": "name3", "id": "id3"}]
+            raise Exception(url)
+
+    client = get_client(user_session=FakeSession())
+    assert client.get_security_definitions_mapping_table(sec_type="index") == {
+        "name1": "id1",
+        "name2": "id2",
+        "name3": "id3",
+    }
+    # name:id
+    # id:name
+    assert client.get_security_definitions_mapping_table(sec_type="index", sec_ids=["id1", "id2", "id3"]) == {
+        "id1": "name1",
+        "id2": "name2",
+        "id3": "name3",
+    }
