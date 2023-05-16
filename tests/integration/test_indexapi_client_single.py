@@ -132,9 +132,28 @@ def test_single_intraday_index_return():
     12  2023-05-15T19:01:00  e0825ead-bb51-40c4-8130-76a1d44c368d  MQUSTRAV   1948.227063
     """
 
-    df = client.get_returns(start_date=start_date, end_date=end_date)
+    df = client.get_returns(start_date=start_date, end_date=end_date, use_intraday_metrics=True)
     assert not df.empty
-    assert len(df["price_return"].tolist())
+    assert len(df["price_return"].tolist()) > 2
+
+    # EOD we can test a fixed window
+    df = client.get_returns(
+        start_date=pd.Timestamp("2023-05-12"), end_date=pd.Timestamp("2023-05-15"), use_intraday_metrics=False
+    )
+    assert df.to_dict(orient="records") == [
+        {
+            "eff_ts": "2023-05-12T00:00:00",
+            "id": "27514b7a-3575-4da1-a1f1-c22d0e361c78",
+            "name": "MQUSTRAV",
+            "price_return": 1926.1529634388705,
+        },
+        {
+            "eff_ts": "2023-05-15T00:00:00",
+            "id": "27514b7a-3575-4da1-a1f1-c22d0e361c78",
+            "name": "MQUSTRAV",
+            "price_return": 1950.7413459671484,
+        },
+    ]
 
 
 def test_single_index_multiple_metrics():

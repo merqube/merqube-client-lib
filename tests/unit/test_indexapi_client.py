@@ -9,6 +9,7 @@ import pytest
 
 from merqube_client_lib.api_client.merqube_client import get_client
 from tests.conftest import mock_secapi
+from tests.unit.fixtures.test_manifest import manifest
 
 valid1 = {"id": "valid1id", "name": "valid1", "stage": "prod"}
 valid2 = {"id": "valid2id", "name": "valid2", "stage": "prod"}
@@ -78,15 +79,20 @@ def test_single_index_returns(monkeypatch):
     gsm = pd.DataFrame.from_records(ret)
 
     def mock_get_collection(url, **kwargs):
-        if url == "https://api.merqube.com/index?name=MQEFAB01":
-            return [{"name": "MQEFAB01", "id": sid}]
-        else:
-            return [{"name": "index"}]  # get_security_metrics
+        return (
+            [{"name": "MQEFAB01", "id": sid}]
+            if url == "https://api.merqube.com/index?name=MQEFAB01"
+            else [{"name": "index"}]
+        )  # get_security_metrics
+
+    man = manifest
+    man["name"] = "MQEFAB01"
+    man["id"] = sid
 
     mock_secapi(
         monkeypatch,
         method_name_function_map={"get_security_metrics": MagicMock(return_value=gsm)},
-        session_func_map={"get_collection": mock_get_collection},
+        session_func_map={"get_collection": mock_get_collection, "get_json": MagicMock(return_value=man)},
         index_name="MQEFAB01",  # get_client_kwargs
     )
 
@@ -97,3 +103,8 @@ def test_single_index_returns(monkeypatch):
     assert isinstance(df, pd.DataFrame)
     assert not df.empty
     assert df.to_dict(orient="records") == ret
+
+    with pytest.raises(ValueError):
+        client.get_returns(
+            start_date=pd.Timestamp("2023-04-01"), end_date=pd.Timestamp("2023-04-10"), use_intraday_metrics=True
+        )

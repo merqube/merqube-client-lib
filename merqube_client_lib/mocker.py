@@ -85,7 +85,7 @@ def mock_secapi_builder(
         if session_func_map is not None:
             for method_name, func in session_func_map.items():
                 if getattr(sess, method_name) is None:
-                    raise ValueError("Trying to patch a function that doesnt exist in the session")
+                    raise ValueError(f"Trying to patch a nonexisting session method: {method_name}")
                 logger.debug(f"Mocking session method {method_name}")
                 setattr(sess, method_name, func)
 
@@ -103,7 +103,7 @@ def mock_secapi_builder(
 
         for method_name, func in method_name_function_map.items():
             if getattr(client, method_name) is None:
-                raise ValueError("Trying to patch a function that doesnt exist in the client")
+                raise ValueError(f"Trying to patch a nonexisting client method: {method_name}")
             logger.debug(f"Mocking method {method_name}")
             setattr(client, method_name, func)
 

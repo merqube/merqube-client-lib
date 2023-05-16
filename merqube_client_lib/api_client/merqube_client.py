@@ -1,7 +1,7 @@
 """
 Combined API Client for all merqube APIs
 """
-from typing import Any
+from typing import Any, cast
 
 import pandas as pd
 from cachetools import LRUCache, cached
@@ -34,9 +34,20 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         self.index_id = res["id"]
         self.is_intraday = is_intraday
 
+        mod = self.get_index_model()
+
+        # intraday model has a nasty type of [None | Intraday | Bool ..]
+        self._has_intraday = mod.intraday is not None and (
+            (isinstance(mod.intraday, bool) and mod.intraday) or mod.intraday.enabled is True
+        )
+
         # get the security id for this index
-        self.sec_type = "index" if not self.is_intraday else "intraday_index"
-        self.sec_id = self.session.get_collection_single(f"/security/{self.sec_type}?names={index_name}")["id"]
+        self._sec_id = self.session.get_collection_single(f"/security/index?names={index_name}")["id"]
+        self._intra_sec_id = (
+            self.session.get_collection_single(f"/security/intraday_index?names={index_name}")["id"]
+            if self._has_intraday
+            else None
+        )
 
     def get_index_manifest(self) -> Manifest:
         """
@@ -53,15 +64,17 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
     def get_metrics(
         self,
         metrics: list[str],
+        use_intraday_metrics: bool = False,
         start_date: pd.Timestamp | None = None,
         end_date: pd.Timestamp | None = None,
     ) -> pd.DataFrame:
         """
         Get a list of metrics for this index
+        Some indices are both end of day and intraday - use the flag to query for intraday metrics
         """
         return self.get_security_metrics(
-            sec_type=self.sec_type,
-            sec_ids=[self.sec_id],
+            sec_type="intraday_index" if use_intraday_metrics else "index",
+            sec_ids=[cast(str, self._intra_sec_id) if use_intraday_metrics else self._sec_id],
             metrics=metrics,
             start_date=start_date,
             end_date=end_date,
@@ -70,13 +83,23 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
     def get_returns(
         self,
         returns_metric: str = "price_return",
+        use_intraday_metrics: bool = False,
         start_date: pd.Timestamp | None = None,
         end_date: pd.Timestamp | None = None,
     ) -> pd.DataFrame:
         """
         Get returns for this index
+        Some indices are both end of day and intraday - use the flag to query for intraday metrics
         """
-        return self.get_metrics(metrics=[returns_metric], start_date=start_date, end_date=end_date)
+        if use_intraday_metrics and not self._has_intraday:
+            raise ValueError("This index is not an intraday index")
+
+        return self.get_metrics(
+            metrics=[returns_metric],
+            use_intraday_metrics=use_intraday_metrics,
+            start_date=start_date,
+            end_date=end_date,
+        )
 
     def get_portfolio(self) -> list[dict[str, Any]]:
         """
