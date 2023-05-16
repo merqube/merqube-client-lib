@@ -302,12 +302,3 @@ def get_merqube_session(token: str | None = None, **session_args: Any) -> Merqub
     Cached; returns a session with the given token
     """
     return MerqubeAPISession(token=token, **session_args)
-
-
-@cached(cache=LRUCache(maxsize=1))
-def get_public_merqube_session() -> MerqubeAPISession:
-    """
-    Returns a (no token) session.
-    This can be used to access all data in the `default` namespace (world viewable)
-    """
-    return MerqubeAPISession()

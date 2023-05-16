@@ -3,7 +3,8 @@ Base class for all Merqube API Clients
 """
 from typing import Any, Iterable, Optional
 
-from merqube_client_lib.session import MerqubeAPISession, get_merqube_session
+# import like this so monkeypatch works as expected
+from merqube_client_lib import session
 from merqube_client_lib.types import ManifestList
 
 
@@ -14,11 +15,11 @@ class MerqubeApiClientBase:
 
     def __init__(
         self,
-        user_session: Optional[MerqubeAPISession] = None,
+        user_session: Optional[session.MerqubeAPISession] = None,
         token: Optional[str] = None,
         **session_kwargs: Any,
     ):
-        self.session = user_session or get_merqube_session(token=token, **session_kwargs)
+        self.session = user_session or session.get_merqube_session(token=token, **session_kwargs)
 
     def _collection_helper(
         self,

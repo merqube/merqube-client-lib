@@ -8,7 +8,7 @@ from collections import abc
 from typing import Any, Iterable, Optional
 
 import pandas as pd
-from cachetools import LRUCache, TTLCache, cached, cachedmethod
+from cachetools import TTLCache, cachedmethod
 
 from merqube_client_lib.api_client.base import MerqubeApiClientBase
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
@@ -41,7 +41,7 @@ class SecAPIClient(MerqubeApiClientBase):
         """
         Get the list of supported security types
         """
-        return self.session.get_collection("/security")
+        return self.session.get_collection(url="/security")
 
     @cachedmethod(operator.attrgetter("type_cache"))
     def _validate_secapi_type(self, sec_type: str) -> None:
@@ -279,16 +279,3 @@ class SecAPIClient(MerqubeApiClientBase):
             .reset_index()
             .drop("index", axis=1)
         )
-
-
-secapi_client_cache: LRUCache = LRUCache(maxsize=256)  # type: ignore
-
-
-@cached(cache=secapi_client_cache)
-def get_client(
-    user_session: Optional[MerqubeAPISession] = None, token: Optional[str] = None, **session_kwargs: Any
-) -> SecAPIClient:
-    """
-    Cached; returns a secapi client for token
-    """
-    return SecAPIClient(user_session=user_session, token=token, **session_kwargs)

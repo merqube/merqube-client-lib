@@ -5,9 +5,8 @@ from unittest.mock import MagicMock
 
 import pytest
 
+from merqube_client_lib.api_client.merqube_client import client_cache, get_client
 from merqube_client_lib.mocker import _sec_types, mock_secapi_builder
-from merqube_client_lib.secapi import client as cl
-from merqube_client_lib.secapi.client import get_client
 from tests.conftest import mock_secapi
 from tests.unit.fixtures.dummy_secapi import get_client as dummy_client
 
@@ -34,7 +33,7 @@ def test_mock_secapi_builder_fail():
 @pytest.mark.parametrize("with_custom_sec_types", [False, True], ids=["default-sec-types", "custom-sec-types"])
 def test_mock_secapi_builder(monkeypatch, with_cache, with_custom_sec_types):
     """test successful mocking using a dummy client"""
-    cache = MagicMock(wraps=cl.secapi_client_cache)
+    cache = MagicMock(wraps=client_cache)
 
     dummy_mocker = mock_secapi_builder(
         get_session_function_path="tests.unit.fixtures.dummy_secapi._get_session",

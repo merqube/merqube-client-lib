@@ -5,8 +5,7 @@ from unittest.mock import MagicMock, call
 
 import pytest
 
-from merqube_client_lib.api_client import base
-from merqube_client_lib.secapi import client
+from merqube_client_lib.api_client import base, merqube_client
 
 
 @pytest.mark.parametrize(
@@ -49,7 +48,7 @@ def test_arg_validation(params, func, should_work):
         def __init__(self):
             self.get_collection = ch
 
-    cl = client.SecAPIClient(user_session=mock_session())
+    cl = merqube_client.MerqubeAPIClient(user_session=mock_session())
 
     if should_work:
         getattr(cl, func)(**params)
