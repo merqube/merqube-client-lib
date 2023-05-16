@@ -6,10 +6,9 @@ from typing import Any
 import pandas as pd
 from cachetools import LRUCache, cached
 
-from merqube_client_lib.api_client.base import MerqubeApiClientBase
 from merqube_client_lib.api_client.indexapi import IndexAPIClient
+from merqube_client_lib.api_client.secapi import SecAPIClient
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
-from merqube_client_lib.secapi.client import SecAPIClient
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types import Manifest
 
@@ -22,16 +21,22 @@ class MerqubeAPIClient(IndexAPIClient, SecAPIClient):
     """
 
 
-class MerqubeAPIClientSingleIndex(MerqubeApiClientBase):
+class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
     """
     Class that contains methods that deal with a single index
+    Instantiate with an index name ("name" field in the index manifest) and indicate if it is a realtime index
     """
 
-    def __init__(self, index_name: str, *args: Any, **kwargs: Any) -> None:
+    def __init__(self, index_name: str, is_intraday: bool = False, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
         res = self.session.get_collection_single(f"/index?names={index_name}")
         self.index_id = res["id"]
+        self.is_intraday = is_intraday
+
+        # get the security id for this index
+        self.sec_type = "index" if not self.is_intraday else "intraday_index"
+        self.sec_id = self.session.get_collection_single(f"/security/{self.sec_type}?names={index_name}")["id"]
 
     def get_index_manifest(self) -> Manifest:
         """
@@ -45,21 +50,33 @@ class MerqubeAPIClientSingleIndex(MerqubeApiClientBase):
         """
         return Index.parse_obj(self.get_index_manifest())
 
-    def get_returns(
-        self,
-        returns_metric: str = "price_return",
-        start_date: pd.Timestamp | None = None,
-        end_date: pd.Timestamp | None = None,
-    ) -> pd.DataFrame:
-        raise NotImplementedError((returns_metric, start_date, end_date))
-
     def get_metrics(
         self,
         metrics: list[str],
         start_date: pd.Timestamp | None = None,
         end_date: pd.Timestamp | None = None,
     ) -> pd.DataFrame:
-        raise NotImplementedError((metrics, start_date, end_date))
+        """
+        Get a list of metrics for this index
+        """
+        return self.get_security_metrics(
+            sec_type=self.sec_type,
+            sec_ids=[self.sec_id],
+            metrics=metrics,
+            start_date=start_date,
+            end_date=end_date,
+        )
+
+    def get_returns(
+        self,
+        returns_metric: str = "price_return",
+        start_date: pd.Timestamp | None = None,
+        end_date: pd.Timestamp | None = None,
+    ) -> pd.DataFrame:
+        """
+        Get returns for this index
+        """
+        return self.get_metrics(metrics=[returns_metric], start_date=start_date, end_date=end_date)
 
     def get_portfolio(self) -> list[dict[str, Any]]:
         """
@@ -111,9 +128,19 @@ client_cache: LRUCache = LRUCache(maxsize=256)  # type: ignore
 
 @cached(cache=client_cache)
 def get_client(
-    user_session: MerqubeAPISession | None = None, token: str | None = None, **session_kwargs: Any
-) -> MerqubeAPIClient:
+    index_name: str | None = None,
+    is_intraday: bool = False,
+    user_session: MerqubeAPISession | None = None,
+    token: str | None = None,
+    **session_kwargs: Any,
+) -> MerqubeAPIClient | MerqubeAPIClientSingleIndex:
     """
-    Cached; returns a Merqube client for token
+    Cached; returns a Merqube client (or SingleClient if provided an index name) for token
     """
-    return MerqubeAPIClient(user_session=user_session, token=token, **session_kwargs)
+    return (
+        MerqubeAPIClientSingleIndex(
+            index_name=index_name, is_intraday=is_intraday, user_session=user_session, token=token, **session_kwargs
+        )
+        if index_name
+        else MerqubeAPIClient(user_session=user_session, token=token, **session_kwargs)
+    )

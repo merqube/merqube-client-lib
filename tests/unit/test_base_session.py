@@ -22,7 +22,7 @@ class MockRequestsResponse(object):
 def test_handle_nonrecoverable():
     exc = Exception("test")
 
-    sess = session.get_public_merqube_session()
+    sess = session.get_merqube_session()
     with pytest.raises(APIError) as e:
         sess.handle_nonrecoverable(MockRequestsResponse(500, {"error": "test"}), exc)
 

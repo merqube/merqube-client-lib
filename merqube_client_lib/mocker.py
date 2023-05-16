@@ -65,7 +65,12 @@ def mock_secapi_builder(
     client_function_module_name = get_client_function_path[: get_client_function_path.rindex(".")]
     client_module = importlib.import_module(client_function_module_name)
 
-    def mock_secapi(monkeypatch, method_name_function_map: dict[str, Callable[..., Any]]) -> None:
+    def mock_secapi(
+        monkeypatch,
+        method_name_function_map: dict[str, Callable[..., Any]],
+        session_func_map: dict[str, Callable[..., Any]] | None = None,
+        **get_client_kwargs: Any,
+    ) -> None:
         """
         get a client with some methods patched with swapout functions
         """
@@ -76,15 +81,25 @@ def mock_secapi_builder(
             logger.debug("No client cache to clear")
 
         sess = MagicMock()
-        logger.debug(f"Mocking session at {get_session_function_path}")
-        monkeypatch.setattr(get_session_function_path, MagicMock(return_value=sess))
 
-        client = client_module.get_client()
+        if session_func_map is not None:
+            for method_name, func in session_func_map.items():
+                if getattr(sess, method_name) is None:
+                    raise ValueError("Trying to patch a function that doesnt exist in the session")
+                logger.debug(f"Mocking session method {method_name}")
+                setattr(sess, method_name, func)
+
+        def get_session(*args: Any, **kwargs: Any):
+            logger.debug("Returning mocked session")
+            return sess
+
+        logger.debug(f"Mocking get_session call at {get_session_function_path}")
+        monkeypatch.setattr(get_session_function_path, get_session)
+
+        client = client_module.get_client(**get_client_kwargs)
 
         if "get_supported_secapi_types" not in method_name_function_map:
             setattr(client, "get_supported_secapi_types", _sec_types)
-
-        # inside
 
         for method_name, func in method_name_function_map.items():
             if getattr(client, method_name) is None:
@@ -93,10 +108,11 @@ def mock_secapi_builder(
             setattr(client, method_name, func)
 
         def get_client(*args: Any, **kwargs: Any):
+            logger.debug("Returning mocked client")
             return client
 
         # now a get_client call from the main code will return this mocked client:
-        logger.debug(f"Mocking client at {get_client_function_path}")
+        logger.debug(f"Mocking get_client call at {get_client_function_path}")
         monkeypatch.setattr(get_client_function_path, get_client)
 
     return mock_secapi

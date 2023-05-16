@@ -7,7 +7,7 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
-from merqube_client_lib.secapi.client import get_client
+from merqube_client_lib.api_client.merqube_client import get_client
 from tests.unit.fixtures.gsm_fixtures import TEST_IDS_NE, TEST_METRICS_NE, TEST_NAMES_NE
 
 CHUNK_TESTS = [(1), (2), (3), (4), (5), (6)]

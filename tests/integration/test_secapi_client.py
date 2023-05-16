@@ -9,7 +9,7 @@ from functools import partial
 import pandas as pd
 import pytest
 
-from merqube_client_lib.secapi.client import get_client
+from merqube_client_lib.api_client.merqube_client import get_client
 from tests.unit.fixtures.gsm_fixtures import (
     mult_mult_assertion,
     mult_sing_assertion,
@@ -27,7 +27,7 @@ def test_mapping_table():
 
     for k, v in {
         "NWSALTVI": "2963d69a-2c81-4ee5-9c0e-98fc1e476f2a",
-        "UBCIPACC": "b47bc829-82b4-4610-921f-9dc73936a10b",
+        "MQEFAB01": "d84bc0d3-7788-4fed-9283-049eadab8964",
         "MQUSTRAV": "27514b7a-3575-4da1-a1f1-c22d0e361c78",
     }.items():
         assert all_public_indices[k] == v
@@ -35,18 +35,18 @@ def test_mapping_table():
 
 def test_mapping_table_for_specific_names():
     public = get_client()
-    mt = public.get_security_definitions_mapping_table(sec_type="index", sec_names=["NWSALTVI", "UBCIPACC"])
+    mt = public.get_security_definitions_mapping_table(sec_type="index", sec_names=["NWSALTVI", "MQEFAB01"])
     assert mt["NWSALTVI"] == "2963d69a-2c81-4ee5-9c0e-98fc1e476f2a"
-    assert mt["UBCIPACC"] == "b47bc829-82b4-4610-921f-9dc73936a10b"
+    assert mt["MQEFAB01"] == "d84bc0d3-7788-4fed-9283-049eadab8964"
 
 
 def test_mapping_table_for_specific_ids():
     public = get_client()
     mt = public.get_security_definitions_mapping_table(
-        sec_type="index", sec_ids=["2963d69a-2c81-4ee5-9c0e-98fc1e476f2a", "b47bc829-82b4-4610-921f-9dc73936a10b"]
+        sec_type="index", sec_ids=["2963d69a-2c81-4ee5-9c0e-98fc1e476f2a", "d84bc0d3-7788-4fed-9283-049eadab8964"]
     )
     assert mt["2963d69a-2c81-4ee5-9c0e-98fc1e476f2a"] == "NWSALTVI"
-    assert mt["b47bc829-82b4-4610-921f-9dc73936a10b"] == "UBCIPACC"
+    assert mt["d84bc0d3-7788-4fed-9283-049eadab8964"] == "MQEFAB01"
 
 
 def test_get_metric_defs_for_security():
