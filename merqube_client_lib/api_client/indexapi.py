@@ -1,13 +1,16 @@
 """
 Client library for Indexapi
 """
+from typing import cast
+
 from merqube_client_lib.api_client.base import MerqubeApiClientBase
+from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.types import Manifest
 
 
 class IndexAPIClient(MerqubeApiClientBase):
     """
-    Indexapi Client
+    Indexapi class that contains methods that deal with multiple indices, creation of indices etc
     """
 
     def get_index_defs(
@@ -38,3 +41,30 @@ class IndexAPIClient(MerqubeApiClientBase):
         url = f"/index?names={names_arg}{prod_clause}"
         res = self.session.get_collection(url)
         return {i["id"]: i for i in res}
+
+    def create_index(self, index_def: Index) -> dict[str, str]:
+        """
+        Create an index
+        Returns a dictionary containing the id of the index and its related securities (index, intraday_index)
+
+        TODO: examples and index templates to be added to this repo.
+        """
+        return cast(dict[str, str], self.session.post("/index", json=index_def.dict()).json())
+
+    def update_index(self, index_id: str, index_def: Index) -> None:
+        """
+        Update (full object replacement) an index
+        """
+        self.session.put(f"/index/{index_id}", json=index_def.dict())
+
+    def patch_index(self, index_id: str, index_updates: Manifest) -> None:
+        """
+        Patch an index - index_updates is a partial index manifest
+        """
+        self.session.patch(f"/index/{index_id}", json=index_updates)
+
+    def delete_index(self, index_id: str) -> None:
+        """
+        Delete an index
+        """
+        self.session.delete(f"/index/{index_id}")
