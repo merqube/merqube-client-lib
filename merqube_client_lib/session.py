@@ -2,10 +2,10 @@
 Merqube API Session - subcomponent of the client library wrapper
 """
 
-
 import json
 import os
 import uuid
+from copy import deepcopy
 from typing import Any, Optional, cast
 from urllib.parse import urljoin
 
@@ -167,7 +167,7 @@ class _BaseAPISession:
         if url.startswith("//"):
             logger.warning(f"URL {url} starts with //, this is probably a mistake")
 
-        headers = headers or {}
+        headers = deepcopy(headers) or {}  # do not modify client dict
         if self.token:
             headers["Authorization"] = f"{self.token_type} {self.token}"
 
@@ -246,7 +246,7 @@ class MerqubeAPISession(_BaseAPISession):
         # (eg client calls dataapi, dataapi calls secapi - we dont want the second call to overwrite the original)
         # if this isnt set by a client making a call to one of our APIs, the API itself will generate one (eg customer call)
         # order is: 1) explicitly specified 2) set via chain, 3) generate new
-        headers = kwargs.pop("headers", {}) or {}
+        headers = deepcopy(kwargs.pop("headers", {})) or {}
         headers[REQUEST_ID_HEADER] = (
             req_id := headers.get(REQUEST_ID_HEADER, os.getenv(MERQ_REQUEST_ID_ENV_VAR, str(uuid.uuid4())))
         )

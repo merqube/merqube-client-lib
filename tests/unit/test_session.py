@@ -123,6 +123,7 @@ SESSION_CLASSES = [
 @pytest.mark.parametrize("method", SESSION_METHODS)
 @pytest.mark.parametrize("headers", [{"header1": "value2"}, {"header2": "value2", "foo": "bar"}])
 def test_session_methods(session_class, method, headers, monkeypatch):
+    monkeypatch.setattr("uuid.uuid4", lambda: "testid")
     mock_retry = MagicMock()
     monkeypatch.setattr("merqube_client_lib.session._RetrySession", mock_retry)
 
@@ -132,8 +133,11 @@ def test_session_methods(session_class, method, headers, monkeypatch):
     url = "/test"
     getattr(sess, method)(url=url, headers=headers, options={"a": "b", "c": "d"}, some_kwarg="foo")
     exp_headers = {"Authorization": f"APIKEY {token}"}
+    if session_class is MerqubeAPISession:
+        exp_headers["X-Request-ID"] = "testid"
     if headers:
         exp_headers.update(headers)
+
     assert sess.http_session.method_calls[-1] == call.request(
         method=method.upper(),
         url="https://api.merqube.com/test",
