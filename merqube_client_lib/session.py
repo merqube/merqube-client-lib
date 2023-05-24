@@ -167,16 +167,7 @@ class _BaseAPISession:
         if url.startswith("//"):
             logger.warning(f"URL {url} starts with //, this is probably a mistake")
 
-        headers = dict(headers) if headers is not None else {}
-
-        # Generate a new requestid if this call isnt being made in a chain that already has it.
-        # (eg client calls dataapi, dataapi calls secapi - we dont want the second call to overwrite the original)
-        # if this isnt set by a client making a call to one of our APIs, the API itself will generate one (eg customer call)
-        # order is: 1) explicitly specified 2) set via chain, 3) generate new
-        headers[REQUEST_ID_HEADER] = headers.get(
-            REQUEST_ID_HEADER, os.getenv(MERQ_REQUEST_ID_ENV_VAR, str(uuid.uuid4()))
-        )
-
+        headers = headers or {}
         if self.token:
             headers["Authorization"] = f"{self.token_type} {self.token}"
 
@@ -184,6 +175,7 @@ class _BaseAPISession:
         url = urljoin(self._prefix_url, url)
         logger.debug(f"Performing {method} on {url}{options_st}")
         options_dict: dict[str, str] = options or {}
+
         return self.http_session.request(
             method=method.value, url=url, params=options_dict or params, data=data, headers=headers, **kwargs
         )
@@ -236,24 +228,34 @@ class MerqubeAPISession(_BaseAPISession):
         """can specify your own oauth token,default is no token (only public APIs)"""
         super().__init__(token=token, **kwargs)
 
-    def handle_nonrecoverable(self, res: Response, e: Exception) -> None:
+    def handle_nonrecoverable(self, res: Response, exc: Exception, req_id: str) -> None:
         """helper function that handles a non recoverable error"""
-        logger.exception(e)
+        logger.exception(exc)
         try:
             # we may not have a json depending on the response
             rj = res.json()
         except (AttributeError, json.decoder.JSONDecodeError):
             rj = {}
-        logger.debug(f"Request failed with status {res.status_code}: {rj}")
-        raise APIError(code=res.status_code, response_json=rj)
+        logger.debug(f"Request failed with status {res.status_code}: {rj}. Request ID: {req_id}")
+        raise APIError(code=res.status_code, response_json=rj, request_id=req_id)
 
     def request_raise(self, method: httpm, url: str, **kwargs: Any) -> Response:
         """request method that logs the status code and raises on non 2XX"""
-        res = self.request(method, url, **kwargs)
+
+        # Generate a new requestid if this call isnt being made in a chain that already has it.
+        # (eg client calls dataapi, dataapi calls secapi - we dont want the second call to overwrite the original)
+        # if this isnt set by a client making a call to one of our APIs, the API itself will generate one (eg customer call)
+        # order is: 1) explicitly specified 2) set via chain, 3) generate new
+        headers = kwargs.pop("headers", {}) or {}
+        headers[REQUEST_ID_HEADER] = (
+            req_id := headers.get(REQUEST_ID_HEADER, os.getenv(MERQ_REQUEST_ID_ENV_VAR, str(uuid.uuid4())))
+        )
+
+        res = self.request(method=method, url=url, headers=headers, **kwargs)
         try:
             res.raise_for_status()
         except HTTPError as e:
-            self.handle_nonrecoverable(res, e)
+            self.handle_nonrecoverable(res=res, exc=e, req_id=req_id)
 
         return res
 

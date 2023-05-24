@@ -4,11 +4,15 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.8.1] - 2023-05-23
+- add the failed request id into the `APIError` object, and logging that occurs on failure
+- Move request id header generation into `MerqubeAPISession` instead of the `_Base`
+
 ## [0.8.0] - 2023-05-16
 - Implement NotImplemented returns/metrics methods for single index
 - add more power to the secapi mocker; can now also mock session level methods
 - add intraday support
-- kill get_client from secapi and move module
+- kill `get_client` from secapi and move module
 - add logging to the secapi mocker
 
 ## [0.7.0] - 2023-05-15

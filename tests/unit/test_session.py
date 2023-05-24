@@ -24,14 +24,11 @@ def test_handle_nonrecoverable():
 
     sess = session.get_merqube_session()
     with pytest.raises(APIError) as e:
-        sess.handle_nonrecoverable(MockRequestsResponse(500, {"error": "test"}), exc)
+        sess.handle_nonrecoverable(MockRequestsResponse(500, {"error": "test"}), exc, req_id="testid")
 
     assert e.value.code == 500
     assert e.value.response_json == {"error": "test"}
-
-
-FAKE_REQ_ID = "1234-abcd"
-EXPECTED_REQID_HEADER = {"X-Request-ID": FAKE_REQ_ID}
+    assert e.value.request_id == "testid"
 
 
 @pytest.mark.parametrize(
@@ -124,9 +121,8 @@ SESSION_CLASSES = [
 
 @pytest.mark.parametrize("session_class", SESSION_CLASSES)
 @pytest.mark.parametrize("method", SESSION_METHODS)
-@pytest.mark.parametrize("headers", [None, {"header1": "value2"}, None, {"header2": "value2"}])
+@pytest.mark.parametrize("headers", [{"header1": "value2"}, {"header2": "value2", "foo": "bar"}])
 def test_session_methods(session_class, method, headers, monkeypatch):
-    monkeypatch.setattr("uuid.uuid4", MagicMock(return_value=FAKE_REQ_ID))
     mock_retry = MagicMock()
     monkeypatch.setattr("merqube_client_lib.session._RetrySession", mock_retry)
 
@@ -135,7 +131,7 @@ def test_session_methods(session_class, method, headers, monkeypatch):
 
     url = "/test"
     getattr(sess, method)(url=url, headers=headers, options={"a": "b", "c": "d"}, some_kwarg="foo")
-    exp_headers = {"Authorization": f"APIKEY {token}", "X-Request-ID": FAKE_REQ_ID}
+    exp_headers = {"Authorization": f"APIKEY {token}"}
     if headers:
         exp_headers.update(headers)
     assert sess.http_session.method_calls[-1] == call.request(
