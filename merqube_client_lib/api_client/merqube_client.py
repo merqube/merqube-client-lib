@@ -6,14 +6,13 @@ from typing import Any, cast
 import pandas as pd
 from cachetools import LRUCache, cached
 
-from merqube_client_lib.api_client.indexapi import IndexAPIClient
-from merqube_client_lib.api_client.secapi import SecAPIClient
+from merqube_client_lib.api_client import base
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types import Manifest
 
 
-class MerqubeAPIClient(IndexAPIClient, SecAPIClient):
+class MerqubeAPIClient(base._IndexAPIClient, base._SecAPIClient):  # noqa
     """
     Combined API Client for indexapi + secapi, for methods that do not pertain to a particular index
     (general queries, CRUD of indices, etc)
