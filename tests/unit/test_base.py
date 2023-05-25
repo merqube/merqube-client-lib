@@ -18,7 +18,7 @@ def test_options(options, expected):
         def __init__(self):
             self.get_collection = ch
 
-    cl = base.MerqubeApiClientBase(user_session=mock_session())
+    cl = base._MerqubeApiClientBase(user_session=mock_session())
 
     assert cl._collection_helper(url="test_url", query_options=options) == [{"foo1": "bar1"}, {"foo2": "bar2"}]
     assert ch.call_args_list == [call(url="test_url", options=expected)]
