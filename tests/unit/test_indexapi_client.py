@@ -92,7 +92,7 @@ def test_single_index_returns(monkeypatch):
     mock_secapi(
         monkeypatch,
         method_name_function_map={"get_security_metrics": MagicMock(return_value=gsm)},
-        session_func_map={"get_collection": mock_get_collection, "get_json": MagicMock(return_value=man)},
+        session_func_map={"get_collection": mock_get_collection, "get_collection_single": MagicMock(return_value=man)},
         index_name="MQEFAB01",  # get_client_kwargs
     )
 

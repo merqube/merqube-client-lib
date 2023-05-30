@@ -1,0 +1,89 @@
+{
+    "administrative": {
+        "role": "calculation"
+    },
+    "description": "Template for Equity Baskets (non Corax)",
+    "family": "Equity Baskets",
+    "family_description": "Equity Baskets",
+    "id": "d86e19ad-a8c8-463e-b13f-f4fb9e12ae8f",
+    "identifiers": [],
+    "intraday": {
+        "active_time_ranges": [
+            {
+                "end_time": "16:20",
+                "exclude_holidays": true,
+                "start_time": "09:30:15"
+            }
+        ],
+        "calculation_max_retry_delay": 15,
+        "enabled": false,
+        "publish_config": {
+            "price_return": [
+                {
+                    "target": "db"
+                },
+                {
+                    "target": "secapi"
+                }
+            ]
+        },
+        "ticker_period": 15,
+        "tzinfo": "US/Eastern"
+    },
+    "launch_date": "2099-01-01",
+    "name": "EQUITY_BASKET_TEMPLATE_V1",
+    "namespace": "default",
+    "related": [],
+    "run_configuration": {
+        "index_reports": [
+            "TODO1",
+            "TODO2"
+        ],
+        "job_enabled": false,
+        "num_days_to_load": 0,
+        "pod_image_and_tag": "merq-310:latest",
+        "schedule": {
+            "retries": 25,
+            "retry_interval_min": 10,
+            "schedule_start": "2023-01-01 18:00:00"
+        },
+        "tzinfo": "US/Eastern"
+    },
+    "spec": {
+        "index_class": "merq.indices.merqube.equity.EquityBasketIndex",
+        "index_class_args": {
+            "spec": {
+                "base_date": "2022-03-11",
+                "base_val": 100,
+                "corporate_actions": {
+                    "dividend": {
+                        "reinvest_strategy": "NONE"
+                    }
+                },
+                "index_id": "EQUITY_BASKET_TEMPLATE_V1",
+                "level_overrides": [],
+                "portfolios": {
+                    "constituents": [],
+                    "date_type": "EFFECTIVE",
+                    "identifier_type": "RIC",
+                    "quantity_type": "SHARES",
+                    "specification_type": "INLINE"
+                },
+                "valid_mics": [
+                    "XNYS",
+                    "XNAS",
+                    "ARCX"
+                ]
+            }
+        }
+    },
+    "stage": "prod",
+    "status": {
+        "created_at": "2023-06-01T15:12:45.159354",
+        "created_by": "tommy@merqube.com",
+        "last_modified": "2023-06-01T15:12:45.159354",
+        "last_modified_by": "tommy@merqube.com"
+    },
+    "tags": "custom",
+    "title": "Equity Basket Template"
+}

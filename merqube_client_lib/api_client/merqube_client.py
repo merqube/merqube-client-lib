@@ -32,8 +32,9 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         res = self.session.get_collection_single(f"/index?names={index_name}")
         self.index_id = res["id"]
         self.is_intraday = is_intraday
+        self.index_name = index_name
 
-        mod = self.get_index_model()
+        self.mod = mod = self.get_index_model(index_name=index_name)
 
         # intraday model has a nasty type of [None | Intraday | Bool ..]
         self._has_intraday = mod.intraday is not None and (
@@ -48,17 +49,17 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
             else None
         )
 
-    def get_index_manifest(self) -> Manifest:
+    def get_manifest(self) -> Manifest:
         """
         Get index definition for specified index id
         """
-        return self.session.get_json(f"/index/{self.index_id}")
+        return self.get_index_manifest(index_name=self.index_name)
 
-    def get_index_model(self) -> Index:
+    def get_model(self) -> Index:
         """
         Get index model for specified index id
         """
-        return Index.parse_obj(self.get_index_manifest())
+        return self.mod
 
     def get_metrics(
         self,

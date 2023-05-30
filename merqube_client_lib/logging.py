@@ -45,13 +45,18 @@ class MerqFormatter(logging.Formatter):
 FORMATTER = MerqFormatter("[%(asctime)s] [%(name)s] [%(levelname)s] [%(process)d] %(message)s")
 
 
-def get_module_logger(mod_name: str, level: int = logging.DEBUG, filename: str | None = None) -> logging.Logger:
+def get_module_logger(
+    mod_name: str, level: int = logging.DEBUG, filename: str | None = None, propagate: bool = False
+) -> logging.Logger:
     """
     Call this from each module with __name__
     see https://docs.python.org/3/howto/logging.html#advanced-logging-tutorial
     """
     logger = logging.getLogger(mod_name)
     logger.setLevel(level)
+
+    if not propagate:
+        logger.propagate = False
 
     handler = logging.StreamHandler()
     handler.setFormatter(FORMATTER)

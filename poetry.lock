@@ -1087,6 +1087,18 @@ files = [
 ]
 
 [[package]]
+name = "types-pytz"
+version = "2023.3.0.0"
+description = "Typing stubs for pytz"
+category = "dev"
+optional = false
+python-versions = "*"
+files = [
+    {file = "types-pytz-2023.3.0.0.tar.gz", hash = "sha256:ecdc70d543aaf3616a7e48631543a884f74205f284cefd6649ddf44c6a820aac"},
+    {file = "types_pytz-2023.3.0.0-py3-none-any.whl", hash = "sha256:4fc2a7fbbc315f0b6630e0b899fd6c743705abe1094d007b0e612d10da15e0f3"},
+]
+
+[[package]]
 name = "types-requests"
 version = "2.29.0.0"
 description = "Typing stubs for requests"
@@ -1198,4 +1210,4 @@ files = [
 [metadata]
 lock-version = "2.0"
 python-versions = "^3.10,<4.0"
-content-hash = "45cf32b518759b17ec3754705ab98289a5a1ae9a3a561606afe06a9d3077534f"
+content-hash = "24c80c3a8996ed1ed8061957fd1ed95eb44fd794ed642153a8997ec57be7fe93"
