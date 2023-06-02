@@ -156,10 +156,10 @@ def test_retries_and_fail(caplog, retries, expected_retries):
     with pytest.raises(requests.exceptions.ConnectionError):
         sess.get("/foo")
 
-    assert len(caplog.records) == expected_retries + 1
+    assert len(caplog.records) == expected_retries
     for i in range(0, expected_retries):
         expected = expected_retries - i - 1
         assert (
             f"Retrying (Retry(total={expected}, connect={expected}, read={expected_retries}, redirect=None, status=None))"
-            in caplog.records[i + 1].message
+            in caplog.records[i].message
         )

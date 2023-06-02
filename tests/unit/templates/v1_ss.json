@@ -1,0 +1,66 @@
+{
+    "administrative": {
+        "role": "development"
+    },
+    "base_date": "2000-01-04",
+    "description": "Template for TR indices",
+    "family": "MerQube Single Stock TR indices",
+    "family_description": "MerQube Single Stock TR indices",
+    "id": "25cd8499-b04f-4b3f-ad3d-3a76971f01af",
+    "identifiers": [],
+    "launch_date": "2023/06/01",
+    "name": "TOMMY_EB_TEST_1",
+    "namespace": "test",
+    "related": [],
+    "run_configuration": {
+        "index_reports": [],
+        "job_enabled": true,
+        "num_days_to_load": 100,
+        "pod_image_and_tag": "merq-310:latest",
+        "schedule": {
+            "retries": 25,
+            "retry_interval_min": 10,
+            "schedule_start": "2023-05-30T18:00:00"
+        },
+        "tzinfo": "US/Eastern"
+    },
+    "spec": {
+        "index_class": "merq.indices.merqube.equity.EquityBasketIndex",
+        "index_class_args": {
+            "spec": {
+                "base_date": "2000-01-04",
+                "base_val": 1000,
+                "corporate_actions": {
+                    "dividend": {
+                        "deduct_tax": false,
+                        "reinvest_day": "PREV_DAY",
+                        "reinvest_strategy": "IN_INDEX"
+                    }
+                },
+                "currency": "EUR",
+                "index_id": "TOMMY_EB_TEST_1",
+                "portfolios": {
+                    "constituents": [
+                        {
+                            "date": "2000-01-04",
+                            "identifier": "LVMH.PA",
+                            "quantity": 1
+                        }
+                    ],
+                    "date_type": "ROLL",
+                    "identifier_type": "RIC",
+                    "quantity_type": "WEIGHT",
+                    "specification_type": "INLINE"
+                }
+            }
+        }
+    },
+    "stage": "prod",
+    "status": {
+        "created_at": "2023-06-01T16:18:48.755226",
+        "created_by": "tommy@merqube.com",
+        "last_modified": "2023-06-01T16:18:48.755226",
+        "last_modified_by": "tommy@merqube.com"
+    },
+    "title": "TOMMY_EB_TEST_1"
+}

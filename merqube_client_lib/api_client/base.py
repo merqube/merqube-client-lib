@@ -1,6 +1,7 @@
 """
 Base class for all Merqube API Clients
 """
+import json
 import operator
 from collections import abc
 from typing import Any, Iterable, Optional, cast
@@ -12,6 +13,7 @@ from cachetools import TTLCache, cachedmethod
 from merqube_client_lib import session
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
+from merqube_client_lib.pydantic_types import IndexDefinitionPost
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types import Manifest, ManifestList
 from merqube_client_lib.types.secapi import (
@@ -88,14 +90,54 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         res = self.session.get_collection(url)
         return {i["id"]: i for i in res}
 
-    def create_index(self, index_def: Index) -> dict[str, str]:
+    def get_index_manifest(self, index_name: str) -> Manifest:
+        """
+        Get the model for a given index
+        """
+        return cast(Manifest, self.session.get_collection_single(f"/index?name={index_name}"))
+
+    def get_index_model(self, index_name: str) -> Index:
+        """
+        Get the model for a given index
+        """
+        as_dict = self.session.get_collection_single(f"/index?name={index_name}")
+        return Index.parse_obj(as_dict)
+
+    def index_post_model_from_existing(
+        self, index_name: str, reset_specific_fields: bool = True
+    ) -> IndexDefinitionPost:
+        """
+        Gets a model that can be posted to /index to create a new index from an existing index
+
+        For safety reasons, by default, the name, namespace, and index_reports are reset.
+        """
+        source_dict = self.get_index_manifest(index_name)
+        source_dict.pop("id")
+        source_dict.pop("status")
+
+        model = IndexDefinitionPost.parse_obj(source_dict)
+
+        if not reset_specific_fields:
+            return model
+
+        model.name = "test"
+        model.namespace = "test"
+        if model.run_configuration:
+            model.run_configuration.index_report_uuids = None
+            model.run_configuration.index_reports = cast(list[str], [])
+
+        return model
+
+    def create_index(self, index_def: IndexDefinitionPost) -> dict[str, str]:
         """
         Create an index
         Returns a dictionary containing the id of the index and its related securities (index, intraday_index)
 
         TODO: examples and index templates to be added to this repo.
         """
-        return cast(dict[str, str], self.session.post("/index", json=index_def.dict()).json())
+        return cast(
+            dict[str, str], self.session.post("/index", json=json.loads(index_def.json(exclude_none=True))).json()
+        )
 
     def update_index(self, index_id: str, index_def: Index) -> None:
         """

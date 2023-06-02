@@ -21,9 +21,9 @@ def test_single_index_operations():
     """
     client = MerqubeAPIClientSingleIndex(index_name="MQEFAB01", user_session=get_merqube_session())
 
-    assert isinstance(client.get_index_manifest(), dict)
+    assert isinstance(client.get_manifest(), dict)
 
-    assert isinstance(client.get_index_model(), BaseModel)
+    assert isinstance(client.get_model(), BaseModel)
 
     # these are frozen and never change, unless there is a (rare) historical correction
     port = client.get_portfolio()

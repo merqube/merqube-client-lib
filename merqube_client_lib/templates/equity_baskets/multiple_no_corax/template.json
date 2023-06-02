@@ -1,0 +1,29 @@
+{
+    "addl_comments": [
+        "set base_date to a business day before the intended start date for the real-time calcs",
+        "set base_value to the value of the index on the base_date",
+        "[OPTIONAL] bbg_ticker: due to the limitations of the Bloomberg ticker creation process (no API), this must be a pre-created ticker. You can email MerQube a list of tickers to create on your behalf at support@merqube.com. Then, you provide those as input to these indices.",
+        "constituents_csv_path - path to a csv file like the constituents.csv in this directory",
+        "[OPTIONAL] set level_overrides_path to a csv file like the level_overrides.csv in this directory, if there are specific dates that need to be overridden",
+        "set is_intraday to true if the index is to be calculated intraday. Costs more.",
+        "set name to the name on Merqube's website for the index. Can also be used for the ticker on Bloomberg. This must be globally unique (you will get a 409 if the name is taken)",
+        "set namespace to your organization's namespace for indices",
+        "set run_hour and run_minute to the time of day that the index should be calculated, in the timezone specified. Eg 18 and 0 for 6pm",
+        "timezone is optional, defaulting to US/Eastern. Must be a valid pytz timezone",
+        "TODO: do we need unit of measure here?"
+    ],
+    "apikey": "XXXX",
+    "base_date": "1990-01-01",
+    "base_value": 100,
+    "bbg_ticker": "Pre-created-ticker-here, if this is to tick on bloomberg",
+    "constituents_csv_path": "constituents.csv",
+    "description": "Describe Your Index Here",
+    "is_intraday": false,
+    "level_overrides_csv_path": null,
+    "name": "TEST_NAME_XXX",
+    "namespace": "test",
+    "run_hour": 18,
+    "run_minute": 0,
+    "timezone": "US/Eastern",
+    "title": "Nice Name For My Index"
+}

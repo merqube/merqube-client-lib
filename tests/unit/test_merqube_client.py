@@ -11,18 +11,20 @@ def test_single():
     """
 
     class fake_session:
-        def get_collection_single(self, *args, **kwargs):
-            return {"id": "valid1id"}
+        call_count = 0
 
-        def get_json(self, *args, **kwargs):
+        def get_collection_single(self, *args, **kwargs):
+            if self.call_count == 0:
+                self.call_count += 1
+                return {"id": "valid1id"}
             return manifest
 
     client = MerqubeAPIClientSingleIndex(index_name="valid1", user_session=fake_session())
 
-    assert client.get_index_manifest() == manifest
+    assert client.get_manifest() == manifest
 
     # show some pydantic models:
-    model = client.get_index_model()
+    model = client.get_model()
     assert model.status == Status(
         created_at="2022-06-07T23:15:31.212502",
         created_by="test@merqube.com",

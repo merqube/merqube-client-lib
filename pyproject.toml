@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "merqube-client-lib"
-version = "0.9.0"
+version = "0.10.0"
 description = "MerQube IndexAPI + SecAPI client library"
 authors = ["Merqube"]
 readme = "README.md"
@@ -11,19 +11,25 @@ include = [
 ]
 
 [tool.poetry.dependencies]
-python = "^3.10,<4.0"
-requests = "*"
-pydantic = {"version" = "^1.10.5"}
-pandas = "^1.3.0"
+cachetools = "^5.2.0"
+click = "~8"
 Flask = "~2"
 Flask-Cors = "~3"
-cachetools = "^5.2.0"
+python = "^3.10,<4.0"
+pydantic = {"version" = "^1.10.5"}
+pandas = "^1.3.0"
 pandas_market_calendars = "*"
+requests = "*"
+
+[tool.poetry.scripts]
+single_stock_tr = "merqube_client_lib.templates.equity_baskets.single_stock_total_return_corax.create:main"
+multiple_no_corax = "merqube_client_lib.templates.equity_baskets.multiple_no_corax.create:main"
 
 [tool.poetry.dev-dependencies]
 coverage =  {version="*"}
 pdbpp = {version="*"}
 pytest = {version="*"}
+types-pytz = {version="*"}
 pytest-cov =  {version="*"}
 pytest-timeout =  {version="*"}
 pytest-socket =  {version="*"}
