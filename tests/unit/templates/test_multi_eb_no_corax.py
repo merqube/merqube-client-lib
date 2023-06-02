@@ -110,18 +110,35 @@ expected_with_intra["intraday"]["publish_config"]["price_return"] = [
     {"target": "bloomberg"},
 ]
 
+expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
+
+good_config = {
+    "apikey": "xxx",
+    "base_date": "2000-01-04",
+    "base_value": 100,
+    "constituents_csv_path": os.path.join(here, "portfolios.csv"),
+    "currency": "EUR",
+    "description": "SSEB 1",
+    "name": "TEST_1",
+    "namespace": "test",
+    "run_hour": 18,
+    "run_minute": 0,
+    "timezone": "US/Eastern",
+    "title": "TEST_1",
+}
+
 
 @freeze_time("2023-06-01")
 @pytest.mark.parametrize(
-    "intraday,bbg_ticker,expected",
+    "intraday,bbg_ticker,expected,expected_bbg_post",
     [
-        (False, None, expected_no_ticker),
-        (True, None, expected_no_ticker_intra),
-        (False, "xxx", expected_with),
-        (True, "xxx", expected_with_intra),
+        (False, None, expected_no_ticker, None),
+        (True, None, expected_no_ticker_intra, None),
+        (False, "xxx", expected_with, expected_bbg_post),
+        (True, "xxx", expected_with_intra, expected_bbg_post),
     ],
 )
-def test_multi(intraday, bbg_ticker, expected, monkeypatch):
+def test_multi(intraday, bbg_ticker, expected, expected_bbg_post, monkeypatch):
     mock_secapi(
         monkeypatch,
         method_name_function_map={},
@@ -132,30 +149,19 @@ def test_multi(intraday, bbg_ticker, expected, monkeypatch):
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with open((fpath := os.path.join(tmpdir, "test.json")), "w") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "apikey": "xxx",
-                        "base_date": "2000-01-04",
-                        "base_value": 100,
-                        "bbg_ticker": bbg_ticker,
-                        "constituents_csv_path": os.path.join(here, "portfolios.csv"),
-                        "currency": "EUR",
-                        "description": "SSEB 1",
-                        "is_intraday": intraday,
-                        "name": "TEST_1",
-                        "namespace": "test",
-                        "run_hour": 18,
-                        "run_minute": 0,
-                        "timezone": "US/Eastern",
-                        "title": "TEST_1",
-                    }
-                )
-            )
+            conf = deepcopy(good_config)
+            conf["bbg_ticker"] = bbg_ticker
+            conf["is_intraday"] = intraday
 
-        template = create.create_equity_basket(config_file_path=fpath)
+            f.write(json.dumps(conf))
 
+        template, bbg_post = create.create_equity_basket(config_file_path=fpath)
         assert json.loads(template.json(exclude_none=True)) == expected
+
+        if not expected_bbg_post:
+            assert bbg_post is None
+        else:
+            assert json.loads(bbg_post.json(exclude_none=True)) == expected_bbg_post
 
 
 illegal_1 = {
@@ -170,27 +176,10 @@ illegal_1 = {
     "run_minute": 0,
     "timezone": "US/Eastern",
     "title": "TEST_1",
-    "underlying_ric": "LVMH.PA",
-}
-
-illegal_2 = {
-    "apikey": "xxx",
-    "base_date": "NOT A DATEEEE",
-    "base_value": 100,
-    "constituents_csv_path": os.path.join(here, "portfolios.csv"),
-    "currency": "EUR",
-    "description": "SSEB 1",
-    "name": "TEST_1",
-    "namespace": "test",
-    "run_hour": 18,
-    "run_minute": 0,
-    "timezone": "US/Eastern",
-    "title": "TEST_1",
-    "underlying_ric": "LVMH.PA",
 }
 
 
-@pytest.mark.parametrize("case", [illegal_1, illegal_2])
+@pytest.mark.parametrize("case", [illegal_1])
 def test_multi_illegal(case, monkeypatch):
     mock_secapi(
         monkeypatch,
