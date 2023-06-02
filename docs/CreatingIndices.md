@@ -16,7 +16,7 @@ A customer may have multiple namespaces for a variety of reasons (different inte
 Every manifest must specify the `namespace` that the index is to be created in.
 
 ## Bloomberg Tickers
-Unfortunately, MerQube does not have API access to Bloomberg. Creating tickers to push your index levels to is currently a manual process.
+Unfortunately, Bloomberg does not provide MerQube API access to create tickers. Creating tickers to push your index levels to is currently a manual process.
 You can email MerQube (`support at merqube dot com`) a list of tickers to create, and our support staff can create them for you.
 After confirmation, you can reference those tickers in your index templates (see below) and your indices will push to those tickers.
 
