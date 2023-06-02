@@ -172,7 +172,7 @@ def configure_index(template: IndexDefinitionPost, index_info: dict[str, Any], i
     template.run_configuration.job_enabled = True
 
     if index_info.get("is_intraday"):
-        assert template.intraday and template.intraday.publish_config and template.intraday.publish_config
+        assert template.intraday and template.intraday.publish_config
         template.intraday.enabled = True
         if index_info.get("bbg_ticker"):
             assert template.intraday.publish_config.__root__
