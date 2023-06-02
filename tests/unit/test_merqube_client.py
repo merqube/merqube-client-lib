@@ -1,7 +1,16 @@
 import datetime
+from unittest.mock import MagicMock
+
+import pytest
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClientSingleIndex
-from merqube_client_lib.pydantic_types import Administrative, Role, Status
+from merqube_client_lib.pydantic_types import (
+    Administrative,
+    IdentifierUUIDPost,
+    Provider,
+    Role,
+    Status,
+)
 from tests.unit.fixtures.test_manifest import manifest
 
 
@@ -33,3 +42,46 @@ def test_single():
         locked_after=datetime.datetime(2023, 1, 25, 22, 41),
     )
     assert model.administrative == Administrative(role=Role.administration)
+
+
+@pytest.mark.parametrize(
+    "existing, should_post, should_work",
+    [
+        ([], True, True),
+        ([{"index_name": "the_same", "name": "xxx", "namespace": "test", "ticker": "xxx"}], False, True),
+        ([{"index_name": "different", "name": "xxx", "namespace": "test", "ticker": "xxx"}], False, False),
+    ],
+    ids=["not_found_ok", "same_ok", "different_fail"],
+)
+def test_identifier_collision(existing, should_post, should_work):
+    """
+    There is also a real integration test of this that tests more methods.
+    """
+
+    fake_post = MagicMock()
+
+    class fake_session:
+        def __init__(self, *args, **kwargs):
+            self.post = fake_post
+            self.get_collection_single = MagicMock(return_value=manifest)
+
+        def get_collection(self, *args, **kwargs):
+            return existing
+
+    client = MerqubeAPIClientSingleIndex(index_name="valid1", user_session=fake_session())
+
+    # not found prior, do the post
+    if should_work:
+        client.create_identifier(
+            Provider.bloomberg,
+            IdentifierUUIDPost(index_name="the_same", name="foo", ticker="bar"),
+        )
+    else:
+        with pytest.raises(ValueError):
+            client.create_identifier(
+                Provider.bloomberg,
+                IdentifierUUIDPost(index_name="the_same", name="foo", ticker="bar"),
+            )
+
+    if should_post:
+        assert len(fake_post.call_args_list) == 1
