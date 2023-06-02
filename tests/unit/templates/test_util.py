@@ -40,7 +40,7 @@ def test_inline_to_tp(monkeypatch):
                 )
             )
 
-        template = create.create_equity_basket(config_file_path=fpath)
+        template, _ = create.create_equity_basket(config_file_path=fpath)
         assert [(y, json.loads(x.json(exclude_none=True))) for (y, x) in inline_to_tp(template)] == [
             (
                 "2000-01-04",

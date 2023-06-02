@@ -1,13 +1,16 @@
 """
 Combined API Client for all merqube APIs
 """
+import json
 from typing import Any, cast
 
 import pandas as pd
 from cachetools import LRUCache, cached
 
 from merqube_client_lib.api_client import base
+from merqube_client_lib.pydantic_types import IdentifierUUIDPost
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
+from merqube_client_lib.pydantic_types import Provider
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types import Manifest
 
@@ -18,6 +21,20 @@ class MerqubeAPIClient(base._IndexAPIClient, base._SecAPIClient):  # noqa
     (general queries, CRUD of indices, etc)
     For a client pertaining to a specific existing index, use MerqubeAPIClientSingleIndex
     """
+
+    def create_identifier(self, provider: Provider, identifier_post: IdentifierUUIDPost) -> dict[str, Any]:
+        """
+        Create a new identifier (in MerQubes system - this does NOT talk to the provider)
+        """
+        payload = json.loads(identifier_post.json(exclude_none=True))
+
+        results = self.session.get_collection(f"/identifier/{provider.value}?names={identifier_post.name}")
+        if len(results) == 0:
+            return cast(dict[str, Any], self.session.post(f"/identifier/{provider.value}", json=payload).json())
+
+        if (exis_name := results[0]["index_name"]) == identifier_post.index_name:
+            return {"status": "already exists for this index name"}
+        raise ValueError(f"Identifier {identifier_post.name} already exists for a different index name ({exis_name})")
 
 
 class MerqubeAPIClientSingleIndex(MerqubeAPIClient):

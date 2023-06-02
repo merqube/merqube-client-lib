@@ -7,7 +7,7 @@ import logging
 import click
 
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import IndexDefinitionPost
+from merqube_client_lib.pydantic_types import IdentifierUUIDPost, IndexDefinitionPost
 from merqube_client_lib.templates.equity_baskets.util import (
     create_index,
     load_template,
@@ -22,7 +22,9 @@ TYPE_SPECIFIC_REQUIRED = ["underlying_ric"]
 TYPE_SPECIFIC_OPTIONAL = ["level_overrides_csv_path"]
 
 
-def create_equity_basket(config_file_path: str, prod_run: bool = False) -> IndexDefinitionPost:
+def create_equity_basket(
+    config_file_path: str, prod_run: bool = False
+) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.

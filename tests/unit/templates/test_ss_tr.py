@@ -81,10 +81,16 @@ good_config = {
     "underlying_ric": "LVMH.PA",
 }
 
+expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
+
 
 @freeze_time("2023-06-01")
-@pytest.mark.parametrize("bbg_ticker,expected", [(None, expected_no_ticker), ("xxx", expected_with)])
-def test_ss_tr(bbg_ticker, expected, monkeypatch):
+@pytest.mark.parametrize(
+    "bbg_ticker,expected,expected_bbg_post",
+    [(None, expected_no_ticker, None), ("xxx", expected_with, expected_bbg_post)],
+    ids=["no_ticker", "with_ticker"],
+)
+def test_ss_tr(bbg_ticker, expected, expected_bbg_post, monkeypatch):
     mock_secapi(
         monkeypatch,
         method_name_function_map={},
@@ -95,10 +101,14 @@ def test_ss_tr(bbg_ticker, expected, monkeypatch):
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with open((fpath := os.path.join(tmpdir, "test.json")), "w") as f:
-            f.write(json.dumps(good_config | {"bbg_ticker": bbg_ticker}))
+            f.write(json.dumps({**good_config, **{"bbg_ticker": bbg_ticker}}))
 
-        template = create.create_equity_basket(config_file_path=fpath)
+        template, bbg_post = create.create_equity_basket(config_file_path=fpath)
         assert json.loads(template.json(exclude_none=True)) == expected
+        if expected_bbg_post is None:
+            assert bbg_post is None
+        else:
+            assert json.loads(bbg_post.json(exclude_none=True)) == expected_bbg_post
 
 
 illegal_1 = deepcopy(good_config)

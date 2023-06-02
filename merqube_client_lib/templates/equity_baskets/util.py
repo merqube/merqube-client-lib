@@ -10,6 +10,7 @@ from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import (
     BasketPosition,
     EquityBasketPortfolio,
+    IdentifierUUIDPost,
     IdentifierUUIDRef,
     IndexDefinitionPatchPutGet,
     IndexDefinitionPost,
@@ -137,7 +138,9 @@ def load_template(
     return client, template, index_info, inner_spec
 
 
-def configure_index(template: IndexDefinitionPost, index_info: dict[str, Any], inner_spec: dict[str, Any]) -> None:
+def configure_index(
+    template: IndexDefinitionPost, index_info: dict[str, Any], inner_spec: dict[str, Any]
+) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
     """
     set up the index from index info
     """
@@ -147,6 +150,10 @@ def configure_index(template: IndexDefinitionPost, index_info: dict[str, Any], i
     inner_spec["index_id"] = index_info["name"]
     for k in SPEC_KEYS:
         inner_spec[k] = index_info[k]
+
+    name = index_info["name"]
+    bbg_ticker = index_info.get("bbg_ticker")
+    is_intraday = index_info.get("is_intraday")
 
     # set the start date at which this will start running
     assert template.run_configuration and template.run_configuration.schedule
@@ -164,23 +171,29 @@ def configure_index(template: IndexDefinitionPost, index_info: dict[str, Any], i
     ).isoformat()
     template.run_configuration.tzinfo = index_info.get("timezone", "US/Eastern")
 
-    template.identifiers = (
-        [IdentifierUUIDRef(name=bbgt, provider=Provider.bloomberg)] if (bbgt := index_info.get("bbg_ticker")) else []
-    )
-
     template.stage = Stage.prod
     template.run_configuration.job_enabled = True
 
     if index_info.get("is_intraday"):
         assert template.intraday and template.intraday.publish_config
         template.intraday.enabled = True
-        if index_info.get("bbg_ticker"):
-            assert template.intraday.publish_config.__root__
+
+    bbg_identifier_post = None
+    if bbg_ticker:
+        template.identifiers = [IdentifierUUIDRef(name=bbg_ticker, provider=Provider.bloomberg)]
+        if is_intraday:
+            assert template.intraday and template.intraday.publish_config and template.intraday.publish_config.__root__
             cast(list[IntradayPublishConfigTarget], template.intraday.publish_config.__root__["price_return"]).append(
                 IntradayPublishConfigTarget(
                     __root__=IntradayPublishConfigBloombergTarget(target="bloomberg", active_time_ranges=None)
                 )
             )
+
+        bbg_identifier_post = IdentifierUUIDPost(
+            name=bbg_ticker, index_name=name, namespace=index_info["namespace"], ticker=bbg_ticker
+        )
+
+    return template, bbg_identifier_post
 
 
 def create_index(
@@ -189,13 +202,21 @@ def create_index(
     index_info: dict[str, Any],
     inner_spec: dict[str, Any],
     prod_run: bool,
-) -> IndexDefinitionPost:
-    configure_index(template=template, index_info=index_info, inner_spec=inner_spec)
+) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
+    """
+    Creates an index from a template
+    """
+    template, bbg_post = configure_index(template=template, index_info=index_info, inner_spec=inner_spec)
 
     log_index(template)
 
     if prod_run:
+        # if we are posting to bloomberg, we need to create the identifier first
+        if bbg_post:
+            res = client.create_identifier(provider=Provider.bloomberg, identifier_post=bbg_post)
+            logger.info(f"Created identifier: {res}")
+
         res = client.create_index(index_def=template)
         logger.info(f"Created index: {res}")
 
-    return template
+    return template, bbg_post
