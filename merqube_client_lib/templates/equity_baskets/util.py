@@ -20,13 +20,14 @@ from merqube_client_lib.pydantic_types import (
     RicEquityPosition,
     Stage,
 )
+from merqube_client_lib.util import freezable_utcnow
 
 SPEC_KEYS = ["base_date"]
 TOP_LEVEL = ["namespace", "name", "title", "base_date"]
 MISC = ["apikey", "run_hour", "run_minute"]
 INFO_REQUIRED = TOP_LEVEL + SPEC_KEYS + MISC
 OPTIONAL = "timezone"
-
+DATE_KEYS = ["base_date"]
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
@@ -97,7 +98,7 @@ def get_index_info(config_file_path: str, required_fields: list[str]) -> dict[st
             raise ValueError(f"Missing key {k} in index info")
 
     try:
-        for k in ["base_date"]:
+        for k in DATE_KEYS:
             pd.Timestamp(index_info[k])
     except ValueError as e:
         raise ValueError(
@@ -106,6 +107,12 @@ def get_index_info(config_file_path: str, required_fields: list[str]) -> dict[st
 
     if (tz := index_info.get("timezone")) and tz not in pytz.all_timezones:
         raise ValueError("Invalid timezone string: {tz}")
+
+    if not (0 <= index_info["run_hour"] <= 23):
+        raise ValueError("run_hour must be between 0 and 23")
+
+    if not (0 <= index_info["run_minute"] <= 59):
+        raise ValueError("run_minute must be between 0 and 59")
 
     return index_info
 
@@ -135,7 +142,7 @@ def configure_index(template: IndexDefinitionPost, index_info: dict[str, Any], i
     set up the index from index info
     """
     for k in TOP_LEVEL:
-        setattr(template, k, index_info[k])
+        setattr(template, k, index_info[k] if k != "base_date" else pd.Timestamp(index_info[k]).strftime("%Y/%m/%d"))
 
     inner_spec["index_id"] = index_info["name"]
     for k in SPEC_KEYS:
@@ -146,7 +153,7 @@ def configure_index(template: IndexDefinitionPost, index_info: dict[str, Any], i
 
     # set runtime
     # make sure to produce the last EOD value immediately on create
-    today = pd.Timestamp.now().date() - pd.Timedelta(days=2)
+    today = freezable_utcnow() - pd.Timedelta(days=2)  # pyright: ignore
     template.run_configuration.schedule.schedule_start = pd.Timestamp(
         year=today.year,
         month=today.month,

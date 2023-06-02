@@ -1,7 +1,10 @@
 """
 Misc helper utilities
 """
-from typing import Any
+import datetime
+from typing import Any, cast
+
+import pandas as pd
 
 
 def batch_post_payload(rows: list[Any], batch_size: int) -> list[list[Any]]:
@@ -17,3 +20,21 @@ def batch_post_payload(rows: list[Any], batch_size: int) -> list[list[Any]]:
         n = batch_size
         return [rows[i * n : (i + 1) * n] for i in range((len(rows) + n - 1) // n)]
     return [rows]
+
+
+def freezable_now(tz: str = "UTC", no_tzinfo_iso: bool = False) -> pd.Timestamp | str:
+    """
+    Builds pd.Timestamp.now out of a datetime.datetime so it can be frozen in unit tests
+    """
+    dt = datetime.datetime.utcnow()
+    ts = pd.Timestamp(dt, tz="UTC").tz_convert(tz)
+    if not no_tzinfo_iso:
+        return cast(pd.Timestamp, ts)
+    return ts.tz_localize(None).isoformat()  # pyright: ignore
+
+
+def freezable_utcnow(no_tzinfo_iso: bool = False) -> pd.Timestamp | str:
+    """
+    Builds pd.Timestamp.utcnow out of a datetime.datetime so it can be frozen in unit tests
+    """
+    return freezable_now(no_tzinfo_iso=no_tzinfo_iso)

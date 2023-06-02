@@ -5,6 +5,7 @@ from copy import deepcopy
 from unittest.mock import MagicMock
 
 import pytest
+from freezegun import freeze_time
 
 from merqube_client_lib.templates.equity_baskets.single_stock_total_return_corax import (
     create,
@@ -16,7 +17,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 expected_no_ticker = {
     "administrative": {"role": "development"},
-    "base_date": "2000-01-04",
+    "base_date": "2000/01/04",
     "description": "Template for TR indices",
     "family": "MerQube Single Stock TR indices",
     "family_description": "MerQube Single Stock TR indices",
@@ -66,57 +67,9 @@ expected_with = deepcopy(expected_no_ticker)
 expected_with["identifiers"] = [{"name": "xxx", "provider": "bloomberg"}]
 
 
-@pytest.mark.parametrize("bbg_ticker,expected", [(None, expected_no_ticker), ("xxx", expected_with)])
-def test_ss_tr(bbg_ticker, expected, monkeypatch):
-    mock_secapi(
-        monkeypatch,
-        method_name_function_map={},
-        session_func_map={
-            "get_collection_single": MagicMock(return_value=json.load(open(os.path.join(here, "v1_ss.json")))),
-        },
-    )
-
-    with tempfile.TemporaryDirectory() as tmpdir:
-        with open((fpath := os.path.join(tmpdir, "test.json")), "w") as f:
-            f.write(
-                json.dumps(
-                    {
-                        "apikey": "xxx",
-                        "base_date": "2000-01-04",
-                        "bbg_ticker": bbg_ticker,
-                        "currency": "EUR",
-                        "description": "SSEB 1",
-                        "name": "TEST_1",
-                        "namespace": "test",
-                        "run_hour": 18,
-                        "run_minute": 0,
-                        "timezone": "US/Eastern",
-                        "title": "TEST_1",
-                        "underlying_ric": "LVMH.PA",
-                    }
-                )
-            )
-
-        template = create.create_equity_basket(config_file_path=fpath)
-        assert json.loads(template.json(exclude_none=True)) == expected
-
-
-illegal_1 = {
+good_config = {
     "apikey": "xxx",
     "base_date": "2000-01-04",
-    "currency": "EUR",
-    "description": "SSEB 1",
-    "name": "TEST_1",
-    "namespace": "test",
-    "run_hour": 18,
-    "run_minute": 0,
-    "timezone": "US/Eastern",
-    "title": "TEST_1",
-}
-
-illegal_2 = {
-    "apikey": "xxx",
-    "base_date": "2000REEEEEEE",
     "currency": "EUR",
     "description": "SSEB 1",
     "name": "TEST_1",
@@ -129,7 +82,40 @@ illegal_2 = {
 }
 
 
-@pytest.mark.parametrize("case", [illegal_1, illegal_2])
+@freeze_time("2023-06-01")
+@pytest.mark.parametrize("bbg_ticker,expected", [(None, expected_no_ticker), ("xxx", expected_with)])
+def test_ss_tr(bbg_ticker, expected, monkeypatch):
+    mock_secapi(
+        monkeypatch,
+        method_name_function_map={},
+        session_func_map={
+            "get_collection_single": MagicMock(return_value=json.load(open(os.path.join(here, "v1_ss.json")))),
+        },
+    )
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open((fpath := os.path.join(tmpdir, "test.json")), "w") as f:
+            f.write(json.dumps(good_config | {"bbg_ticker": bbg_ticker}))
+
+        template = create.create_equity_basket(config_file_path=fpath)
+        assert json.loads(template.json(exclude_none=True)) == expected
+
+
+illegal_1 = deepcopy(good_config)
+del illegal_1["underlying_ric"]
+
+illegal_2 = deepcopy(good_config)
+illegal_2["base_date"] = "2000REEEEEEE"
+
+
+illegal_3 = deepcopy(good_config)
+illegal_3["run_hour"] = 184
+
+illegal_4 = deepcopy(good_config)
+illegal_4["run_minute"] = 184
+
+
+@pytest.mark.parametrize("case", [illegal_1, illegal_2, illegal_3, illegal_4])
 def test_multi_illegal(case, monkeypatch):
     mock_secapi(
         monkeypatch,

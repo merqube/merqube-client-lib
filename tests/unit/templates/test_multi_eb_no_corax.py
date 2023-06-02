@@ -5,6 +5,7 @@ from copy import deepcopy
 from unittest.mock import MagicMock
 
 import pytest
+from freezegun import freeze_time
 
 from merqube_client_lib.templates.equity_baskets.multiple_no_corax import create
 from tests.conftest import mock_secapi
@@ -14,7 +15,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 expected_no_ticker = {
     "administrative": {"role": "calculation"},
-    "base_date": "2000-01-04",
+    "base_date": "2000/01/04",
     "description": "Template for Equity Baskets (non Corax)",
     "family": "Equity Baskets",
     "family_description": "Equity Baskets",
@@ -110,6 +111,7 @@ expected_with_intra["intraday"]["publish_config"]["price_return"] = [
 ]
 
 
+@freeze_time("2023-06-01")
 @pytest.mark.parametrize(
     "intraday,bbg_ticker,expected",
     [
