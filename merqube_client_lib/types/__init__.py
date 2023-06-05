@@ -20,3 +20,5 @@ class HTTPMethod(str, Enum):
 
 Manifest = dict[str, Any]
 ManifestList = list[Manifest]
+
+Records = list[dict[str, str]]

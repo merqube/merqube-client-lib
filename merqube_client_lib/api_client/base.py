@@ -109,7 +109,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         """
         Gets a model that can be posted to /index to create a new index from an existing index
 
-        For safety reasons, by default, the name, namespace, and index_reports are reset.
+        For safety reasons, by default, the name and namespace are reset.
         """
         source_dict = self.get_index_manifest(index_name)
         source_dict.pop("id")
@@ -122,9 +122,6 @@ class _IndexAPIClient(_MerqubeApiClientBase):
 
         model.name = "test"
         model.namespace = "test"
-        if model.run_configuration:
-            model.run_configuration.index_report_uuids = None
-            model.run_configuration.index_reports = cast(list[str], [])
 
         return model
 

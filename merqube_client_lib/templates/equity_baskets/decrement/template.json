@@ -1,0 +1,35 @@
+{
+    "addl_comments": [
+        "base_date: set to a business day before the intended start date for the real-time calcs",
+        "[OPTIONAL] bbg_ticker - due to the limitations of the Bloomberg ticker creation process (no API), this must be a pre-created ticker. You can email MerQube a list of tickers to create on your behalf at support@merqube.com. Then, you provide those as input to these indices.",
+        "[OPTIONAL] email_list - a list of emails like ['a@company.com', 'b@company.com',...] to receive daily reports for. If no list is specified, the index will run daily without sending reports",
+        "name -  set to the name on Merqube's website for the index (sometimes called it's 'ticker' but the name need not be the same as the bbg ticker, though it can be). This must be globally unique (you will get a 409 if the name is taken)",
+        "namespace: set to your organization's namespace for indices",
+        "run_hour and run_minute - set to the time of day that the index should be calculated, in the timezone specified. Eg 18 and 0 for 6pm",
+        "[OPTIONAL] timezone -  set to the runtime timezone, defaults to US/Eastern. Must be a valid pytz timezone",
+        "",
+        "Index type specific fields:",
+        "base_value - set to the value of the index on the base_date",
+        "day_count_convention - must either adapt to a fixed number of days in a year e.g. 'f360' or to Actual ISDA convention, i.e. 'actual'",
+        "fee type and value - e.g. fee_value=50 fee_type='fixed' for 50 Index points fee or fee_value=0.005, fee_type='percentage_pre' for a 0.5% percentage fee",
+        "underlying_index_name - the TR index this decrement index is on. There is a function to view all TRs to choose from"
+    ],
+    "apikey": "XXXX",
+    "base_date": "1990-01-01",
+    "bbg_ticker": "Pre-created-ticker-here, if this is to tick on bloomberg, for this decrement index",
+    "description": "Describe Your Index Here",
+    "email_list": ["bob@mycompany.com", "alice@mycompany.com", "pat@mycompany.com"],
+    "holiday_calendar": "either {'mics': list[str]} or {'swaps_monitor_codes': list[str]}",
+    "name": "TEST_NAME_XXX",
+    "namespace": "test",
+    "run_hour": 18,
+    "run_minute": 0,
+    "timezone": "US/Eastern",
+    "title": "Nice Name For My Decrement Index",
+
+    "day_count_convention": "f360",
+    "underlying_index_name": "MQSSLVTE",
+    "base_value": 100,
+    "fee_value": 0.005,
+    "fee_type": "percentage_pre"
+}

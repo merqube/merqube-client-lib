@@ -62,5 +62,5 @@ Note, we use a [third party tool](https://github.com/koxudaxi/datamodel-code-gen
 These types can then be used as classes in any code forming indices (finally, using pydantic's `.json` or `.dict` method to convert before sending to the API).
 The most relevent types to clients are probably:
 1. `IndexDefinitionPost`: the schema for new index creation (`POST`)
-1. `IndexDefinitionPatchPutGet`: the schema for the return from `GET`s, and what would be supplied on `PUT` and `PATCH`. This model contains server side generated fields like `Status` that are illegal on `POST`.
+1. `IndexDefinitionPatchPutGet`: the schema for the return from `GET`s, and what would be supplied on `PUT` and `PATCH`. This model contains server side generated fields like `Status` that are bad on `POST`.
 1. `SecurityMetrics`: the schema for every record in the SecAPI. This is what can be expected on all reads.

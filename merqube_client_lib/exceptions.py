@@ -15,6 +15,3 @@ class APIError(Exception):
         self.code = code
         self.response_json = response_json
         self.request_id = request_id
-
-    def __str__(self) -> str:
-        return f"API Error: code: {self.code}, response_json: {self.response_json}, request_id: {self.request_id}"

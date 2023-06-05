@@ -10,13 +10,11 @@ from tests.conftest import mock_secapi
 here = os.path.dirname(os.path.abspath(__file__))
 
 
-def test_inline_to_tp(monkeypatch):
+def test_inline_to_tp(v1_multi, monkeypatch):
     mock_secapi(
         monkeypatch,
         method_name_function_map={},
-        session_func_map={
-            "get_collection_single": MagicMock(return_value=json.load(open(os.path.join(here, "v1_multi.json")))),
-        },
+        session_func_map={"get_collection_single": MagicMock(return_value=v1_multi)},
     )
 
     with tempfile.TemporaryDirectory() as tmpdir:
@@ -40,7 +38,7 @@ def test_inline_to_tp(monkeypatch):
                 )
             )
 
-        template, _ = create.create_equity_basket(config_file_path=fpath)
+        template, _ = create.create(config_file_path=fpath)
         assert [(y, json.loads(x.json(exclude_none=True))) for (y, x) in inline_to_tp(template)] == [
             (
                 "2000-01-04",
