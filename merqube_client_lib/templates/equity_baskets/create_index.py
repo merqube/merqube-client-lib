@@ -28,7 +28,7 @@ logger = get_module_logger(__name__, level=logging.DEBUG)
     "--index-type",
     type=click.Choice(SUPPORTED_INDEX_TYPES),
     required=True,
-    help="type of index to create; must be one of f{SUPPORTED_INDEX_TYPES}",
+    help=f"type of index to create; must be one of {SUPPORTED_INDEX_TYPES}",
 )
 @click.option(
     "--config-file-path", type=str, required=True, help="path to the config file that follows the index template"
