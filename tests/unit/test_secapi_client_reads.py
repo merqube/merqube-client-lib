@@ -114,7 +114,7 @@ def test_get_security_metrics_no_chunks(expected, assertion, monkeypatch):
 
 def test_multi_ids_multi_metrics_chunked_bad_values(monkeypatch):
     """
-    illegal inputs
+    bad inputs
     """
     sm = gsm_call(monkeypatch)
     with pytest.raises(NotImplementedError):

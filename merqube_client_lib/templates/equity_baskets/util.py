@@ -1,19 +1,23 @@
 import json
 import logging
+from copy import deepcopy
 from typing import Any, cast
 
 import pandas as pd
 import pytz
+from pydantic.error_wrappers import ValidationError
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import (
     BasketPosition,
     EquityBasketPortfolio,
+    HolidayCalendarSpec,
     IdentifierUUIDPost,
     IdentifierUUIDRef,
     IndexDefinitionPatchPutGet,
     IndexDefinitionPost,
+    IndexReport,
     IntradayPublishConfigBloombergTarget,
     IntradayPublishConfigTarget,
     PortfolioUom,
@@ -21,14 +25,27 @@ from merqube_client_lib.pydantic_types import (
     RicEquityPosition,
     Stage,
 )
+from merqube_client_lib.pydantic_types import WeekmaskEnum as wm
 from merqube_client_lib.util import freezable_utcnow
 
 SPEC_KEYS = ["base_date"]
-TOP_LEVEL = ["namespace", "name", "title", "base_date"]
-MISC = ["apikey", "run_hour", "run_minute"]
-INFO_REQUIRED = TOP_LEVEL + SPEC_KEYS + MISC
-OPTIONAL = "timezone"
 DATE_KEYS = ["base_date"]
+
+# TODO: use jsonschema instead
+TOP_LEVEL = ["namespace", "name", "title", "base_date", "description"]
+MISC = ["apikey", "run_hour", "run_minute"]
+REQUIRED_BASE_FIELDS = TOP_LEVEL + SPEC_KEYS + MISC
+
+OPTIONAL_BASE_FIELDS = [
+    "addl_comments",
+    "bbg_ticker",
+    "currency",
+    "is_intraday",
+    "timezone",
+    "holiday_calendar",
+    "email_list",
+]
+
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
@@ -88,15 +105,21 @@ def log_index(index: IndexDefinitionPost) -> None:
     logger.info("Index spec: \n" + json_formatted_str)
 
 
-def get_index_info(config_file_path: str, required_fields: list[str]) -> dict[str, Any]:
+def get_index_info(
+    config_file_path: str, type_specific_req_fields: list[str] = [], type_specific_opt_fields: list[str] = []
+) -> dict[str, Any]:
     """
     load index specific info from config file + validate the data
     """
     index_info = cast(dict[str, Any], json.load(open(config_file_path, "r")))
 
-    for k in required_fields:
+    for k in (req := REQUIRED_BASE_FIELDS + type_specific_req_fields):
         if k not in index_info:
-            raise ValueError(f"Missing key {k} in index info")
+            raise ValueError(f"Missing required key {k} in index info")
+
+    for k in index_info:
+        if k not in req + OPTIONAL_BASE_FIELDS + type_specific_opt_fields:
+            raise ValueError(f"Unknown key {k} in index info")
 
     try:
         for k in DATE_KEYS:
@@ -115,27 +138,79 @@ def get_index_info(config_file_path: str, required_fields: list[str]) -> dict[st
     if not (0 <= index_info["run_minute"] <= 59):
         raise ValueError("run_minute must be between 0 and 59")
 
+    # default: NYSE
+    # TODO: we may have to allow configuration of the weekmask
+    week = [wm.Mon, wm.Tue, wm.Wed, wm.Thu, wm.Fri]
+    hol_cal = HolidayCalendarSpec(calendar_identifiers=["MIC:XNYS"], weekmask=week)
+    if index_info.get("holiday_calendar"):
+        try:
+            assert isinstance(hc := index_info["holiday_calendar"], dict)
+            if hc.get("mics"):
+                hol_cal = HolidayCalendarSpec(calendar_identifiers=[f"MIC:{mic}" for mic in hc["mics"]], weekmask=week)
+            elif hc.get("swaps_monitor_codes"):
+                hol_cal = HolidayCalendarSpec(swaps_monitor_codes=hc["swaps_monitor_codes"], weekmask=week)
+        except (AssertionError, ValidationError):
+            raise ValueError("Invalid holiday calendar spec")
+
+    index_info["_holiday_spec"] = hol_cal
+
+    if index_info.get("email_list"):
+        if not isinstance(index_info["email_list"], list) or not all(
+            isinstance(x, str) for x in index_info["email_list"]
+        ):
+            raise ValueError("email_list must be a list of strings")
+
     return index_info
 
 
 def load_template(
-    template_name: str, config_file_path: str, type_required_specific_fields: list[str]
+    template_name: str,
+    config_file_path: str,
+    type_specific_req_fields: list[str],
+    type_specific_opt_fields: list[str] = [],
 ) -> tuple[MerqubeAPIClient, IndexDefinitionPost, dict[str, Any], dict[str, Any]]:
     """
     Loads a template index model to edit and then create a new index from
     """
     index_info = get_index_info(
-        config_file_path=config_file_path, required_fields=type_required_specific_fields + INFO_REQUIRED
+        config_file_path=config_file_path,
+        type_specific_req_fields=type_specific_req_fields,
+        type_specific_opt_fields=type_specific_opt_fields,
     )
     token = index_info.get("apikey")
 
     client = MerqubeAPIClient(token=token)
+
     template = client.index_post_model_from_existing(template_name)
 
     assert template.spec and template.spec.index_class_args and template.spec.index_class_args.get("spec")
     inner_spec = template.spec.index_class_args["spec"]
 
     return client, template, index_info, inner_spec
+
+
+def _configure_report(template: IndexDefinitionPost, email_list: list[str] | None = None) -> None:
+    """
+    confifugre index reports
+    """
+    updated_reports = []
+    if not email_list or not template.run_configuration or not template.run_configuration.index_reports:
+        logger.warning("Warning, index has no reports to configure or has not been given an email list")
+        return
+
+    for ind, report in enumerate(template.run_configuration.index_reports):
+        updated_report = cast(IndexReport, deepcopy(report))
+        assert updated_report.program_args
+        diss_config = json.loads(updated_report.program_args["diss_config"].replace('\\"', '"'))
+
+        if not (dc := diss_config.get("email")) or len(dc) > 1:
+            logger.warning(f"Warning, report {ind} has no email config or has more than one config")
+            continue
+
+        diss_config["email"][0]["recipients"] = email_list
+        updated_report.program_args["diss_config"] = json.dumps(diss_config).replace('"', '\\"')
+        updated_reports.append(updated_report)
+    template.run_configuration.index_reports = updated_reports
 
 
 def configure_index(
@@ -150,6 +225,7 @@ def configure_index(
     inner_spec["index_id"] = index_info["name"]
     for k in SPEC_KEYS:
         inner_spec[k] = index_info[k]
+    inner_spec["holiday_spec"] = index_info["_holiday_spec"]
 
     name = index_info["name"]
     bbg_ticker = index_info.get("bbg_ticker")
@@ -160,7 +236,7 @@ def configure_index(
 
     # set runtime
     # make sure to produce the last EOD value immediately on create
-    today = freezable_utcnow() - pd.Timedelta(days=2)  # pyright: ignore
+    today = freezable_utcnow() - pd.Timedelta(days=5)  # pyright: ignore
     template.run_configuration.schedule.schedule_start = pd.Timestamp(
         year=today.year,
         month=today.month,
@@ -192,6 +268,8 @@ def configure_index(
         bbg_identifier_post = IdentifierUUIDPost(
             name=bbg_ticker, index_name=name, namespace=index_info["namespace"], ticker=bbg_ticker
         )
+
+    _configure_report(template=template, email_list=index_info.get("email_list"))
 
     return template, bbg_identifier_post
 

@@ -2,10 +2,11 @@
 
 This client library comes with a library of index templates.
 The number of templates will grow.
-Currently, there are two templates:
+Currently, there are three templates:
 
 1. Single equity total return indices - creates a single stock total return index on any RIC (Reuters). More input sources will be supported in the future.
 1. Multiple equity (pre-corax adjusted) basket - creates an equity basket where the client provides rebalance portfolios
+1. Decrement - a decrement index on top of a single total return index
 
 ## Permissions
 As discussed in (Overview), customer indices are in `namespaces`.
@@ -22,33 +23,18 @@ After confirmation, you can reference those tickers in your index templates (see
 
 We are working on improvements to make this as seamless as possible.
 
-## Single Stock Total Return
+## Template Locations
 
-The template for creating a single stock total return index (often abbreviated as a "TR") is found at:
+The template configuration for creating each of the index types above are found at:
 
     merqube_client_lib/templates/equity_baskets/single_stock_total_return_corax/template.json
+    merqube_client_lib/templates/equity_baskets/decrement/template.json
+    merqube_client_lib/templates/equity_baskets/multi_basket_no_corax/template.json
 
-This will create an index that produces the total return of the `underlying_ric`. It will backfill returns since `base_date`.
-
-This index reinvests dividends and accounts for all corporate actions (stock splits, etc).
-
-A client for creating Decrement Indices (or "Overlay") is coming, and those decrements are specified on these TR indices.
-
-The process to create the index is:
+The process to create an index is:
 
 1. `poetry install` of this library
 2. copy the `template.json` and edit it per your index
-3. `poetry run single_stock_tr --config-file-path /path/to/that/template`
+3. `poetry run create --index-type=TYPE --config-file-path=/path/to/template/you/copied/and/edited`
 
-## Multiple Stock Basket (No Corporate Actions)
-
-The template for creating an equity basket where the client provides their own corporate action adjusted portfolio (daily, or at any interval) is found at:
-
-    merqube_client_lib/templates/equity_baskets/multiple_no_corax/template.json
-
-The process to create an index is the same as the above, except with `run multiple_no_corax`.
-
-
-## Multiple Stock Basket (With Corporate Actions)
-
-Coming Soon
+Add `--prod-run` to create the index in production, rather than just templating/logging it.

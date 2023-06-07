@@ -3,7 +3,6 @@ Create an equity basket index
 """
 from typing import Any, cast
 
-import click
 import pandas as pd
 
 from merqube_client_lib.logging import get_module_logger
@@ -45,9 +44,7 @@ def _get_constituents(base_date: str | pd.Timestamp, base_value: float, constitu
     return inline
 
 
-def create_equity_basket(
-    config_file_path: str, prod_run: bool = False
-) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
+def create(config_file_path: str, prod_run: bool = False) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.
@@ -55,7 +52,8 @@ def create_equity_basket(
     client, template, index_info, inner_spec = load_template(
         template_name="EQUITY_BASKET_TEMPLATE_V1",
         config_file_path=config_file_path,
-        type_required_specific_fields=TYPE_SPECIFIC_REQUIRED,
+        type_specific_req_fields=TYPE_SPECIFIC_REQUIRED,
+        type_specific_opt_fields=TYPE_SPECIFIC_OPTIONAL,
     )
 
     ports = {
@@ -82,17 +80,3 @@ def create_equity_basket(
     return create_index(
         client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run
     )
-
-
-@click.command()
-@click.option(
-    "--config-file-path", type=str, required=True, help="path to the config file that follows the index template"
-)
-@click.option("--prod-run", is_flag=True, default=False, help="Create the index in production")
-def main(config_file_path: str, prod_run: bool) -> None:
-    """main entrypoint"""
-    create_equity_basket(config_file_path=config_file_path, prod_run=prod_run)
-
-
-if __name__ == "__main__":
-    main()  # pyright: ignore  # pylint: disable=no-value-for-parameter

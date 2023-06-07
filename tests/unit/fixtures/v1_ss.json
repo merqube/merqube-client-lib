@@ -2,25 +2,31 @@
     "administrative": {
         "role": "development"
     },
-    "base_date": "2000-01-04",
     "description": "Template for TR indices",
     "family": "MerQube Single Stock TR indices",
     "family_description": "MerQube Single Stock TR indices",
-    "id": "25cd8499-b04f-4b3f-ad3d-3a76971f01af",
+    "id": "e2ed22fb-5e60-4f5c-bf65-0e134a3aa07a",
     "identifiers": [],
     "launch_date": "2023/06/01",
-    "name": "TOMMY_EB_TEST_1",
-    "namespace": "test",
+    "name": "SINGLE_STOCK_TR_TEMPLATE_VERSION_1",
+    "namespace": "merqube",
     "related": [],
     "run_configuration": {
-        "index_reports": [],
+        "index_reports": [
+            {
+                "program_args": {
+                    "diss_config": "{\\\"email\\\": [{\\\"files\\\": [\\\"levels\\\", \\\"close_portfolio\\\", \\\"corporate_actions\\\", \\\"proforma_portfolio\\\"], \\\"subject\\\": \\\"{INDEX_NAME} Report: {REPORT_DATE:%Y-%m-%d}\\\"}]}"
+                },
+                "uuid": "e79c6ea1-2ad0-429c-a4f0-b89915c1839e"
+            }
+        ],
         "job_enabled": true,
         "num_days_to_load": 100,
         "pod_image_and_tag": "merq-310:latest",
         "schedule": {
             "retries": 25,
             "retry_interval_min": 10,
-            "schedule_start": "2023-05-30T18:00:00"
+            "schedule_start": "2023-05-30 18:00:00"
         },
         "tzinfo": "US/Eastern"
     },
@@ -37,13 +43,13 @@
                         "reinvest_strategy": "IN_INDEX"
                     }
                 },
-                "currency": "EUR",
-                "index_id": "TOMMY_EB_TEST_1",
+                "currency": "USD",
+                "index_id": "SINGLE_STOCK_TR_TEMPLATE_VERSION_1",
                 "portfolios": {
                     "constituents": [
                         {
                             "date": "2000-01-04",
-                            "identifier": "LVMH.PA",
+                            "identifier": "XXX",
                             "quantity": 1
                         }
                     ],
@@ -57,10 +63,10 @@
     },
     "stage": "prod",
     "status": {
-        "created_at": "2023-06-01T16:18:48.755226",
-        "created_by": "tommy@merqube.com",
-        "last_modified": "2023-06-01T16:18:48.755226",
-        "last_modified_by": "tommy@merqube.com"
+        "created_at": "2023-06-01T15:58:23.824263",
+        "created_by": "foo@merqube.com",
+        "last_modified": "2023-06-06T13:23:08.775157",
+        "last_modified_by": "foo@merqube.com"
     },
-    "title": "TOMMY_EB_TEST_1"
+    "title": "MerQube Single Stock TR Index"
 }
