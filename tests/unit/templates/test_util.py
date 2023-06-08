@@ -22,7 +22,6 @@ def test_inline_to_tp(v1_multi, monkeypatch):
             f.write(
                 json.dumps(
                     {
-                        "apikey": "xxx",
                         "base_date": "2000-01-04",
                         "base_value": 100,
                         "constituents_csv_path": os.path.join(here, "portfolios.csv"),

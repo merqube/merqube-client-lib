@@ -11,4 +11,5 @@ Table Of Contents:
 - [Overview](docs/Overview.md)
 - [Data Retrieval](docs/DataRetrieval.md)
 - [Creating Indices](docs/CreatingIndices.md)
+- [Full Decrement Flow Example](docs/DecrementDemo.md)
 - [History of Changes](Changelog.md)

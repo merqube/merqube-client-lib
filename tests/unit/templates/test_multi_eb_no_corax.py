@@ -113,7 +113,6 @@ expected_with_intra["intraday"]["publish_config"]["price_return"] = [
 expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
 
 good_config = {
-    "apikey": "xxx",
     "base_date": "2000-01-04",
     "base_value": 100,
     "constituents_csv_path": os.path.join(here, "portfolios.csv"),
@@ -152,7 +151,6 @@ def test_multi(intraday, bbg_ticker, expected, expected_bbg_post, v1_multi, monk
 
 
 bad_1 = {
-    "apikey": "xxx",
     "base_date": "2000-01-04",
     "base_value": 100,
     "currency": "EUR",

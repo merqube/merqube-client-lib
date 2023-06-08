@@ -12,6 +12,8 @@ Currently, there are three templates:
 As discussed in (Overview), customer indices are in `namespaces`.
 Your API key has access to create indices in one or more namespaces.
 
+To create any indices with this library, you must set the env `MERQ_API_KEY`.
+
 The official process and website page for creating, viewing, and deleting API Keys is coming - and it will allow you to view the permissions associated with each key.
 A customer may have multiple namespaces for a variety of reasons (different internal teams, logical partitioning, etc).
 Every manifest must specify the `namespace` that the index is to be created in.
@@ -35,6 +37,6 @@ The process to create an index is:
 
 1. `poetry install` of this library
 2. copy the `template.json` and edit it per your index
-3. `poetry run create --index-type=TYPE --config-file-path=/path/to/template/you/copied/and/edited`
+3. `MERQ_API_KEY poetry run create --index-type=TYPE --config-file-path=/path/to/template/you/copied/and/edited`
 
 Add `--prod-run` to create the index in production, rather than just templating/logging it.

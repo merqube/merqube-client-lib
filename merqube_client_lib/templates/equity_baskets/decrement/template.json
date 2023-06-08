@@ -14,7 +14,6 @@
         "fee type and value - e.g. fee_value=50 fee_type='fixed' for 50 Index points fee or fee_value=0.005, fee_type='percentage_pre' for a 0.5% percentage fee",
         "underlying_index_name - the TR index this decrement index is on. There is a function to view all TRs to choose from"
     ],
-    "apikey": "XXXX",
     "base_date": "1990-01-01",
     "bbg_ticker": "Pre-created-ticker-here, if this is to tick on bloomberg, for this decrement index",
     "description": "Describe Your Index Here",

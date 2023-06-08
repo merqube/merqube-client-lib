@@ -26,14 +26,14 @@ from merqube_client_lib.pydantic_types import (
     Stage,
 )
 from merqube_client_lib.pydantic_types import WeekmaskEnum as wm
-from merqube_client_lib.util import freezable_utcnow
+from merqube_client_lib.util import freezable_utcnow, get_token
 
 SPEC_KEYS = ["base_date"]
 DATE_KEYS = ["base_date"]
 
 # TODO: use jsonschema instead
 TOP_LEVEL = ["namespace", "name", "title", "base_date", "description"]
-MISC = ["apikey", "run_hour", "run_minute"]
+MISC = ["run_hour", "run_minute"]
 REQUIRED_BASE_FIELDS = TOP_LEVEL + SPEC_KEYS + MISC
 
 OPTIONAL_BASE_FIELDS = [
@@ -121,16 +121,14 @@ def get_index_info(
         if k not in req + OPTIONAL_BASE_FIELDS + type_specific_opt_fields:
             raise ValueError(f"Unknown key {k} in index info")
 
-    try:
-        for k in DATE_KEYS:
+    for k in DATE_KEYS:
+        try:
             pd.Timestamp(index_info[k])
-    except ValueError as e:
-        raise ValueError(
-            "{k} must be a valid date. If the index should run at a certain time of day UTC, that should be part of the ISO8601 formatted first_run_date"
-        ) from e
+        except ValueError as e:
+            raise ValueError(f"Invalid date format for {k}") from e
 
     if (tz := index_info.get("timezone")) and tz not in pytz.all_timezones:
-        raise ValueError("Invalid timezone string: {tz}")
+        raise ValueError(f"Invalid timezone string: {tz}")
 
     if not (0 <= index_info["run_hour"] <= 23):
         raise ValueError("run_hour must be between 0 and 23")
@@ -177,7 +175,7 @@ def load_template(
         type_specific_req_fields=type_specific_req_fields,
         type_specific_opt_fields=type_specific_opt_fields,
     )
-    token = index_info.get("apikey")
+    token = get_token()
 
     client = MerqubeAPIClient(token=token)
 

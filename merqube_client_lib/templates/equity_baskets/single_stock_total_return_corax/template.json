@@ -12,7 +12,6 @@
         "Index type specific fields",
         "underlying_ric - the reuters ric of the stock the TR index is on top of"
     ],
-    "apikey": "XXXX",
     "base_date": "1990-01-01",
     "bbg_ticker": "Pre-created-ticker-here, if this is to tick on bloomberg",
     "currency": "USD",

@@ -9,6 +9,7 @@ from typing import cast
 import boto3
 import pandas as pd
 
+from merqube_client_lib.exceptions import APIError
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import IdentifierUUIDPost, IndexDefinitionPost
 from merqube_client_lib.templates.equity_baskets.util import create_index, load_template
@@ -22,6 +23,7 @@ TYPE_SPECIFIC_REQUIRED = [
     "fee_type",
     "day_count_convention",
     "base_value",
+    "client_owned_underlying",
 ]
 
 TYPE_SPECIFIC_OPTIONAL: list[str] = []
@@ -36,7 +38,7 @@ def _download_tr_map(tdir: str) -> str:
 
 def _get_trs(tr: str | None = None) -> Records:
     """
-    Returns the list of all TRs decrements can be on
+    Returns the list of all MerQube TRs decrements can be on
     """
     with tempfile.TemporaryDirectory() as tdir:
         trs = pd.read_csv(_download_tr_map(tdir))
@@ -69,12 +71,24 @@ def create(config_file_path: str, prod_run: bool = False) -> tuple[IndexDefiniti
     )
 
     uin = index_info["underlying_index_name"]
-    tr = _get_trs(uin)[0]
+    if index_info["client_owned_underlying"]:
+        # check that the underlying index exists
+        logger.info(f"Checking that the underlying index {uin} exists")
+        try:
+            client.get_index_model(index_name=uin)
+        except APIError:
+            raise ValueError(f"{uin} is not a valid index or you are not permissioned for it")
+
+        underlying_secapi_metric = "price_return"
+    else:
+        logger.info(f"Checking that the underlying index {uin} is a permissioned MerQube provided TR")
+        tr = _get_trs(uin)[0]
+        underlying_secapi_metric = tr["metric"]
 
     # set the metric to the TR metric
     template.plot_metric = inner_spec.get("output_metric", (getattr(template, "plot_metric", "price_return")))
 
-    inner_spec["metric"] = tr["metric"]  # the decrement index looks up the returns of the tr via this metric
+    inner_spec["metric"] = underlying_secapi_metric  # the decrement index looks up the returns of the tr via this
     inner_spec["underlying_ticker"] = uin
 
     if (
