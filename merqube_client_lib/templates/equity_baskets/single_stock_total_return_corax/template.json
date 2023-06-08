@@ -17,11 +17,12 @@
     "currency": "USD",
     "description": "Describe Your Index Here",
     "email_list": ["bob@mycompany.com", "alice@mycompany.com", "pat@mycompany.com"],
+    "holiday_calendar": "either {'mics': list[str]} or {'swaps_monitor_codes': list[str]}",
     "name": "TEST_NAME_XXX",
     "namespace": "test",
     "run_hour": 18,
     "run_minute": 0,
-    "timezone": "US/Eastern",
+    "timezone": "Europe/Paris",
     "title": "Nice Name For My Index",
     "underlying_ric": "LVMH.PA"
 }

@@ -36,7 +36,8 @@ The template configuration for creating each of the index types above are found 
 The process to create an index is:
 
 1. `poetry install` of this library
-2. copy the `template.json` and edit it per your index
-3. `MERQ_API_KEY poetry run create --index-type=TYPE --config-file-path=/path/to/template/you/copied/and/edited`
+1. copy the `template.json` and edit it per your index
+1. `export MERQ_API_KEY..`  (can also set this in your environment config)
+1. `poetry run create --index-type=TYPE --config-file-path=/path/to/template/you/copied/and/edited`
 
 Add `--prod-run` to create the index in production, rather than just templating/logging it.
