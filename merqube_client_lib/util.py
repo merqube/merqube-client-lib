@@ -2,6 +2,7 @@
 Misc helper utilities
 """
 import datetime
+import os
 from typing import Any, cast
 
 import pandas as pd
@@ -38,3 +39,12 @@ def freezable_utcnow(no_tzinfo_iso: bool = False) -> pd.Timestamp | str:
     Builds pd.Timestamp.utcnow out of a datetime.datetime so it can be frozen in unit tests
     """
     return freezable_now(no_tzinfo_iso=no_tzinfo_iso)
+
+
+def get_token() -> str:
+    """
+    Gets the users token from the env var
+    """
+    if not (api_key := os.environ.get("MERQ_API_KEY")):
+        raise ValueError("MERQ_API_KEY not set")
+    return api_key

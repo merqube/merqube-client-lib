@@ -67,7 +67,6 @@ expected_with["identifiers"] = [{"name": "xxx", "provider": "bloomberg"}]
 
 
 good_config = {
-    "apikey": "xxx",
     "base_date": "2000-01-04",
     "currency": "EUR",
     "description": "SSEB 1",

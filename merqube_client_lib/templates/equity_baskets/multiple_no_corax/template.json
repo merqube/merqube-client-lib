@@ -15,7 +15,6 @@
         "[OPTIONAL] level_overrides_path - path to a csv file like the level_overrides.csv in this directory, if there are specific dates that need to be overridden",
         "TODO: do we need unit of measure here?"
     ],
-    "apikey": "XXXX",
     "base_date": "1990-01-01",
     "base_value": 100,
     "bbg_ticker": "Pre-created-ticker-here, if this is to tick on bloomberg",

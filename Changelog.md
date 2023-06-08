@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.12.0] - 2023-06-08
+- Use ENV for APIKey, so configs are shareable.
+- Allow users to specify their own TR indices
+
 ## [0.11.0] - 2023-06-05
 - Reorganize to have a single click script before we have a ton of them
 - add decrement index template

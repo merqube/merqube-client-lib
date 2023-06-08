@@ -1,5 +1,6 @@
 import os
 from copy import deepcopy
+from functools import partial
 
 import pytest
 from freezegun import freeze_time
@@ -74,9 +75,9 @@ expected_with_ticker_with_email["run_configuration"]["index_reports"][0]["progra
 ] = expected_diss_config
 
 good_config = {
-    "apikey": "xxx",
     "base_date": "2000-01-04",
     "description": "DEC 1",
+    "client_owned_underlying": False,
     "holiday_calendar": {"mics": ["XNYS"]},
     "name": "TEST_1",
     "namespace": "test",
@@ -94,10 +95,12 @@ good_config = {
 expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
 
 
-def fake_s3_download(tdir):
+def fake_s3_download(tdir, valid: bool = True):
     with open(p := os.path.join(tdir, "tr.csv"), "w") as f:
         f.write(
             "underlying_ric,index_name,metric\nZ.Y,TOMMY_EB_TEST_2,price_return\nLVMH.PA,MY_WONDERFUL_UNDERLYING_TR,price_return"
+            if valid
+            else ""
         )
     return p
 
@@ -120,9 +123,28 @@ def test_get_trs(monkeypatch):
         create._get_trs(tr="TOMMY_EB_TEST_3")
 
 
+fake_underlying = {
+    "id": "123",
+    "description": "test",
+    "status": {"last_modified": "2020"},
+    "title": "",
+    "family": "",
+    "administrative": {"role": "calculation"},
+    "name": "t",
+    "launch_date": "2020",
+    "stage": "prod",
+}
+
+
 @freeze_time("2023-06-01")
+# normally a bool, being tricky for testing
 @pytest.mark.parametrize(
-    "bbg_ticker,email_list,expected,expected_bbg_post",
+    "client_owned, should_work",
+    [(False, True), (False, False), ("missing", False), (fake_underlying, True)],
+    ids=["mqu", "missing-mqu", "invalid-client", "valid-client"],
+)
+@pytest.mark.parametrize(
+    "bbg_ticker,email_list,expected,expec_bbg_post",
     [
         (None, None, expected_no_ticker, None),
         (None, ["foo@co", "bar@co"], expected_no_ticker_with_email, None),
@@ -131,55 +153,76 @@ def test_get_trs(monkeypatch):
     ],
     ids=["no_ticker", "no_ticker_with_email", "with_ticker", "with_ticker_with_email"],
 )
-def test_decrement(bbg_ticker, email_list, expected, expected_bbg_post, v1_decrement, monkeypatch):
-    monkeypatch.setattr(
-        "merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3_download
-    )
+def test_decrement(
+    bbg_ticker, email_list, expected, expec_bbg_post, client_owned, should_work, v1_decrement, monkeypatch
+):
+    fake_s3 = partial(fake_s3_download, valid=(not client_owned and should_work))
+    monkeypatch.setattr("merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3)
 
-    eb_test(
-        func=create.create,
-        config=good_config,
-        bbg_ticker=bbg_ticker,
-        email_list=email_list,
-        expected=expected,
-        template=v1_decrement,
-        monkeypatch=monkeypatch,
-        expected_bbg_post=expected_bbg_post,
-    )
+    def t():
+        eb_test(
+            func=create.create,
+            config=good_config,
+            bbg_ticker=bbg_ticker,
+            email_list=email_list,
+            expected=expected,
+            template=v1_decrement,
+            monkeypatch=monkeypatch,
+            expected_bbg_post=expec_bbg_post,
+            client_owned_underlying=client_owned,
+        )
+
+    if should_work:
+        t()
+    else:
+        with pytest.raises(ValueError):
+            t()
 
 
 bad_1 = deepcopy(good_config)
 del bad_1["underlying_index_name"]
+b1 = (bad_1, "Missing required key underlying_index_name in index info")
 
 bad_2 = deepcopy(good_config)
 bad_2["base_date"] = "2000REEEEEEE"
+b2 = (bad_2, "Invalid date format for base_date")
 
 bad_3 = deepcopy(good_config)
 bad_3["fee_type"] = "noooo"
+b3 = (bad_3, "fee_value must be a number and fee_type must be one of fixed, percentage_pre, percentage_post")
 
 bad_4 = deepcopy(good_config)
 bad_4["fee_value"] = "noooo"
+b4 = (bad_4, "fee_value must be a number and fee_type must be one of fixed, percentage_pre, percentage_post")
 
 bad_5 = deepcopy(good_config)
 bad_5["underlying_index_name"] = "nooot in file"
+b5 = (bad_5, "nooot in file is not a valid TR")
 
 bad_6 = deepcopy(good_config)
 bad_6["email_list"] = [666]
+b6 = (bad_6, "email_list must be a list of strings")
 
 bad_7 = deepcopy(good_config)
 bad_7["holiday_calendar"] = "noooo"
+b7 = (bad_7, "Invalid holiday calendar spec")
 
 bad_8 = deepcopy(good_config)
 bad_8["timezone"] = "asdfnoooo"
+b8 = (bad_8, "Invalid timezone string: asdfnoooo")
 
 bad_9 = deepcopy(good_config)
 bad_9["extraaaaaakeyyyyy"] = 1
+b9 = (bad_9, "Unknown key extraaaaaakeyyyyy in index info")
 
 
-@pytest.mark.parametrize("case", [bad_1, bad_2, bad_3, bad_4, bad_5, bad_6, bad_7, bad_8, bad_9])
-def test_multi_bad(case, v1_decrement, monkeypatch):
+@pytest.mark.parametrize("case,err", [b1, b2, b3, b4, b5, b6, b7, b8, b9])
+def test_multi_bad(case, err, v1_decrement, monkeypatch):
     monkeypatch.setattr(
         "merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3_download
     )
 
-    eb_test_bad(func=create.create, config=case, template=v1_decrement, monkeypatch=monkeypatch)
+    assert (
+        eb_test_bad(func=create.create, config=case, template=v1_decrement, monkeypatch=monkeypatch)
+        == f"ValueError: {err}"
+    )
