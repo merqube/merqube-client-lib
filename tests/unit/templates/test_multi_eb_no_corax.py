@@ -10,6 +10,7 @@ from .helpers import eb_test, eb_test_bad
 
 here = os.path.dirname(os.path.abspath(__file__))
 
+cal = {"calendar_identifiers": ["MIC:XNYS"], "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"]}
 
 expected_no_ticker = {
     "administrative": {"role": "calculation"},
@@ -82,7 +83,8 @@ expected_no_ticker = {
                     "specification_type": "INLINE",
                 },
                 "valid_mics": ["XNYS", "XNAS", "ARCX"],
-                "holiday_spec": {"calendar_identifiers": ["MIC:XNYS"], "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"]},
+                "holiday_spec": cal,
+                "calendar": cal,
             }
         },
     },
