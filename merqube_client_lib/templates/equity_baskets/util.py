@@ -10,22 +10,18 @@ from pydantic.error_wrappers import ValidationError
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import (
-    BasketPosition,
-    EquityBasketPortfolio,
     HolidayCalendarSpec,
     IdentifierUUIDPost,
     IdentifierUUIDRef,
-    IndexDefinitionPatchPutGet,
     IndexDefinitionPost,
     IndexReport,
     IntradayPublishConfigBloombergTarget,
     IntradayPublishConfigTarget,
-    PortfolioUom,
     Provider,
-    RicEquityPosition,
     Stage,
 )
-from merqube_client_lib.util import freezable_utcnow, get_token
+from merqube_client_lib.types import TargetPortfoliosDates
+from merqube_client_lib.util import freezable_utcnow, get_token, pydantic_to_dict
 
 SPEC_KEYS = ["base_date"]
 DATE_KEYS = ["base_date"]
@@ -47,48 +43,6 @@ OPTIONAL_BASE_FIELDS = [
 
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
-
-
-def inline_to_tp(index_model: IndexDefinitionPatchPutGet) -> list[tuple[str, EquityBasketPortfolio]]:
-    """Convert the inline portfolio to a list of target portfolios"""
-
-    target_portfolios = []
-
-    assert index_model.spec and index_model.spec.index_class_args and index_model.spec.index_class_args.get("spec")
-    portfolio = index_model.spec.index_class_args["spec"]["portfolios"]
-    uom = PortfolioUom.UNITS if portfolio["quantity_type"] == "SHARES" else PortfolioUom.WEIGHT
-    id_type = portfolio["identifier_type"]
-
-    # see how nany TP values we need
-    dates = set()
-    for constituent in (const := portfolio["constituents"]):
-        dates.add(constituent["date"])
-
-    for date in sorted(dates):
-        positions: list[BasketPosition | RicEquityPosition] = []
-        for constituent in const:
-            sec_type = constituent["security_type"]
-            pos_class = RicEquityPosition if sec_type == "EQUITY" else BasketPosition
-
-            if constituent["date"] != date:
-                continue  # will get picked up in another target portfolio
-
-            positions.append(
-                pos_class(
-                    asset_type=constituent["security_type"],
-                    identifier=constituent["identifier"],
-                    amount=constituent["quantity"],
-                    # this is only at the top level of inline; but its wrong for the cash position (in TP it is CURRENCY_CODE)
-                    identifier_type="CURRENCY_CODE" if sec_type == "CASH" else id_type,
-                )
-            )
-
-        target_port_val = EquityBasketPortfolio(timestamp=date, unit_of_measure=uom, positions=positions)
-
-        EquityBasketPortfolio.parse_obj(target_port_val)  # validate
-        target_portfolios.append((date, target_port_val))
-
-    return target_portfolios
 
 
 def read_file(filename: str) -> list[Any]:
@@ -148,10 +102,11 @@ def get_index_info(
 
     if not swaps_monitor_codes and not calendar_identifiers:
         calendar_identifiers = ["MIC:XNYS"]  # default to nyse
+
+    # TODO: we may have to allow configuration of the weekmask
     index_info["_holiday_spec"] = HolidayCalendarSpec(
         calendar_identifiers=calendar_identifiers,
         swaps_monitor_codes=swaps_monitor_codes,
-        # TODO: we may have to allow configuration of the weekmask
     )  # type: ignore
 
     if index_info.get("email_list"):
@@ -161,6 +116,14 @@ def get_index_info(
             raise ValueError("email_list must be a list of strings")
 
     return index_info
+
+
+def get_inner_spec(template: IndexDefinitionPost) -> dict[str, Any]:
+    """
+    Gets the inner spec of the index
+    """
+    assert template.spec and template.spec.index_class_args and template.spec.index_class_args.get("spec")
+    return cast(dict[str, Any], template.spec.index_class_args["spec"])
 
 
 def load_template(
@@ -183,10 +146,7 @@ def load_template(
 
     template = client.index_post_model_from_existing(template_name)
 
-    assert template.spec and template.spec.index_class_args and template.spec.index_class_args.get("spec")
-    inner_spec = template.spec.index_class_args["spec"]
-
-    return client, template, index_info, inner_spec
+    return client, template, index_info, get_inner_spec(template)
 
 
 def _configure_report(template: IndexDefinitionPost, email_list: list[str] | None = None) -> None:
@@ -282,6 +242,7 @@ def create_index(
     index_info: dict[str, Any],
     inner_spec: dict[str, Any],
     prod_run: bool,
+    initial_target_portfolios: TargetPortfoliosDates | None = None,
 ) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
     """
     Creates an index from a template
@@ -289,6 +250,12 @@ def create_index(
     template, bbg_post = configure_index(template=template, index_info=index_info, inner_spec=inner_spec)
 
     log_index(template)
+
+    if initial_target_portfolios:
+        logger.info("Initial target portfolios:")
+        for date, itp in initial_target_portfolios:
+            formatted = json.dumps(pydantic_to_dict(itp), indent=4, sort_keys=True)
+            logger.info(f"{date}: {formatted}")
 
     if prod_run:
         # if we are posting to bloomberg, we need to create the identifier first
@@ -298,5 +265,10 @@ def create_index(
 
         res = client.create_index(index_def=template)
         logger.info(f"Created index: {res}")
+        new_id = res["id"]
+
+        for date, itp in initial_target_portfolios or []:
+            logger.info(f"Pushing target portfolio for {date}")
+            client.replace_target_portfolio(index_id=new_id, target_portfolio=pydantic_to_dict(itp))
 
     return template, bbg_post

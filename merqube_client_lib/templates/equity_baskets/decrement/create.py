@@ -11,9 +11,8 @@ import pandas as pd
 
 from merqube_client_lib.exceptions import APIError
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import IdentifierUUIDPost, IndexDefinitionPost
 from merqube_client_lib.templates.equity_baskets.util import create_index, load_template
-from merqube_client_lib.types import Records
+from merqube_client_lib.types import CreateReturn, Records
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
@@ -58,7 +57,7 @@ def _get_trs(tr: str | None = None) -> Records:
     return cast(Records, row.to_dict(orient="records"))
 
 
-def create(config_file_path: str, prod_run: bool = False) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
+def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.
@@ -104,6 +103,8 @@ def create(config_file_path: str, prod_run: bool = False) -> tuple[IndexDefiniti
 
     inner_spec["fee"] = {"fee_value": fv, "fee_type": ft}
 
-    return create_index(
+    post_template, ident_ppost = create_index(
         client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run
     )
+
+    return CreateReturn(post_template, ident_ppost)

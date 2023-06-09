@@ -1,7 +1,6 @@
 """
 Base class for all Merqube API Clients
 """
-import json
 import operator
 from collections import abc
 from typing import Any, Iterable, Optional, cast
@@ -22,7 +21,7 @@ from merqube_client_lib.types.secapi import (
     SecapiMetricDefinition,
     SecAPIRecordsResponse,
 )
-from merqube_client_lib.util import batch_post_payload
+from merqube_client_lib.util import batch_post_payload, pydantic_to_dict
 
 
 class _MerqubeApiClientBase:
@@ -132,26 +131,39 @@ class _IndexAPIClient(_MerqubeApiClientBase):
 
         TODO: examples and index templates to be added to this repo.
         """
-        payload = json.loads(index_def.json(exclude_none=True, exclude_defaults=True))
-        return cast(dict[str, str], self.session.post("/index", json=payload).json())
+        return cast(dict[str, str], self.session.post("/index", json=pydantic_to_dict(index_def)).json())
 
-    def update_index(self, index_id: str, index_def: Index) -> None:
+    def update_index(self, index_def: Index) -> dict[str, str]:
         """
         Update (full object replacement) an index
         """
-        self.session.put(f"/index/{index_id}", json=index_def.dict())
+        return cast(dict[str, str], self.session.put(f"/index/{index_def.id}", json=pydantic_to_dict(index_def)).json())
 
-    def patch_index(self, index_id: str, index_updates: Manifest) -> None:
+    def patch_index(self, index_id: str, index_updates: Manifest) -> dict[str, str]:
         """
         Patch an index - index_updates is a partial index manifest
         """
-        self.session.patch(f"/index/{index_id}", json=index_updates)
+        return cast(dict[str, str], self.session.patch(f"/index/{index_id}", json=index_updates).json())
 
-    def delete_index(self, index_id: str) -> None:
+    def delete_index(self, index_id: str) -> dict[str, str]:
         """
         Delete an index
         """
-        self.session.delete(f"/index/{index_id}")
+        return cast(dict[str, str], self.session.delete(f"/index/{index_id}").json())
+
+    def replace_target_portfolio(self, index_id: str, target_portfolio: dict[str, Any]) -> dict[str, Any]:
+        """
+        Target portfolios are a PUT, not a POST, because an index can only have one open portfolio on a given day.
+        "Last one wins".
+        It is not defined behavior to have two open portfolios on the same day.
+
+        Internally (server side) all the history is kept, but only the latest one is used , and only the latest one is retrievable via this client.
+        That is, if you PUT port1, then port2, (either via direct API or this library) port2 is always the one that is read on the next index run.
+        Moreover, future portfolios can be posted at any time, but wont be considered by the index until that day.
+        """
+        return cast(
+            dict[str, str], self.session.put(f"/index/{index_id}/target_portfolio", json=target_portfolio).json()
+        )
 
 
 class _SecAPIClient(_MerqubeApiClientBase):

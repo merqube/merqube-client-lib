@@ -10,6 +10,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from merqube_client_lib.exceptions import APIError
+from merqube_client_lib.util import pydantic_to_dict
 from tests.conftest import mock_secapi
 
 
@@ -24,6 +25,7 @@ def eb_test(
     email_list=None,
     intraday=False,
     client_owned_underlying=None,
+    expected_target_portfolios=None,
 ):
     """shared helper used for all equity basket tests"""
 
@@ -63,12 +65,22 @@ def eb_test(
 
             f.write(json.dumps(conf))
 
-        template, bbg_post = func(config_file_path=fpath)
-        assert (act := json.loads(template.json(exclude_none=True))) == expected, act
+        cr = func(config_file_path=fpath)
+
+        # assert the index template
+        assert pydantic_to_dict(cr.template) == expected
+
+        # assert the bbg template (if applicable)
         if expected_bbg_post is None:
-            assert bbg_post is None
+            assert cr.ident is None
         else:
-            assert json.loads(bbg_post.json(exclude_none=True)) == expected_bbg_post
+            assert pydantic_to_dict(cr.ident) == expected_bbg_post
+
+        # assert target portfolios (if applicable)
+        if expected_target_portfolios is None:
+            assert cr.initial_target_ports is None
+        else:
+            assert [(x, pydantic_to_dict(y)) for (x, y) in cr.initial_target_ports] == expected_target_portfolios
 
 
 def eb_test_bad(func, config, template, monkeypatch):
