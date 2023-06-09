@@ -9,6 +9,12 @@ from merqube_client_lib.templates.equity_baskets.single_stock_total_return_corax
 
 from .helpers import eb_test, eb_test_bad
 
+cal = {
+    "swaps_monitor_codes": ["LnB"],
+    "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"],
+    "calendar_identifiers": ["MIC:XPAR"],
+}
+
 expected_no_ticker = {
     "administrative": {"role": "development"},
     "base_date": "2000/01/04",
@@ -53,7 +59,8 @@ expected_no_ticker = {
                     "quantity_type": "WEIGHT",
                     "specification_type": "INLINE",
                 },
-                "holiday_spec": {"swaps_monitor_codes": ["LnB"], "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"]},
+                "holiday_spec": cal,
+                "calendar": cal,
             }
         },
     },
@@ -70,7 +77,7 @@ good_config = {
     "base_date": "2000-01-04",
     "currency": "EUR",
     "description": "SSEB 1",
-    "holiday_calendar": {"swaps_monitor_codes": ["LnB"]},
+    "holiday_calendar": {"swaps_monitor_codes": ["LnB"], "mics": ["XPAR"]},
     "name": "TEST_1",
     "namespace": "test",
     "run_hour": 18,

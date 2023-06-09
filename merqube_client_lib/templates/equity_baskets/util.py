@@ -25,7 +25,6 @@ from merqube_client_lib.pydantic_types import (
     RicEquityPosition,
     Stage,
 )
-from merqube_client_lib.pydantic_types import WeekmaskEnum as wm
 from merqube_client_lib.util import freezable_utcnow, get_token
 
 SPEC_KEYS = ["base_date"]
@@ -136,21 +135,24 @@ def get_index_info(
     if not (0 <= index_info["run_minute"] <= 59):
         raise ValueError("run_minute must be between 0 and 59")
 
-    # default: NYSE
-    # TODO: we may have to allow configuration of the weekmask
-    week = [wm.Mon, wm.Tue, wm.Wed, wm.Thu, wm.Fri]
-    hol_cal = HolidayCalendarSpec(calendar_identifiers=["MIC:XNYS"], weekmask=week)
+    swaps_monitor_codes, calendar_identifiers = None, None
     if index_info.get("holiday_calendar"):
         try:
             assert isinstance(hc := index_info["holiday_calendar"], dict)
             if hc.get("mics"):
-                hol_cal = HolidayCalendarSpec(calendar_identifiers=[f"MIC:{mic}" for mic in hc["mics"]], weekmask=week)
-            elif hc.get("swaps_monitor_codes"):
-                hol_cal = HolidayCalendarSpec(swaps_monitor_codes=hc["swaps_monitor_codes"], weekmask=week)
+                calendar_identifiers = [f"MIC:{mic}" for mic in hc["mics"]]
+            if hc.get("swaps_monitor_codes"):
+                swaps_monitor_codes = hc["swaps_monitor_codes"]
         except (AssertionError, ValidationError):
             raise ValueError("Invalid holiday calendar spec")
 
-    index_info["_holiday_spec"] = hol_cal
+    if not swaps_monitor_codes and not calendar_identifiers:
+        calendar_identifiers = ["MIC:XNYS"]  # default to nyse
+    index_info["_holiday_spec"] = HolidayCalendarSpec(
+        calendar_identifiers=calendar_identifiers,
+        swaps_monitor_codes=swaps_monitor_codes,
+        # TODO: we may have to allow configuration of the weekmask
+    )  # type: ignore
 
     if index_info.get("email_list"):
         if not isinstance(index_info["email_list"], list) or not all(
@@ -223,7 +225,9 @@ def configure_index(
     inner_spec["index_id"] = index_info["name"]
     for k in SPEC_KEYS:
         inner_spec[k] = index_info[k]
-    inner_spec["holiday_spec"] = index_info["_holiday_spec"]
+
+    # some indices want "calendar" instead of "holiday_spec"
+    inner_spec["holiday_spec"] = inner_spec["calendar"] = index_info["_holiday_spec"]
 
     name = index_info["name"]
     bbg_ticker = index_info.get("bbg_ticker")

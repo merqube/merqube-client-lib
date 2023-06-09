@@ -132,7 +132,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
 
         TODO: examples and index templates to be added to this repo.
         """
-        payload = json.loads(index_def.json(exclude_none=True))
+        payload = json.loads(index_def.json(exclude_none=True, exclude_defaults=True))
         return cast(dict[str, str], self.session.post("/index", json=payload).json())
 
     def update_index(self, index_id: str, index_def: Index) -> None:

@@ -9,6 +9,8 @@ from merqube_client_lib.templates.equity_baskets.decrement import create
 
 from .helpers import eb_test, eb_test_bad
 
+cal = {"calendar_identifiers": ["MIC:XNYS"], "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"]}
+
 expected_no_ticker = {
     "administrative": {"role": "development"},
     "base_date": "2000/01/04",
@@ -47,7 +49,8 @@ expected_no_ticker = {
                 "base_val": 1000,
                 "day_count_convention": "f360",
                 "fee": {"fee_value": 0.005, "fee_type": "percentage_pre"},
-                "holiday_spec": {"calendar_identifiers": ["MIC:XNYS"], "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"]},
+                "holiday_spec": cal,
+                "calendar": cal,
                 "index_id": "TEST_1",
                 "metric": "price_return",
                 "output_metric": "total_return",
