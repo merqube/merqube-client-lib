@@ -297,7 +297,7 @@ class MerqubeAPISession(_BaseAPISession):
             logger.error(f"Expected 1 result but {num_results} found!")
             if num_results == 0:
                 raise APIError(404, {"message": "No results found for url {url} but 1 was expected!"})
-            raise APIError(400, {"message": f"Only one result was expected but {num_results} found!"})
+            raise APIError(409, {"message": f"Only one result was expected but multiple ({num_results}) found!"})
         return res[0]
 
 

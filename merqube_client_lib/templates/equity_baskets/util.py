@@ -257,18 +257,21 @@ def create_index(
             formatted = json.dumps(pydantic_to_dict(itp), indent=4, sort_keys=True)
             logger.info(f"{date}: {formatted}")
 
-    if prod_run:
-        # if we are posting to bloomberg, we need to create the identifier first
-        if bbg_post:
-            res = client.create_identifier(provider=Provider.bloomberg, identifier_post=bbg_post)
-            logger.info(f"Created identifier: {res}")
+    if not prod_run:
+        logger.debug("Dry run; exiting without creating the index")
+        return template, bbg_post
 
-        res = client.create_index(index_def=template)
-        logger.info(f"Created index: {res}")
-        new_id = res["id"]
+    # if we are posting to bloomberg, we need to create the identifier first
+    if bbg_post:
+        res = client.create_identifier(provider=Provider.bloomberg, identifier_post=bbg_post)
+        logger.info(f"Created identifier: {res}")
 
-        for date, itp in initial_target_portfolios or []:
-            logger.info(f"Pushing target portfolio for {date}")
-            client.replace_target_portfolio(index_id=new_id, target_portfolio=pydantic_to_dict(itp))
+    res = client.create_index(index_def=template)
+    logger.info(f"Created index: {res}")
+    new_id = res["id"]
+
+    for date, itp in initial_target_portfolios or []:
+        logger.info(f"Pushing target portfolio for {date}")
+        client.replace_target_portfolio(index_id=new_id, target_portfolio=pydantic_to_dict(itp))
 
     return template, bbg_post

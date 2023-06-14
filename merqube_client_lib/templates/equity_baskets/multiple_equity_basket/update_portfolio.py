@@ -41,14 +41,18 @@ def _update_portfolio(
         inner_spec = get_inner_spec(template=template)
         inner_spec["level_overrides"] = read_file(level_overrides_csv_path)
 
-    if prod_run:
-        # in the ongoing update case, we only care about dates >= today since all history is
-        # already in on the server, and not relevent to the next run of the index
-        today = pd.Timestamp.today()
-        for date, tp in target_portfolios:
-            if date >= today:
-                # see the docstring under replace_target_portfolio; this works for future dates too, desptie 'replace'
-                client.replace_portfolio(target_portfolio=pydantic_to_dict(tp))
+    if not prod_run:
+        logger.debug("Dry run, not updating portfolio")
+        return
+
+    logger.info("Updating portfolio")
+    # in the ongoing update case, we only care about dates >= today since all history is
+    # already in on the server, and not relevent to the next run of the index
+    today = pd.Timestamp.today()
+    for date, tp in target_portfolios:
+        if date >= today:
+            # see the docstring under replace_target_portfolio; this works for future dates too, desptie 'replace'
+            client.replace_portfolio(target_portfolio=pydantic_to_dict(tp))
 
 
 @click.command()
