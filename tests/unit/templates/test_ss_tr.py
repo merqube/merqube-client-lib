@@ -9,11 +9,7 @@ from merqube_client_lib.templates.equity_baskets.single_stock_total_return_corax
 
 from .helpers import eb_test, eb_test_bad
 
-cal = {
-    "swaps_monitor_codes": ["LnB"],
-    "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"],
-    "calendar_identifiers": ["MIC:XPAR"],
-}
+cal = {"swaps_monitor_codes": ["LnB"], "calendar_identifiers": ["MIC:XPAR"]}
 
 expected_no_ticker = {
     "administrative": {"role": "development"},

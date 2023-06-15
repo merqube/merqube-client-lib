@@ -5,12 +5,12 @@ Create an equity basket index
 import logging
 
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import IdentifierUUIDPost, IndexDefinitionPost
 from merqube_client_lib.templates.equity_baskets.util import (
     create_index,
     load_template,
     read_file,
 )
+from merqube_client_lib.types import CreateReturn
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
@@ -20,7 +20,7 @@ TYPE_SPECIFIC_REQUIRED = ["underlying_ric"]
 TYPE_SPECIFIC_OPTIONAL = ["level_overrides_csv_path"]
 
 
-def create(config_file_path: str, prod_run: bool = False) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
+def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.
@@ -44,6 +44,8 @@ def create(config_file_path: str, prod_run: bool = False) -> tuple[IndexDefiniti
     if pth := index_info.get("level_overrides_csv_path"):
         inner_spec["level_overrides"] = read_file(pth)
 
-    return create_index(
+    post_template, ident_ppost = create_index(
         client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run
     )
+
+    return CreateReturn(post_template, ident_ppost)

@@ -442,7 +442,7 @@ class RealTimeTradeType(Enum):
 
 class PortfolioUom(Enum):
     WEIGHT = "WEIGHT"
-    UNITS = "UNITS"
+    SHARES = "SHARES"
 
 
 class IdentifierType(Enum):

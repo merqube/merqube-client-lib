@@ -1,18 +1,18 @@
 """
 Combined API Client for all merqube APIs
 """
-import json
 from typing import Any, cast
 
 import pandas as pd
 from cachetools import LRUCache, cached
 
 from merqube_client_lib.api_client import base
-from merqube_client_lib.pydantic_types import IdentifierUUIDPost
+from merqube_client_lib.pydantic_types import EquityBasketPortfolio, IdentifierUUIDPost
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.pydantic_types import Provider
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types import Manifest
+from merqube_client_lib.util import pydantic_to_dict
 
 
 class MerqubeAPIClient(base._IndexAPIClient, base._SecAPIClient):  # noqa
@@ -22,19 +22,28 @@ class MerqubeAPIClient(base._IndexAPIClient, base._SecAPIClient):  # noqa
     For a client pertaining to a specific existing index, use MerqubeAPIClientSingleIndex
     """
 
-    def create_identifier(self, provider: Provider, identifier_post: IdentifierUUIDPost) -> dict[str, Any]:
+    def create_identifier(
+        self, provider: Provider, identifier_post: IdentifierUUIDPost | dict[str, Any]
+    ) -> dict[str, Any]:
         """
         Create a new identifier (in MerQubes system - this does NOT talk to the provider)
         """
-        payload = json.loads(identifier_post.json(exclude_none=True))
+        name = (
+            payload := (
+                pydantic_to_dict(identifier_post)
+                if isinstance(identifier_post, IdentifierUUIDPost)
+                else identifier_post
+            )
+        )["name"]
+        linked_name = payload["index_name"]
 
-        results = self.session.get_collection(f"/identifier/{provider.value}?names={identifier_post.name}")
+        results = self.session.get_collection(f"/identifier/{provider.value}?names={name}")
         if len(results) == 0:
             return cast(dict[str, Any], self.session.post(f"/identifier/{provider.value}", json=payload).json())
 
-        if (exis_name := results[0]["index_name"]) == identifier_post.index_name:
+        if (exis_name := results[0]["index_name"]) == linked_name:
             return {"status": "already exists for this index name"}
-        raise ValueError(f"Identifier {identifier_post.name} already exists for a different index name ({exis_name})")
+        raise ValueError(f"Identifier {name} already exists for a different index name ({exis_name})")
 
 
 class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
@@ -46,7 +55,7 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
     def __init__(self, index_name: str, is_intraday: bool = False, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        res = self.session.get_collection_single(f"/index?names={index_name}")
+        res = self.session.get_collection_single(f"/index?name={index_name}")
         self.index_id = res["id"]
         self.is_intraday = is_intraday
         self.index_name = index_name
@@ -59,9 +68,9 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         )
 
         # get the security id for this index
-        self._sec_id = self.session.get_collection_single(f"/security/index?names={index_name}")["id"]
+        self._sec_id = self.session.get_collection_single(f"/security/index?name={index_name}")["id"]
         self._intra_sec_id = (
-            self.session.get_collection_single(f"/security/intraday_index?names={index_name}")["id"]
+            self.session.get_collection_single(f"/security/intraday_index?name={index_name}")["id"]
             if self._has_intraday
             else None
         )
@@ -132,13 +141,22 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         """
         return self.session.get_collection(f"/index/{self.index_id}/portfolio_allocations")
 
-    def get_target_portfolio(self) -> list[dict[str, Any]]:
+    def get_target_portfolio(
+        self, start_date: pd.Timestamp | None = None, end_date: pd.Timestamp | None = None
+    ) -> list[dict[str, Any]]:
         """
         Some indices allow the customer to set a target portfolio (e.g., equity baskets) and a target date
         this returns those target_portfolios
         sometime after the date of each, a get on /portfolio may return the target portfolio (but in some cases it may not be possible to achieve the exact target)
         """
-        return self.session.get_collection(f"/index/{self.index_id}/target_portfolio")
+        opts = {}
+        if start_date is not None:
+            opts["start_date"] = start_date.date().isoformat()
+
+        if end_date is not None:
+            opts["end_date"] = end_date.date().isoformat()
+
+        return self.session.get_collection(f"/index/{self.index_id}/target_portfolio", options=opts)
 
     def get_caps(self) -> list[dict[str, Any]]:
         """
@@ -161,6 +179,17 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         This is not available for all indices
         """
         return self.session.get_collection(f"/index/{self.index_id}/data_collections")
+
+    def replace_portfolio(self, target_portfolio: dict[str, Any] | EquityBasketPortfolio) -> dict[str, Any]:
+        """
+        set the open portfolio for a given day. see the base class docs for more info
+        """
+        tp = (
+            pydantic_to_dict(target_portfolio)
+            if isinstance(target_portfolio, EquityBasketPortfolio)
+            else target_portfolio
+        )
+        return self.replace_target_portfolio(index_id=self.index_id, target_portfolio=tp)
 
 
 client_cache: LRUCache = LRUCache(maxsize=256)  # type: ignore

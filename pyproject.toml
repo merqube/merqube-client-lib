@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "merqube-client-lib"
-version = "0.12.1"
+version = "0.13.0"
 description = "MerQube IndexAPI + SecAPI client library"
 authors = ["Merqube"]
 readme = "README.md"
@@ -24,6 +24,7 @@ requests = "*"
 
 [tool.poetry.scripts]
 create = "merqube_client_lib.templates.equity_baskets.create_index:main"
+update_portfolio = "merqube_client_lib.templates.equity_baskets.multiple_equity_basket.update_portfolio:main"
 
 [tool.poetry.dev-dependencies]
 coverage =  {version="*"}

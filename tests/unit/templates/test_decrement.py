@@ -9,7 +9,7 @@ from merqube_client_lib.templates.equity_baskets.decrement import create
 
 from .helpers import eb_test, eb_test_bad
 
-cal = {"calendar_identifiers": ["MIC:XNYS"], "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"]}
+cal = {"calendar_identifiers": ["MIC:XNYS"]}
 
 expected_no_ticker = {
     "administrative": {"role": "development"},

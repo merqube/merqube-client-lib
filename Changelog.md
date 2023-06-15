@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.13.0] - 2023-06-12
+- Add support for updating target portfolios of an existing basket index
+- Restructure to support corax on multi-baskets
+- support passing in the pydantic object or dict in client lib functions
+- add `MERQ_API_KEY` in circle-ci secrets that allows int tests. Add said int tests
+- add `start_date` and `end_date` functionality into getting target portfolios
+
 ## [0.12.1] - 2023-06-09
 - some index specs use `calendar` while others use `holiday_spec` - set both.
 

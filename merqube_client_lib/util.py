@@ -2,6 +2,7 @@
 Misc helper utilities
 """
 import datetime
+import json
 import os
 from typing import Any, cast
 
@@ -48,3 +49,12 @@ def get_token() -> str:
     if not (api_key := os.environ.get("MERQ_API_KEY")):
         raise ValueError("MERQ_API_KEY not set")
     return api_key
+
+
+def pydantic_to_dict(pydantic_obj: Any) -> dict[str, Any]:
+    """
+    helper function to convert pydantic objects to dictionaries
+    you would think .dict() would work - but that can still contain objects such as Enums,
+    which are not json serializable
+    """
+    return cast(dict[str, Any], json.loads(pydantic_obj.json(exclude_none=True, exclude_defaults=True)))

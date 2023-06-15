@@ -5,7 +5,7 @@ The number of templates will grow.
 Currently, there are three templates:
 
 1. Single equity total return indices - creates a single stock total return index on any RIC (Reuters). More input sources will be supported in the future.
-1. Multiple equity (pre-corax adjusted) basket - creates an equity basket where the client provides rebalance portfolios
+1. Multiple equity (pre-corax adjusted, or MerQube handled corporate actions) basket
 1. Decrement - a decrement index on top of a single total return index
 
 ## Permissions
@@ -31,7 +31,7 @@ The template configuration for creating each of the index types above are found 
 
     merqube_client_lib/templates/equity_baskets/single_stock_total_return_corax/template.json
     merqube_client_lib/templates/equity_baskets/decrement/template.json
-    merqube_client_lib/templates/equity_baskets/multi_basket_no_corax/template.json
+    merqube_client_lib/templates/equity_baskets/multiple_equity_basket/template.json
 
 The process to create an index is:
 

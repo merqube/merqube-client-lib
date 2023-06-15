@@ -88,7 +88,7 @@ class _RetrySession(Session):
 class _BaseAPISession:
     """Base class for Merqube sessions"""
 
-    def __init__(self, token: Optional[str] = None, **kwargs: Any):
+    def __init__(self, token: Optional[str] = None, prefix_url: str = API_URL, **kwargs: Any):
         """
         Create a new merq session using token (the API Key)
         """
@@ -97,7 +97,7 @@ class _BaseAPISession:
 
         self._session: Optional[Session] = None
         self._session_pid: int = -1
-        self._prefix_url = API_URL
+        self._prefix_url = prefix_url
         self.token_type = "APIKEY"
 
     @property
@@ -236,7 +236,7 @@ class MerqubeAPISession(_BaseAPISession):
             rj = res.json()
         except (AttributeError, json.decoder.JSONDecodeError):
             rj = {}
-        logger.debug(f"Request failed with status {res.status_code}: {rj}. Request ID: {req_id}")
+        logger.error(f"Request failed with status {res.status_code}: {rj}. Request ID: {req_id}")
         raise APIError(code=res.status_code, response_json=rj, request_id=req_id)
 
     def request_raise(self, method: httpm, url: str, **kwargs: Any) -> Response:
@@ -294,7 +294,10 @@ class MerqubeAPISession(_BaseAPISession):
         res = self.get_collection(url, options=options, **kwargs)
         num_results = len(res)
         if num_results != 1:
-            raise APIError(400, {"message": f"Only one result was expected but {num_results} found!"})
+            logger.error(f"Expected 1 result but {num_results} found!")
+            if num_results == 0:
+                raise APIError(404, {"message": "No results found for url {url} but 1 was expected!"})
+            raise APIError(409, {"message": f"Only one result was expected but multiple ({num_results}) found!"})
         return res[0]
 
 

@@ -1,16 +1,17 @@
 import os
 from copy import deepcopy
 
+import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from merqube_client_lib.templates.equity_baskets.multiple_no_corax import create
+from merqube_client_lib.templates.equity_baskets.multiple_equity_basket import create
 
 from .helpers import eb_test, eb_test_bad
 
 here = os.path.dirname(os.path.abspath(__file__))
 
-cal = {"calendar_identifiers": ["MIC:XNYS"], "weekmask": ["Mon", "Tue", "Wed", "Thu", "Fri"]}
+cal = {"calendar_identifiers": ["MIC:XNYS"]}
 
 expected_no_ticker = {
     "administrative": {"role": "calculation"},
@@ -49,38 +50,11 @@ expected_no_ticker = {
                 "index_id": "TEST_1",
                 "level_overrides": [],
                 "portfolios": {
-                    "constituents": [
-                        {"date": "2000-01-04", "identifier": "USD", "quantity": 100, "security_type": "CASH"},
-                        {
-                            "date": "2022-03-11",
-                            "identifier": "AAPL.OQ",
-                            "quantity": -0.2512355,
-                            "security_type": "EQUITY",
-                        },
-                        {
-                            "date": "2022-03-11",
-                            "identifier": "AMZN.OQ",
-                            "quantity": -0.28782633781297995,
-                            "security_type": "EQUITY",
-                        },
-                        {
-                            "date": "2022-03-11",
-                            "identifier": "GOOG.OQ",
-                            "quantity": 0.78687756527879,
-                            "security_type": "EQUITY",
-                        },
-                        {
-                            "date": "2022-03-11",
-                            "identifier": "A.N",
-                            "quantity": 0.8687756527878999,
-                            "security_type": "EQUITY",
-                        },
-                        {"date": "2022-03-11", "identifier": "USD", "quantity": 60.0, "security_type": "CASH"},
-                    ],
+                    "constituents": [],
                     "date_type": "EFFECTIVE",
                     "identifier_type": "RIC",
                     "quantity_type": "SHARES",
-                    "specification_type": "INLINE",
+                    "specification_type": "API",
                 },
                 "valid_mics": ["XNYS", "XNAS", "ARCX"],
                 "holiday_spec": cal,
@@ -92,6 +66,38 @@ expected_no_ticker = {
     "tags": "custom",
     "title": "TEST_1",
 }
+
+expected_tp = [
+    (
+        pd.Timestamp("2000-01-04 00:00:00"),
+        {
+            "positions": [
+                {"amount": 100.0, "asset_type": "CASH", "identifier": "USD", "identifier_type": "CURRENCY_CODE"}
+            ],
+            "timestamp": "2000-01-04T00:00:00",
+            "unit_of_measure": "SHARES",
+        },
+    ),
+    (
+        pd.Timestamp("2022-03-11 00:00:00"),
+        {
+            "positions": [
+                {"amount": -0.2512355, "asset_type": "EQUITY", "identifier": "AAPL.OQ", "identifier_type": "RIC"},
+                {
+                    "amount": -0.28782633781297995,
+                    "asset_type": "EQUITY",
+                    "identifier": "AMZN.OQ",
+                    "identifier_type": "RIC",
+                },
+                {"amount": 0.78687756527879, "asset_type": "EQUITY", "identifier": "GOOG.OQ", "identifier_type": "RIC"},
+                {"amount": 0.8687756527878999, "asset_type": "EQUITY", "identifier": "A.N", "identifier_type": "RIC"},
+                {"amount": 60.0, "asset_type": "CASH", "identifier": "USD", "identifier_type": "CURRENCY_CODE"},
+            ],
+            "timestamp": "2022-03-11T00:00:00",
+            "unit_of_measure": "SHARES",
+        },
+    ),
+]
 
 
 expected_with = deepcopy(expected_no_ticker)
@@ -149,6 +155,7 @@ def test_multi(intraday, bbg_ticker, expected, expected_bbg_post, v1_multi, monk
         template=v1_multi,
         monkeypatch=monkeypatch,
         intraday=intraday,
+        expected_target_portfolios=expected_tp,
     )
 
 
