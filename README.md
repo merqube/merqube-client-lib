@@ -5,7 +5,7 @@ MerQube API Client Library (Python)
 ## Overview
 
 This is a python client library for MerQube's public API.
-This is a WIP release of an internal client library. This README will be updated when it is ready. More functionality will be added here over the coming weeks.
+This is a WIP release of an internal client library. More functionality will be added here over the coming weeks.
 
 Table Of Contents:
 - [Overview](docs/Overview.md)
