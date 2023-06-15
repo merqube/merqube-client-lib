@@ -153,9 +153,8 @@ class _IndexAPIClient(_MerqubeApiClientBase):
 
     def replace_target_portfolio(self, index_id: str, target_portfolio: dict[str, Any]) -> dict[str, Any]:
         """
-        Target portfolios are a PUT, not a POST, because an index can only have one open portfolio on a given day.
-        "Last one wins".
-        It is not defined behavior to have two open portfolios on the same day.
+        Target portfolios are a PUT, not a POST, because an index can only have one active portfolio at a given time.
+        "Last one wins", and it is not defined to have two+ active portfolios for the same timestamp.
 
         Internally (server side) all the history is kept, but only the latest one is used , and only the latest one is retrievable via this client.
         That is, if you PUT port1, then port2, (either via direct API or this library) port2 is always the one that is read on the next index run.
