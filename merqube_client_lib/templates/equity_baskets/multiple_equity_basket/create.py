@@ -22,7 +22,6 @@ logger = get_module_logger(__name__)
 def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
-    This class does not handle Corax.
     """
     client, template, index_info, inner_spec = load_template(
         template_name="EQUITY_BASKET_TEMPLATE_V1",
@@ -30,6 +29,14 @@ def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
         type_specific_req_fields=TYPE_SPECIFIC_REQUIRED,
         type_specific_opt_fields=TYPE_SPECIFIC_OPTIONAL,
     )
+
+    if index_info.get("corporate_actions", {}).get("reinvest_dividends") in [True, None]:
+        # unfortunately, this class has all corax on except for dividend reinvestment -
+        # the standard case for this client tool is to turn dividend reinvestment on;
+        # we cannot just delete the whole corporate_actions dict
+        inner_spec["corporate_actions"] = {
+            "dividend": {"deduct_tax": False, "reinvest_day": "PREV_DAY", "reinvest_strategy": "IN_INDEX"}
+        }
 
     const = get_constituents(
         constituents_csv_path=index_info["constituents_csv_path"],

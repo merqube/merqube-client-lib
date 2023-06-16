@@ -26,6 +26,7 @@ def eb_test(
     intraday=False,
     client_owned_underlying=None,
     expected_target_portfolios=None,
+    corax_conf=None,
 ):
     """shared helper used for all equity basket tests"""
 
@@ -62,6 +63,9 @@ def eb_test(
 
             if client_owned_underlying is not None:
                 conf["client_owned_underlying"] = client_owned_underlying
+
+            if corax_conf is not None:
+                conf["corporate_actions"] = corax_conf
 
             f.write(json.dumps(conf))
 

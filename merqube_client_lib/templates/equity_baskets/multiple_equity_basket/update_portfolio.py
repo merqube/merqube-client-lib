@@ -53,6 +53,8 @@ def _update_portfolio(
         if date >= today:
             # see the docstring under replace_target_portfolio; this works for future dates too, desptie 'replace'
             client.replace_portfolio(target_portfolio=pydantic_to_dict(tp))
+        else:
+            logger.warning(f"Ignoring portfolio dated in the past, {date}, since it will have no effect")
 
 
 @click.command()

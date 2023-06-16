@@ -13,7 +13,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 cal = {"calendar_identifiers": ["MIC:XNYS"]}
 
-expected_no_ticker = {
+expected_base = {
     "administrative": {"role": "calculation"},
     "base_date": "2000/01/04",
     "description": "wonderful index",
@@ -33,7 +33,14 @@ expected_no_ticker = {
     "namespace": "test",
     "related": [],
     "run_configuration": {
-        "index_reports": ["8ba49d26-31eb-4918-8bee-6898e0941fe9", "33574191-914d-4de9-9ba1-050ad09d1ba9"],
+        "index_reports": [
+            {
+                "uuid": "da6057c3-d78e-4975-b1d4-dc40f3c67c83",
+                "program_args": {
+                    "diss_config": '{\\"s3\\": [{\\"bucket\\": \\"merq-dissemination-backups\\", \\"key_prefix\\": \\"bloomberg\\", \\"files\\": [\\"bloomberg_portfolio\\"]}], \\"sftp\\": [{\\"files\\": [\\"bloomberg_portfolio\\"], \\"sftp_targets\\": [\\"5f150574-48d4-44c4-b0e0-f92d8956fa6b\\"]}], \\"email\\": [{\\"files\\": [\\"close_portfolio\\", \\"open_portfolio\\", \\"corporate_actions\\", \\"proforma_portfolio\\"], \\"subject\\": \\"{INDEX_NAME} Index Report {REPORT_DATE:%Y-%m-%d}\\"}]}'
+                },
+            }
+        ],
         "job_enabled": True,
         "pod_image_and_tag": "merq-310:latest",
         "schedule": {"retries": 25, "retry_interval_min": 10, "schedule_start": "2023-05-27T18:00:00"},
@@ -99,25 +106,6 @@ expected_tp = [
     ),
 ]
 
-
-expected_with = deepcopy(expected_no_ticker)
-expected_with["identifiers"] = [{"name": "xxx", "provider": "bloomberg"}]
-
-expected_no_ticker_intra = deepcopy(expected_no_ticker)
-expected_no_ticker_intra["intraday"]["enabled"] = True
-expected_no_ticker_intra["intraday"]["publish_config"]["price_return"] = [
-    {"target": "db"},
-    {"target": "secapi"},
-]
-
-expected_with_intra = deepcopy(expected_with)
-expected_with_intra["intraday"]["enabled"] = True
-expected_with_intra["intraday"]["publish_config"]["price_return"] = [
-    {"target": "db"},
-    {"target": "secapi"},
-    {"target": "bloomberg"},
-]
-
 expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
 
 good_config = {
@@ -135,27 +123,43 @@ good_config = {
 }
 
 
-@freeze_time("2023-06-01")
+@freeze_time("2023-06-01")  # for schedule-start
+@pytest.mark.parametrize("intraday", [True, False], ids=["intraday", "eod"])
 @pytest.mark.parametrize(
-    "intraday,bbg_ticker,expected,expected_bbg_post",
-    [
-        (False, None, expected_no_ticker, None),
-        (True, None, expected_no_ticker_intra, None),
-        (False, "xxx", expected_with, expected_bbg_post),
-        (True, "xxx", expected_with_intra, expected_bbg_post),
-    ],
+    "corax_conf, has_corax",
+    [(None, True), ({"reinvest_dividends": True}, True), ({"reinvest_dividends": False}, False)],
+    ids=["corax_implicit", "corax_explicit", "corax-false"],
 )
-def test_multi(intraday, bbg_ticker, expected, expected_bbg_post, v1_multi, monkeypatch):
+@pytest.mark.parametrize("bbg_ticker", ["xxx", None], ids=["with_bbg", "without_bbg"])
+def test_multi(intraday, bbg_ticker, corax_conf, has_corax, v1_multi, monkeypatch):
+    expected = deepcopy(expected_base)
+    ebbg = None
+
+    if has_corax:
+        expected["spec"]["index_class_args"]["spec"]["corporate_actions"] = {
+            "dividend": {"deduct_tax": False, "reinvest_day": "PREV_DAY", "reinvest_strategy": "IN_INDEX"}
+        }
+
+    if intraday:
+        expected["intraday"]["enabled"] = True
+        if bbg_ticker:
+            expected["intraday"]["publish_config"]["price_return"].append({"target": "bloomberg"})
+
+    if bbg_ticker:
+        expected["identifiers"] = [{"name": bbg_ticker, "provider": "bloomberg"}]
+        ebbg = expected_bbg_post
+
     eb_test(
         func=create.create,
         config=good_config,
         bbg_ticker=bbg_ticker,
         expected=expected,
-        expected_bbg_post=expected_bbg_post,
+        expected_bbg_post=ebbg,
         template=v1_multi,
         monkeypatch=monkeypatch,
         intraday=intraday,
         expected_target_portfolios=expected_tp,
+        corax_conf=corax_conf,
     )
 
 
