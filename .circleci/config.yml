@@ -41,6 +41,15 @@ jobs:
           - run:
               name: Publish package to PyPI
               command: poetry publish --build -u __token__ -p $PYPI_API_TOKEN
+          - run:
+              name: Git tag
+              command: |
+                bash -c ' \
+                TAG=$(poetry version | cut -d' ' -f2)
+                git tag -a $TAG -m $TAG
+                git push -u origin main
+                git push -u origin $TAG'
+
 
 # Helpful:
 # https://circleci.com/docs/variables
