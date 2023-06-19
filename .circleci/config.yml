@@ -39,11 +39,11 @@ jobs:
               name: Install dependencies
               command: poetry install
           - run:
-              name: Git tag
-              command: make tag
-          - run:
               name: Publish package to PyPI
               command: poetry publish --build -u __token__ -p $PYPI_API_TOKEN
+          - run:
+              name: Git tag
+              command: make tag
 
 # Helpful:
 # https://circleci.com/docs/variables
