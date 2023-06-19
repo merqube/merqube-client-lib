@@ -39,12 +39,11 @@ jobs:
               name: Install dependencies
               command: poetry install
           - run:
+              name: Git tag
+              command: TAG=$(poetry version | cut -d' ' -f2) echo $TAG; git tag -a $TAG -m $TAG; git push -u origin main; git push -u origin $TAG
+          - run:
               name: Publish package to PyPI
               command: poetry publish --build -u __token__ -p $PYPI_API_TOKEN
-          - run:
-              name: Git tag
-              command: TAG=$(poetry version | cut -d' ' -f2) git tag -a $TAG -m $TAG; git push -u origin main; git push -u origin $TAG
-
 
 # Helpful:
 # https://circleci.com/docs/variables
