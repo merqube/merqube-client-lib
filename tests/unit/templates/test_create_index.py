@@ -18,6 +18,7 @@ from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.base imp
 from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.create import (
     create_index,
 )
+from merqube_client_lib.templates.equity_baskets.schema import ClientIndexConfigBase
 
 
 @pytest.mark.parametrize("prod_run", [True, False])
@@ -90,15 +91,18 @@ def test_cli_fail():
 
 
 iinfo = {
+    "base_value": 100,
     "namespace": "testns",
     "name": "testname",
     "title": "testtitle",
     "base_date": "2022-01-01",
     "description": "testdesc",
-    "_holiday_spec": None,
+    "holiday_spec": None,
     "run_hour": 16,
     "run_minute": 0,
 }
+
+iinfo = ClientIndexConfigBase.parse_obj(iinfo)
 
 
 def _get_client():
@@ -141,13 +145,13 @@ def test_prod_run_ticker(v1_multi):
     ind = IndexDefinitionPost.parse_obj(manifest)
 
     inf = deepcopy(iinfo)
-    inf["bbg_ticker"] = "TEST"
+    inf.bbg_ticker = "TEST"
 
     client, ident, index, target = _get_client()
     create_index(
         client=client,
         template=ind,
-        index_info={**iinfo, "bbg_ticker": "TEST"},
+        index_info=inf,
         inner_spec={},
         prod_run=True,
     )
@@ -175,13 +179,13 @@ def test_prod_run_ticker_tp(v1_multi):
     ]
 
     inf = deepcopy(iinfo)
-    inf["bbg_ticker"] = "TEST"
+    inf.bbg_ticker = "TEST"
 
     client, ident, index, target = _get_client()
     create_index(
         client=client,
         template=ind,
-        index_info={**iinfo, "bbg_ticker": "TEST"},
+        index_info=inf,
         inner_spec={},
         initial_target_portfolios=inline_to_tp(ind.spec.index_class_args["spec"]["portfolios"]),
         prod_run=True,

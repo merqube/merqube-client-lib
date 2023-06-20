@@ -1,13 +1,17 @@
 """
 Create an equity basket index
 """
+from typing import cast
+
+import pandas as pd
 
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.base import (
-    TYPE_SPECIFIC_OPTIONAL,
-    TYPE_SPECIFIC_REQUIRED,
     get_constituents,
     inline_to_tp,
+)
+from merqube_client_lib.templates.equity_baskets.schema import (
+    ClientMutliEquityBasketConfig,
 )
 from merqube_client_lib.templates.equity_baskets.util import (
     create_index,
@@ -26,11 +30,12 @@ def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
     client, template, index_info, inner_spec = load_template(
         template_name="EQUITY_BASKET_TEMPLATE_V1",
         config_file_path=config_file_path,
-        type_specific_req_fields=TYPE_SPECIFIC_REQUIRED,
-        type_specific_opt_fields=TYPE_SPECIFIC_OPTIONAL,
+        model=ClientMutliEquityBasketConfig,
     )
 
-    if index_info.get("corporate_actions", {}).get("reinvest_dividends") in [True, None]:
+    index_info = cast(ClientMutliEquityBasketConfig, index_info)
+
+    if index_info.corporate_actions.reinvest_dividends:
         # unfortunately, this class has all corax on except for dividend reinvestment -
         # the standard case for this client tool is to turn dividend reinvestment on;
         # we cannot just delete the whole corporate_actions dict
@@ -39,9 +44,9 @@ def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
         }
 
     const = get_constituents(
-        constituents_csv_path=index_info["constituents_csv_path"],
-        base_date=index_info["base_date"],
-        base_value=index_info["base_value"],
+        constituents_csv_path=index_info.constituents_csv_path,
+        base_date=cast(pd.Timestamp, index_info.base_date),
+        base_value=index_info.base_value,
         add_initial_cash_position=True,
     )
 
@@ -58,7 +63,7 @@ def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
     inner_spec["portfolios"]["specification_type"] = "API"
     inner_spec["portfolios"]["constituents"] = []
 
-    if pth := index_info.get("level_overrides_csv_path"):
+    if pth := index_info.level_overrides_csv_path:
         inner_spec["level_overrides"] = read_file(pth)
 
     post_template, ident = create_index(

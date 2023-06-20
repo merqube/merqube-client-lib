@@ -11,11 +11,6 @@ from merqube_client_lib.pydantic_types import (
 from merqube_client_lib.templates.equity_baskets.util import read_file
 from merqube_client_lib.types import TargetPortfoliosDates
 
-TYPE_SPECIFIC_REQUIRED = ["constituents_csv_path", "base_value"]
-
-# Optional keys that have defaults
-TYPE_SPECIFIC_OPTIONAL = ["level_overrides_csv_path", "corporate_actions"]
-
 
 def get_constituents(
     constituents_csv_path: str,

@@ -71,6 +71,7 @@ expected_with["identifiers"] = [{"name": "xxx", "provider": "bloomberg"}]
 
 good_config = {
     "base_date": "2000-01-04",
+    "base_value": 1000,
     "currency": "EUR",
     "description": "SSEB 1",
     "holiday_calendar": {"swaps_monitor_codes": ["LnB"], "mics": ["XPAR"]},
