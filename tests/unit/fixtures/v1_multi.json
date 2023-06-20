@@ -36,8 +36,12 @@
     "related": [],
     "run_configuration": {
         "index_reports": [
-            "8ba49d26-31eb-4918-8bee-6898e0941fe9",
-            "33574191-914d-4de9-9ba1-050ad09d1ba9"
+            {
+                "program_args": {
+                    "diss_config": "{\\\"s3\\\": [{\\\"bucket\\\": \\\"merq-dissemination-backups\\\", \\\"key_prefix\\\": \\\"bloomberg\\\", \\\"files\\\": [\\\"bloomberg_portfolio\\\"]}], \\\"sftp\\\": [{\\\"files\\\": [\\\"bloomberg_portfolio\\\"], \\\"sftp_targets\\\": [\\\"5f150574-48d4-44c4-b0e0-f92d8956fa6b\\\"]}], \\\"email\\\": [{\\\"files\\\": [\\\"close_portfolio\\\", \\\"open_portfolio\\\", \\\"corporate_actions\\\", \\\"proforma_portfolio\\\"], \\\"subject\\\": \\\"{INDEX_NAME} Index Report {REPORT_DATE:%Y-%m-%d}\\\"}]}"
+                },
+                "uuid": "da6057c3-d78e-4975-b1d4-dc40f3c67c83"
+            }
         ],
         "job_enabled": false,
         "num_days_to_load": 0,
@@ -81,7 +85,7 @@
     "status": {
         "created_at": "2023-06-01T15:12:45.159354",
         "created_by": "foo@merqube.com",
-        "last_modified": "2023-06-06T19:46:39.441157",
+        "last_modified": "2023-06-12T19:53:05.969052",
         "last_modified_by": "foo@merqube.com"
     },
     "tags": "custom",

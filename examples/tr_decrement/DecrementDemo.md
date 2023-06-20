@@ -10,15 +10,15 @@ This document represents a full demo of creating a TR (single stock total return
 
 ## Creating the TR
 
-Fill out this template (there are more details inside the template for each class in the `templates` directory):
+Fill out this template (there are more details inside the template for each class in the `templates` directory). There is an example working file in this directory.
 
 ```json
 {
     "base_date": "2000-01-04",
     "bbg_ticker": null,
     "currency": "EUR",
-    "description": "Demo LVMH TR Index",
-    "email_list": ["tommy@merqube.com"],
+    "description": "LVMH TR Index",
+    "email_list": ["foo@merqube.com"],
     "is_intraday": false,
     "holiday_calendar": {"mics": ["XPAR"]},
     "name": "Demo_LVMH_TR_Index",
@@ -26,7 +26,7 @@ Fill out this template (there are more details inside the template for each clas
     "run_hour": 18,
     "run_minute": 0,
     "timezone": "Europe/Paris",
-    "title": "Demonstration LVMH TR Index",
+    "title": "title of my LVMH TR Index that shows on MerQube's website",
     "underlying_ric": "LVMH.PA"
 }
 ```
@@ -43,7 +43,7 @@ This will return the unique `uuid` of the index (you can use this on our API to 
 
 ## Accessing the TR
 
-The above will launch an index titled `Demo_LVMH_TR_Index` into the namespace (`test` in this example).
+The above will launch an index titled `Demo_LVMH_TR_Index` (or, the value you used for `name`) into the namespace (`test` in this example).
 
 After a few moments, (depending on how far back the `base_date` is), you will recieve the full historical Corporate Actions email for historical corporate actions since the `base_date`.
 
@@ -56,7 +56,11 @@ To access returns, you have three options:
 
 ![Alt text](imgs/tr_website.png?raw=true "Title")
 
-3. You can use this client library to fetch returns, portfolios, etc:
+3. You can use the API directly:
+
+     curl -H "Authorization: APIKEY YOUR_API_KEY "https://api.merqube.com/security/index?name={name}&metrics=price_return" | jq .
+
+4. You can use this client library to fetch returns, portfolios, etc:
 
 ```python
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClientSingleIndex
@@ -88,7 +92,7 @@ which produces a dataframe:
 
 ## Creating the decrement
 
-Next, fill out this template (changing the fee etc):
+Next, fill out this template (changing the fee etc). There is an example working file in this directory.
 
 ```json
 {
@@ -120,8 +124,9 @@ poetry run create --index-type=decrement --config-file-path ~/Desktop/decrement.
 ## Accessing the decrement
 
 Exactly like the above, you can either:
-1. You can use the daily emails (and the email that was sent upon creation with the historical return)
-1. Visit the website at `https://merqube.com/index/Demo_LVMH_Decrement_Index`, replacing with your index name:
+1. You can use the daily emails
+1. Visit the website at
+1. Use the API directly (the metric for this index is `total_return`)
 1. You can use this client library:
 
 ```python
@@ -131,7 +136,7 @@ from merqube_client_lib.util import get_token
 client = MerqubeAPIClientSingleIndex(index_name="Demo_LVMH_Decrement_Index", token=get_token())
 df = client.get_metrics(metrics=["price_return"])
 print(df)  # a pandas dataframe
-ports: list[dict[str, Any]] = client.get_portfolio()
+ports = client.get_portfolio()
 ```
 gets your levels as a pandas dataframe:
 

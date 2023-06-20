@@ -14,7 +14,7 @@ from merqube_client_lib.types import TargetPortfoliosDates
 TYPE_SPECIFIC_REQUIRED = ["constituents_csv_path", "base_value"]
 
 # Optional keys that have defaults
-TYPE_SPECIFIC_OPTIONAL = ["level_overrides_csv_path"]
+TYPE_SPECIFIC_OPTIONAL = ["level_overrides_csv_path", "corporate_actions"]
 
 
 def get_constituents(

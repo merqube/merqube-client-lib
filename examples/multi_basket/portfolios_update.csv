@@ -1,0 +1,4 @@
+date,identifier,quantity,security_type
+2023-12-14,AMZN.OQ,0.5,EQUITY
+2023-12-14,GOOG.OQ,0.5,EQUITY
+2023-12-14,USD,60.0,CASH
