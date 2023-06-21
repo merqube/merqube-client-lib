@@ -1,11 +1,10 @@
 import json
 import logging
 from copy import deepcopy
-from typing import Any, cast
+from typing import Any, Type, cast
 
 import pandas as pd
-import pytz
-from pydantic.error_wrappers import ValidationError
+from pydantic import BaseModel
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
 from merqube_client_lib.logging import get_module_logger
@@ -20,26 +19,13 @@ from merqube_client_lib.pydantic_types import (
     Provider,
     Stage,
 )
+from merqube_client_lib.templates.equity_baskets.schema import ClientIndexConfigBase
 from merqube_client_lib.types import TargetPortfoliosDates
 from merqube_client_lib.util import freezable_utcnow, get_token, pydantic_to_dict
 
 SPEC_KEYS = ["base_date"]
 DATE_KEYS = ["base_date"]
-
-# TODO: use jsonschema instead
 TOP_LEVEL = ["namespace", "name", "title", "base_date", "description"]
-MISC = ["run_hour", "run_minute"]
-REQUIRED_BASE_FIELDS = TOP_LEVEL + SPEC_KEYS + MISC
-
-OPTIONAL_BASE_FIELDS = [
-    "addl_comments",
-    "bbg_ticker",
-    "currency",
-    "is_intraday",
-    "timezone",
-    "holiday_calendar",
-    "email_list",
-]
 
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
@@ -58,62 +44,28 @@ def log_index(index: IndexDefinitionPost) -> None:
     logger.info("Index spec: \n" + json_formatted_str)
 
 
-def get_index_info(
-    config_file_path: str, type_specific_req_fields: list[str] = [], type_specific_opt_fields: list[str] = []
-) -> dict[str, Any]:
+def get_index_info(config_file_path: str, model: Type[ClientIndexConfigBase]) -> ClientIndexConfigBase:
     """
     load index specific info from config file + validate the data
     """
-    index_info = cast(dict[str, Any], json.load(open(config_file_path, "r")))
+    # validate:
+    config = json.load(open(config_file_path, "r"))
 
-    for k in (req := REQUIRED_BASE_FIELDS + type_specific_req_fields):
-        if k not in index_info:
-            raise ValueError(f"Missing required key {k} in index info")
-
-    for k in index_info:
-        if k not in req + OPTIONAL_BASE_FIELDS + type_specific_opt_fields:
-            raise ValueError(f"Unknown key {k} in index info")
-
-    for k in DATE_KEYS:
-        try:
-            pd.Timestamp(index_info[k])
-        except ValueError as e:
-            raise ValueError(f"Invalid date format for {k}") from e
-
-    if (tz := index_info.get("timezone")) and tz not in pytz.all_timezones:
-        raise ValueError(f"Invalid timezone string: {tz}")
-
-    if not (0 <= index_info["run_hour"] <= 23):
-        raise ValueError("run_hour must be between 0 and 23")
-
-    if not (0 <= index_info["run_minute"] <= 59):
-        raise ValueError("run_minute must be between 0 and 59")
+    index_info = model.parse_obj(config)
 
     swaps_monitor_codes, calendar_identifiers = None, None
-    if index_info.get("holiday_calendar"):
-        try:
-            assert isinstance(hc := index_info["holiday_calendar"], dict)
-            if hc.get("mics"):
-                calendar_identifiers = [f"MIC:{mic}" for mic in hc["mics"]]
-            if hc.get("swaps_monitor_codes"):
-                swaps_monitor_codes = hc["swaps_monitor_codes"]
-        except (AssertionError, ValidationError):
-            raise ValueError("Invalid holiday calendar spec")
+    if hc := getattr(index_info, "holiday_calendar", None):
+        calendar_identifiers = [f"MIC:{mic}" for mic in hc.mics] or []
+        swaps_monitor_codes = hc.swaps_monitor_codes or None
 
     if not swaps_monitor_codes and not calendar_identifiers:
         calendar_identifiers = ["MIC:XNYS"]  # default to nyse
 
     # TODO: we may have to allow configuration of the weekmask
-    index_info["_holiday_spec"] = HolidayCalendarSpec(
+    index_info.holiday_spec = HolidayCalendarSpec(
         calendar_identifiers=calendar_identifiers,
         swaps_monitor_codes=swaps_monitor_codes,
     )  # type: ignore
-
-    if index_info.get("email_list"):
-        if not isinstance(index_info["email_list"], list) or not all(
-            isinstance(x, str) for x in index_info["email_list"]
-        ):
-            raise ValueError("email_list must be a list of strings")
 
     return index_info
 
@@ -129,17 +81,12 @@ def get_inner_spec(template: IndexDefinitionPost) -> dict[str, Any]:
 def load_template(
     template_name: str,
     config_file_path: str,
-    type_specific_req_fields: list[str],
-    type_specific_opt_fields: list[str] = [],
-) -> tuple[MerqubeAPIClient, IndexDefinitionPost, dict[str, Any], dict[str, Any]]:
+    model: Type[ClientIndexConfigBase],
+) -> tuple[MerqubeAPIClient, IndexDefinitionPost, BaseModel, dict[str, Any]]:
     """
     Loads a template index model to edit and then create a new index from
     """
-    index_info = get_index_info(
-        config_file_path=config_file_path,
-        type_specific_req_fields=type_specific_req_fields,
-        type_specific_opt_fields=type_specific_opt_fields,
-    )
+    index_info = get_index_info(config_file_path=config_file_path, model=model)
     token = get_token()
 
     client = MerqubeAPIClient(token=token)
@@ -174,24 +121,27 @@ def _configure_report(template: IndexDefinitionPost, email_list: list[str] | Non
 
 
 def configure_index(
-    template: IndexDefinitionPost, index_info: dict[str, Any], inner_spec: dict[str, Any]
+    template: IndexDefinitionPost, index_info: ClientIndexConfigBase, inner_spec: dict[str, Any]
 ) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
     """
     set up the index from index info
     """
     for k in TOP_LEVEL:
-        setattr(template, k, index_info[k] if k != "base_date" else pd.Timestamp(index_info[k]).strftime("%Y/%m/%d"))
+        v = getattr(index_info, k)
+        if k == "base_date":
+            v = pd.Timestamp(v).strftime("%Y/%m/%d")
+        setattr(template, k, v)
 
-    inner_spec["index_id"] = index_info["name"]
+    inner_spec["index_id"] = index_info.name
     for k in SPEC_KEYS:
-        inner_spec[k] = index_info[k]
+        inner_spec[k] = getattr(index_info, k)
 
     # some indices want "calendar" instead of "holiday_spec"
-    inner_spec["holiday_spec"] = inner_spec["calendar"] = index_info["_holiday_spec"]
+    inner_spec["holiday_spec"] = inner_spec["calendar"] = index_info.holiday_spec
 
-    name = index_info["name"]
-    bbg_ticker = index_info.get("bbg_ticker")
-    is_intraday = index_info.get("is_intraday")
+    name = index_info.name
+    bbg_ticker = index_info.bbg_ticker
+    is_intraday = index_info.is_intraday
 
     # set the start date at which this will start running
     assert template.run_configuration and template.run_configuration.schedule
@@ -203,16 +153,16 @@ def configure_index(
         year=today.year,
         month=today.month,
         day=today.day,
-        hour=index_info["run_hour"],
-        minute=index_info["run_minute"],
+        hour=index_info.run_hour,
+        minute=index_info.run_minute,
         second=0,
     ).isoformat()
-    template.run_configuration.tzinfo = index_info.get("timezone", "US/Eastern")
+    template.run_configuration.tzinfo = index_info.timezone
 
     template.stage = Stage.prod
     template.run_configuration.job_enabled = True
 
-    if index_info.get("is_intraday"):
+    if index_info.is_intraday:
         assert template.intraday and template.intraday.publish_config
         template.intraday.enabled = True
 
@@ -228,10 +178,10 @@ def configure_index(
             )
 
         bbg_identifier_post = IdentifierUUIDPost(
-            name=bbg_ticker, index_name=name, namespace=index_info["namespace"], ticker=bbg_ticker
+            name=bbg_ticker, index_name=name, namespace=index_info.namespace, ticker=bbg_ticker
         )
 
-    _configure_report(template=template, email_list=index_info.get("email_list"))
+    _configure_report(template=template, email_list=index_info.email_list)
 
     return template, bbg_identifier_post
 
@@ -239,7 +189,7 @@ def configure_index(
 def create_index(
     client: MerqubeAPIClient,
     template: IndexDefinitionPost,
-    index_info: dict[str, Any],
+    index_info: ClientIndexConfigBase,
     inner_spec: dict[str, Any],
     prod_run: bool,
     initial_target_portfolios: TargetPortfoliosDates | None = None,

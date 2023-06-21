@@ -184,19 +184,19 @@ def test_decrement(
 
 bad_1 = deepcopy(good_config)
 del bad_1["underlying_index_name"]
-b1 = (bad_1, "Missing required key underlying_index_name in index info")
+b1 = (bad_1, "pydantic")
 
 bad_2 = deepcopy(good_config)
 bad_2["base_date"] = "2000REEEEEEE"
-b2 = (bad_2, "Invalid date format for base_date")
+b2 = (bad_2, "pydantic")
 
 bad_3 = deepcopy(good_config)
 bad_3["fee_type"] = "noooo"
-b3 = (bad_3, "fee_value must be a number and fee_type must be one of fixed, percentage_pre, percentage_post")
+b3 = (bad_3, "pydantic")
 
 bad_4 = deepcopy(good_config)
 bad_4["fee_value"] = "noooo"
-b4 = (bad_4, "fee_value must be a number and fee_type must be one of fixed, percentage_pre, percentage_post")
+b4 = (bad_4, "pydantic")
 
 bad_5 = deepcopy(good_config)
 bad_5["underlying_index_name"] = "nooot in file"
@@ -204,19 +204,19 @@ b5 = (bad_5, "nooot in file is not a valid TR")
 
 bad_6 = deepcopy(good_config)
 bad_6["email_list"] = [666]
-b6 = (bad_6, "email_list must be a list of strings")
+b6 = (bad_6, "pydantic")
 
 bad_7 = deepcopy(good_config)
 bad_7["holiday_calendar"] = "noooo"
-b7 = (bad_7, "Invalid holiday calendar spec")
+b7 = (bad_7, "pydantic")
 
 bad_8 = deepcopy(good_config)
 bad_8["timezone"] = "asdfnoooo"
-b8 = (bad_8, "Invalid timezone string: asdfnoooo")
+b8 = (bad_8, "pydantic")
 
 bad_9 = deepcopy(good_config)
 bad_9["extraaaaaakeyyyyy"] = 1
-b9 = (bad_9, "Unknown key extraaaaaakeyyyyy in index info")
+b9 = (bad_9, "pydantic")
 
 
 @pytest.mark.parametrize("case,err", [b1, b2, b3, b4, b5, b6, b7, b8, b9])
@@ -225,7 +225,8 @@ def test_multi_bad(case, err, v1_decrement, monkeypatch):
         "merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3_download
     )
 
-    assert (
-        eb_test_bad(func=create.create, config=case, template=v1_decrement, monkeypatch=monkeypatch)
-        == f"ValueError: {err}"
-    )
+    actual = eb_test_bad(func=create.create, config=case, template=v1_decrement, monkeypatch=monkeypatch)
+    if err == "pydantic":
+        assert "pydantic.error_wrappers.ValidationError" in actual
+    else:
+        assert actual == f"ValueError: {err}"

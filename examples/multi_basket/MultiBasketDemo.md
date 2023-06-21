@@ -10,7 +10,7 @@ The client can choose to
 1. set `MERQ_API_KEY` to that key
 1. Clone this repo and run `poetry install`
 
-## Creating the TR
+## Creating the Index
 
 Fill out this template (there are more details inside the template for each class in the `templates` directory):
 
@@ -48,6 +48,7 @@ Run the tool to create the index:
 
 ```fish
 poetry run poetry run create --index-type multiple_equity_basket --config-file-path /path/to/template.json --prod-run
+poetry run poetry run create --index-type multiple_equity_basket --config-file-path /path/to/template_no_corax.json --prod-run
 ```
 
 ## Accessing the returns
@@ -255,3 +256,53 @@ shows:
     },
 ]
 ```
+
+# Comparing dividend reinvestment to without
+
+Let's launch two indices, with the same basket, one with dividend reinvestment and one without.
+Fill in the two templates provided (`example_mult.json`, `example_mult_no_corax.json`) and create them using the above:
+
+```bash
+poetry run poetry run create --index-type=multiple_equity_basket --config-file-path /path/to/mult_no_corax.json --prod-run
+poetry run poetry run create --index-type=multiple_equity_basket --config-file-path /path/to/mult_no_corax.json --prod-run
+```
+
+There is an example portfolio in this dir, `./portfolios_initial_corax_compare.csv` that has two constituents - 100 shares of Apple and Google both starting in 2015.
+Having launched those two indices, one with dividend reinvestment, one without, we can see how the returns compare:
+
+```python
+from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
+from merqube_client_lib.util import get_token
+
+client = MerqubeAPIClient(token=get_token())
+df = client.get_security_metrics(
+    sec_type="index",
+    sec_names=["tjc_multi_basket_index_wout_divs", "tjc_multi_basket_index_w_divs"],
+    metrics=["price_return"],
+)
+df = df.pivot(index="eff_ts", columns="name", values="price_return").query(
+    "eff_ts > '2015-01-08'"
+)
+
+print(df)
+```
+
+shows:
+
+```python
+name                 tjc_multi_basket_index_w_div6  tjc_multi_basket_index_wout_div6
+eff_ts
+2015-01-08T00:00:00                    1000.000000                        1000.00000
+2015-01-09T00:00:00                    1000.000000                        1000.00000
+2015-01-12T00:00:00                   60180.000000                       60180.00000
+2015-01-13T00:00:00                   60640.000000                       60640.00000
+2015-01-14T00:00:00                   61067.000000                       61067.00000
+...                                            ...                               ...
+2023-06-12T00:00:00                  328395.913152                      322898.80585
+2023-06-13T00:00:00                  328363.815135                      322867.24513
+2023-06-14T00:00:00                  328522.191693                      323022.97058
+2023-06-15T00:00:00                  332236.102146                      326674.71289
+2023-06-16T00:00:00                  328264.114550                      322769.21346
+```
+
+We can see that the div reinvestment generates about 5.5k in the index from 1/2015 to 6/2023.

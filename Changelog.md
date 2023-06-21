@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.15.0] - 2023-06-20
+- switch to pydantic for validation and client models; eliminate json checking
+- add some extra example docs for equity baskets
+
 ## [0.14.0] - 2023-06-16
 - add support for multiple equity baskets with corax
 - add walkthrough for multiple equity baskets

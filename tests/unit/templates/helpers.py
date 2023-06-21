@@ -62,7 +62,7 @@ def eb_test(
                 conf["email_list"] = email_list
 
             if client_owned_underlying is not None:
-                conf["client_owned_underlying"] = client_owned_underlying
+                conf["client_owned_underlying"] = bool(client_owned_underlying)
 
             if corax_conf is not None:
                 conf["corporate_actions"] = corax_conf
