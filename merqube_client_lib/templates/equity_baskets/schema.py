@@ -96,7 +96,7 @@ class ClientDecrementConfig(ClientIndexConfigBase):
     client_owned_underlying: bool = True
 
 
-class ClientMutliEquityBasketConfig(ClientIndexConfigBase):
+class ClientMultiEquityBasketConfig(ClientIndexConfigBase):
     """
     Equity Basket
     """

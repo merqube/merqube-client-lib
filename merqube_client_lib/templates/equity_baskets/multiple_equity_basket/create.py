@@ -11,7 +11,7 @@ from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.base imp
     inline_to_tp,
 )
 from merqube_client_lib.templates.equity_baskets.schema import (
-    ClientMutliEquityBasketConfig,
+    ClientMultiEquityBasketConfig,
 )
 from merqube_client_lib.templates.equity_baskets.util import (
     create_index,
@@ -30,10 +30,10 @@ def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
     client, template, index_info, inner_spec = load_template(
         template_name="EQUITY_BASKET_TEMPLATE_V1",
         config_file_path=config_file_path,
-        model=ClientMutliEquityBasketConfig,
+        model=ClientMultiEquityBasketConfig,
     )
 
-    index_info = cast(ClientMutliEquityBasketConfig, index_info)
+    index_info = cast(ClientMultiEquityBasketConfig, index_info)
 
     if index_info.corporate_actions.reinvest_dividends:
         # unfortunately, this class has all corax on except for dividend reinvestment -
