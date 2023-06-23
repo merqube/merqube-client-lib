@@ -27,16 +27,10 @@ We are working on improvements to make this as seamless as possible.
 
 ## Template Locations
 
-The template configuration for creating each of the index types above are found at:
-
-    merqube_client_lib/templates/equity_baskets/single_stock_total_return_corax/template.json
-    merqube_client_lib/templates/equity_baskets/decrement/template.json
-    merqube_client_lib/templates/equity_baskets/multiple_equity_basket/template.json
-
-The process to create an index is:
+See the `examples` directory for full walkthroughs. But in short, the process to create an index is:
 
 1. `poetry install` of this library
-1. copy the `template.json` and edit it per your index
+1. copy the appropriate `template.json` and edit it per your index
 1. `export MERQ_API_KEY..`  (can also set this in your environment config)
 1. `poetry run create --index-type=TYPE --config-file-path=/path/to/template/you/copied/and/edited`
 

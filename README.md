@@ -9,7 +9,6 @@ This is a WIP release of an internal client library. More functionality will be 
 
 Table Of Contents:
 - [Overview](docs/Overview.md)
-- [Data Retrieval](docs/DataRetrieval.md)
 - [Creating Indices](docs/CreatingIndices.md)
 - [History of Changes](Changelog.md)
 
