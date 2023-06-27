@@ -21,7 +21,6 @@ manifest = {
         "created_by": "test@merqube.com",
         "last_modified": "2023-01-25T22:40:25.552308",
         "last_modified_by": "test@merqube.com",
-        "locked_after": "2023-01-25T22:41:00",
     },
     "title": "Test",
 }

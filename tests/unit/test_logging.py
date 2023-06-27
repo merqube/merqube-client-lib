@@ -32,7 +32,7 @@ def test_instantiate_logger_file():
         # When you pass in a timezone aware datetime, freeze_time will convert it to UTC first before storing it.
         # If you call time.localtime, it will take the stored UTC datetime and return it in local time based on the machine's timezone (time.timezone).
         # So if you want to set what time.localtime will return you need to pass in a timezone aware datetime set to the machine's timezone.
-        # In this test case the log Formatter uses time.localtime to print the log timestamp.
+        # In this test case the log Formatter uses time.localtime to show the log timestamp.
         local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
         local_time = time.localtime()
         is_dst = local_time.tm_isdst == 1

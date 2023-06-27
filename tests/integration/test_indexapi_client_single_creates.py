@@ -5,6 +5,7 @@ you can run the test in circle ci
 """
 import random
 import string
+import time
 from typing import cast
 
 import pandas as pd
@@ -137,7 +138,31 @@ for e in expected:
         del e[k]
 
 
+def _test_target_ports(sing_cl):
+    for tpd in tp:
+        sing_cl.replace_portfolio(target_portfolio=tpd[1])
+
+    assert sing_cl.get_target_portfolio() == expected
+    # start date before both
+    assert sing_cl.get_target_portfolio(start_date=pd.Timestamp("2023-06-12 00:00:00")) == expected
+    # end date after both
+    assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-15 00:00:00")) == expected
+    # start date on second
+    assert sing_cl.get_target_portfolio(start_date=pd.Timestamp("2023-06-13 00:00:00")) == expected[1:]
+    # end date on first
+    assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-12 00:00:00")) == expected[:1]
+    # start date after both
+    assert sing_cl.get_target_portfolio(start_date=pd.Timestamp("2023-06-15 00:00:00")) == []
+    # end date before both
+    assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-11 00:00:00")) == []
+
+
 def test_index_workflow():
+    """
+    creates an index
+    runs through a bunch of index functionality
+    deletes the index
+    """
     cl = get_client(token=get_token(), prefix_url=STAGING_API_URL)
 
     test_name = "cl_int_test" + "".join(random.choice(string.digits) for i in range(10))
@@ -152,22 +177,37 @@ def test_index_workflow():
             MerqubeAPIClientSingleIndex, get_client(token=get_token(), prefix_url=STAGING_API_URL, index_name=test_name)
         )
 
-        for tpd in tp:
-            sing_cl.replace_portfolio(target_portfolio=tpd[1])
+        # change the description:
+        assert sing_cl.get_manifest()["description"] == "Client lib int test"
+        sing_cl.partial_update({"description": "new description"})
+        assert sing_cl.get_manifest()["description"] == "new description"
 
-        assert sing_cl.get_target_portfolio() == expected
-        # start date before both
-        assert sing_cl.get_target_portfolio(start_date=pd.Timestamp("2023-06-12 00:00:00")) == expected
-        # end date after both
-        assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-15 00:00:00")) == expected
-        # start date on second
-        assert sing_cl.get_target_portfolio(start_date=pd.Timestamp("2023-06-13 00:00:00")) == expected[1:]
-        # end date on first
-        assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-12 00:00:00")) == expected[:1]
-        # start date after both
-        assert sing_cl.get_target_portfolio(start_date=pd.Timestamp("2023-06-15 00:00:00")) == []
-        # end date before both
-        assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-11 00:00:00")) == []
+        # lock the index
+        sing_cl.lock()
+        assert sing_cl.get_manifest()["status"]["locked_after"] is not None
+
+        time.sleep(5)  # clock skew
+
+        # try to update the description, which should fail
+        with pytest.raises(APIError) as e:
+            res = sing_cl.partial_update({"description": "new description 2"})
+
+        assert e.value.code == 400
+        assert e.value.response_json["error"].startswith(
+            "This manifest is locked. You must unlock it before making any changes. Locked since:"
+        )
+
+        # unlock the index (so it can be deleted later)
+        sing_cl.unlock()
+        assert sing_cl.get_manifest()["status"].get("locked_after") is None
+
+        # try again:
+        assert sing_cl.get_manifest()["description"] == "new description"
+        sing_cl.partial_update({"description": "new description 2"})
+        assert sing_cl.get_manifest()["description"] == "new description 2"
+
+        # test TP functionality
+        _test_target_ports(sing_cl)
 
     finally:
         cl.delete_index(index_id=newid)

@@ -1,6 +1,7 @@
 """
 Combined API Client for all merqube APIs
 """
+from functools import partial
 from typing import Any, cast
 
 import pandas as pd
@@ -11,7 +12,6 @@ from merqube_client_lib.pydantic_types import EquityBasketPortfolio, IdentifierU
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.pydantic_types import Provider
 from merqube_client_lib.session import MerqubeAPISession
-from merqube_client_lib.types import Manifest
 from merqube_client_lib.util import pydantic_to_dict
 
 
@@ -55,16 +55,14 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
     def __init__(self, index_name: str, is_intraday: bool = False, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        res = self.session.get_collection_single(f"/index?name={index_name}")
-        self.index_id = res["id"]
+        self.mod: Index = self.get_index_model(index_name=index_name)
+        self.index_id = self.mod.id
         self.is_intraday = is_intraday
         self.index_name = index_name
 
-        self.mod = mod = self.get_index_model(index_name=index_name)
-
         # intraday model has a nasty type of [None | Intraday | Bool ..]
-        self._has_intraday = mod.intraday is not None and (
-            (isinstance(mod.intraday, bool) and mod.intraday) or mod.intraday.enabled is True
+        self._has_intraday = self.mod.intraday is not None and (
+            (isinstance(self.mod.intraday, bool) and self.mod.intraday) or self.mod.intraday.enabled is True
         )
 
         # get the security id for this index
@@ -75,17 +73,13 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
             else None
         )
 
-    def get_manifest(self) -> Manifest:
-        """
-        Get index definition for specified index id
-        """
-        return self.get_index_manifest(index_name=self.index_name)
-
-    def get_model(self) -> Index:
-        """
-        Get index model for specified index id
-        """
-        return self.mod
+        # partials over id methods; partials preserve types
+        self.get_manifest = partial(self.get_index_manifest, index_id=self.index_id)
+        self.get_model = partial(self.get_index_model, index_id=self.index_id)
+        self.post_model_from_existing = partial(self.index_post_model_from_existing, index_id=self.index_id)
+        self.lock = partial(self.lock_index, index_id=self.index_id)
+        self.unlock = partial(self.unlock_index, index_id=self.index_id)
+        self.partial_update = partial(self.patch_index, index_id=self.index_id)
 
     def get_metrics(
         self,
@@ -151,10 +145,10 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         """
         opts = {}
         if start_date is not None:
-            opts["start_date"] = start_date.date().isoformat()
+            opts["start_date"] = start_date.isoformat()
 
         if end_date is not None:
-            opts["end_date"] = end_date.date().isoformat()
+            opts["end_date"] = end_date.isoformat()
 
         return self.session.get_collection(f"/index/{self.index_id}/target_portfolio", options=opts)
 

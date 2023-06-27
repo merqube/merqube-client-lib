@@ -3,7 +3,9 @@ Base class for all Merqube API Clients
 """
 import operator
 from collections import abc
-from typing import Any, Iterable, Optional, cast
+from copy import deepcopy
+from functools import wraps
+from typing import Any, Callable, Iterable, Optional, cast
 
 import pandas as pd
 from cachetools import TTLCache, cachedmethod
@@ -14,14 +16,35 @@ from merqube_client_lib.constants import DEFAULT_CACHE_TTL
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.pydantic_types import IndexDefinitionPost
 from merqube_client_lib.session import MerqubeAPISession
-from merqube_client_lib.types import Manifest, ManifestList
+from merqube_client_lib.types import HTTPResJson, Manifest, ManifestList
 from merqube_client_lib.types.secapi import (
     AddlSecapiOptions,
     MappingTable,
     SecapiMetricDefinition,
     SecAPIRecordsResponse,
 )
-from merqube_client_lib.util import batch_post_payload, pydantic_to_dict
+from merqube_client_lib.util import (
+    batch_post_payload,
+    freezable_utcnow_iso,
+    pydantic_to_dict,
+)
+
+
+def _name_or_id(func: Callable[..., Any]) -> Callable[..., Any]:
+    """
+    decorator to allow passing either id or name to a function
+    """
+
+    @wraps(func)
+    def wrapped(
+        self: Any, *args: Any, index_id: str | None = None, index_name: str | None = None, **kwargs: Any
+    ) -> Any:
+        assert (
+            index_name or index_id and (not (index_name and index_id))
+        ), "Must specify exactky one of index_name/index_id via kwarg"
+        return func(self, *args, index_id=index_id, index_name=index_name, **kwargs)
+
+    return wrapped
 
 
 class _MerqubeApiClientBase:
@@ -89,28 +112,61 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         res = self.session.get_collection(url)
         return {i["id"]: i for i in res}
 
-    def get_index_manifest(self, index_name: str) -> Manifest:
+    def create_index(self, index_def: IndexDefinitionPost) -> HTTPResJson:
+        """
+        Create an index
+        Returns a dictionary containing the id of the index and its related securities (index, intraday_index)
+
+        TODO: examples and index templates to be added to this repo.
+        """
+        return cast(HTTPResJson, self.session.post("/index", json=pydantic_to_dict(index_def)).json())
+
+    def replace_index(self, index_def: Index) -> HTTPResJson:
+        """
+        Update (full object replacement) an index
+        """
+        return cast(dict[str, str], self.session.put(f"/index/{index_def.id}", json=pydantic_to_dict(index_def)).json())
+
+    def replace_target_portfolio(self, index_id: str, target_portfolio: dict[str, Any]) -> HTTPResJson:
+        """
+        Target portfolios are a PUT, not a POST, because an index can only have one active portfolio at a given time.
+        "Last one wins", and it is not defined to have two+ active portfolios for the same timestamp.
+
+        Internally (server side) all the history is kept, but only the latest one is used , and only the latest one is retrievable via this client.
+        That is, if you PUT port1, then port2, (either via direct API or this library) port2 is always the one that is read on the next index run.
+        Moreover, future portfolios can be posted at any time, but wont be considered by the index until that day.
+
+        (You can get the index id by doing get_index_manifest(index_name)["id"])
+        """
+        return cast(HTTPResJson, self.session.put(f"/index/{index_id}/target_portfolio", json=target_portfolio).json())
+
+    @_name_or_id
+    def get_index_manifest(self, index_name: str | None = None, index_id: str | None = None) -> Manifest:
         """
         Get the model for a given index
         """
-        return cast(Manifest, self.session.get_collection_single(f"/index?name={index_name}"))
+        if index_name:
+            return cast(Manifest, self.session.get_collection_single(f"/index?name={index_name}"))
+        return cast(Manifest, self.session.get_json(f"/index/{index_id}"))
 
-    def get_index_model(self, index_name: str) -> Index:
+    @_name_or_id
+    def get_index_model(self, index_name: str | None = None, index_id: str | None = None) -> Index:
         """
         Get the model for a given index
         """
-        as_dict = self.session.get_collection_single(f"/index?name={index_name}")
-        return Index.parse_obj(as_dict)
+        msft = self.get_index_manifest(index_name=index_name, index_id=index_id)
+        return Index.parse_obj(msft)
 
+    @_name_or_id
     def index_post_model_from_existing(
-        self, index_name: str, reset_specific_fields: bool = True
+        self, index_name: str | None = None, index_id: str | None = None, reset_specific_fields: bool = True
     ) -> IndexDefinitionPost:
         """
         Gets a model that can be posted to /index to create a new index from an existing index
 
         For safety reasons, by default, the name and namespace are reset.
         """
-        source_dict = self.get_index_manifest(index_name)
+        source_dict = deepcopy(self.get_index_manifest(index_name=index_name, index_id=index_id))
         source_dict.pop("id")
         source_dict.pop("status")
 
@@ -124,45 +180,73 @@ class _IndexAPIClient(_MerqubeApiClientBase):
 
         return model
 
-    def create_index(self, index_def: IndexDefinitionPost) -> dict[str, str]:
-        """
-        Create an index
-        Returns a dictionary containing the id of the index and its related securities (index, intraday_index)
-
-        TODO: examples and index templates to be added to this repo.
-        """
-        return cast(dict[str, str], self.session.post("/index", json=pydantic_to_dict(index_def)).json())
-
-    def update_index(self, index_def: Index) -> dict[str, str]:
-        """
-        Update (full object replacement) an index
-        """
-        return cast(dict[str, str], self.session.put(f"/index/{index_def.id}", json=pydantic_to_dict(index_def)).json())
-
-    def patch_index(self, index_id: str, index_updates: Manifest) -> dict[str, str]:
-        """
-        Patch an index - index_updates is a partial index manifest
-        """
-        return cast(dict[str, str], self.session.patch(f"/index/{index_id}", json=index_updates).json())
-
-    def delete_index(self, index_id: str) -> dict[str, str]:
+    @_name_or_id
+    def delete_index(self, index_name: str | None = None, index_id: str | None = None) -> HTTPResJson:
         """
         Delete an index
         """
-        return cast(dict[str, str], self.session.delete(f"/index/{index_id}").json())
+        if index_name:
+            index_id = self.get_index_manifest(index_name)["id"]
 
-    def replace_target_portfolio(self, index_id: str, target_portfolio: dict[str, Any]) -> dict[str, Any]:
-        """
-        Target portfolios are a PUT, not a POST, because an index can only have one active portfolio at a given time.
-        "Last one wins", and it is not defined to have two+ active portfolios for the same timestamp.
+        return cast(HTTPResJson, self.session.delete(f"/index/{index_id}").json())
 
-        Internally (server side) all the history is kept, but only the latest one is used , and only the latest one is retrievable via this client.
-        That is, if you PUT port1, then port2, (either via direct API or this library) port2 is always the one that is read on the next index run.
-        Moreover, future portfolios can be posted at any time, but wont be considered by the index until that day.
+    @_name_or_id
+    def lock_index(self, index_name: str | None = None, index_id: str | None = None) -> HTTPResJson:
         """
-        return cast(
-            dict[str, str], self.session.put(f"/index/{index_id}/target_portfolio", json=target_portfolio).json()
-        )
+        Lock an index.
+
+        Locks/unlocks must be done in isolated operations; ie you cannot lock a manifest while changing anything else,
+        similarly you cannot change anything else while unlocking a manifest.
+
+        Locking an index prevents all writes (PUT/PATCH/DELETE) on that index until it is explicitly unlocked.
+        """
+        model = self.get_index_model(index_name=index_name, index_id=index_id)
+
+        if (status := model.status).locked_after:
+            raise ValueError("Index is already locked")
+
+        status.locked_after = freezable_utcnow_iso()
+        payload = {"status": pydantic_to_dict(status)}
+        return cast(HTTPResJson, self.patch_index(index_id=model.id, updates=payload, auto_status=False))
+
+    @_name_or_id
+    def unlock_index(self, index_name: str | None = None, index_id: str | None = None) -> HTTPResJson:
+        """
+        Unlock an index; see "lock_index"
+        """
+        model = self.get_index_model(index_name=index_name, index_id=index_id)
+
+        if (status := model.status).locked_after is None:
+            raise ValueError("Index is already unlocked")
+
+        status.locked_after = None
+        # None is a default and we want to explicitly set it:
+        payload = {"status": pydantic_to_dict(status, exclude_none=False, exclude_defaults=False)}
+        return cast(HTTPResJson, self.patch_index(index_id=model.id, updates=payload, auto_status=False))
+
+    @_name_or_id
+    def patch_index(
+        self,
+        *,
+        index_name: str | None = None,
+        index_id: str | None = None,
+        updates: Manifest | None = None,
+        auto_status: bool = True,
+    ) -> HTTPResJson:
+        """
+        Patch an index - updates is a partial index manifest
+        (You can get the index id by doing get_index_manifest(index_name)["id"])
+
+        auto_status:  status is required on all PUT/PATCH to prevent write conflicts, its a write token certifying that
+        the object youre updating is the latest version. You probably always want this to be set
+        """
+        if not updates:
+            return cast(HTTPResJson, {})
+
+        if auto_status:
+            updates["status"] = self.get_index_manifest(index_name=index_name, index_id=index_id)["status"]
+
+        return cast(HTTPResJson, self.session.patch(f"/index/{index_id}", json=updates).json())
 
 
 class _SecAPIClient(_MerqubeApiClientBase):
