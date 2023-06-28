@@ -21,7 +21,7 @@ from merqube_client_lib.pydantic_types import (
 )
 from merqube_client_lib.templates.equity_baskets.schema import ClientIndexConfigBase
 from merqube_client_lib.types import TargetPortfoliosDates
-from merqube_client_lib.util import freezable_utcnow, get_token, pydantic_to_dict
+from merqube_client_lib.util import freezable_utcnow_ts, get_token, pydantic_to_dict
 
 SPEC_KEYS = ["base_date"]
 DATE_KEYS = ["base_date"]
@@ -91,7 +91,7 @@ def load_template(
 
     client = MerqubeAPIClient(token=token)
 
-    template = client.index_post_model_from_existing(template_name)
+    template = client.index_post_model_from_existing(index_name=template_name)
 
     return client, template, index_info, get_inner_spec(template)
 
@@ -148,7 +148,7 @@ def configure_index(
 
     # set runtime
     # make sure to produce the last EOD value immediately on create
-    today = freezable_utcnow() - pd.Timedelta(days=5)  # pyright: ignore
+    today = freezable_utcnow_ts() - pd.Timedelta(days=5)  # pyright: ignore
     template.run_configuration.schedule.schedule_start = pd.Timestamp(
         year=today.year,
         month=today.month,

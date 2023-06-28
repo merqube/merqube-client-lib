@@ -23,7 +23,7 @@ def test_single_index_operations():
 
     assert isinstance(client.get_manifest(), dict)
 
-    assert isinstance(client.get_model(), BaseModel)
+    assert isinstance(client.model, BaseModel)
 
     # these are frozen and never change, unless there is a (rare) historical correction
     port = client.get_portfolio()

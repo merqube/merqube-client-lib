@@ -34,6 +34,8 @@ Records = list[dict[str, str]]
 
 TargetPortfoliosDates = list[tuple[pd.Timestamp, EquityBasketPortfolio]]
 
+ResponseJson = dict[str, Any]
+
 
 @dataclass
 class CreateReturn:
