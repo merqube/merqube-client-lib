@@ -179,7 +179,7 @@ def test_index_workflow():
 
         # change the description:
         assert sing_cl.get_manifest()["description"] == "Client lib int test"
-        sing_cl.partial_update({"description": "new description"})
+        sing_cl.partial_update(updates={"description": "new description"})
         assert sing_cl.get_manifest()["description"] == "new description"
 
         # lock the index
@@ -190,7 +190,7 @@ def test_index_workflow():
 
         # try to update the description, which should fail
         with pytest.raises(APIError) as e:
-            res = sing_cl.partial_update({"description": "new description 2"})
+            res = sing_cl.partial_update(updates={"description": "new description 2"})
 
         assert e.value.code == 400
         assert e.value.response_json["error"].startswith(
@@ -203,7 +203,7 @@ def test_index_workflow():
 
         # try again:
         assert sing_cl.get_manifest()["description"] == "new description"
-        sing_cl.partial_update({"description": "new description 2"})
+        sing_cl.partial_update(updates={"description": "new description 2"})
         assert sing_cl.get_manifest()["description"] == "new description 2"
 
         # test TP functionality

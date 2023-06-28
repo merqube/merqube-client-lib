@@ -25,7 +25,7 @@ def _update_portfolio(
     Creates a new Equity Basket with multiple entries
     """
     client = MerqubeAPIClientSingleIndex(index_name=index_name, token=get_token())
-    template = client.get_model()
+    template = client.model
 
     ports = {
         "constituents": get_constituents(constituents_csv_path=constituents_csv_path),

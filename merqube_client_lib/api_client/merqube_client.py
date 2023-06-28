@@ -55,14 +55,14 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
     def __init__(self, index_name: str, is_intraday: bool = False, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
 
-        self.mod: Index = self.get_index_model(index_name=index_name)
-        self.index_id = self.mod.id
-        self.is_intraday = is_intraday
-        self.index_name = index_name
+        self._model: Index = self.get_index_model(index_name=index_name)
+        self._index_id = self._model.id
+        self._is_intraday = is_intraday
+        self._index_name = index_name
 
         # intraday model has a nasty type of [None | Intraday | Bool ..]
-        self._has_intraday = self.mod.intraday is not None and (
-            (isinstance(self.mod.intraday, bool) and self.mod.intraday) or self.mod.intraday.enabled is True
+        self._has_intraday = self._model.intraday is not None and (
+            (isinstance(self._model.intraday, bool) and self._model.intraday) or self._model.intraday.enabled is True
         )
 
         # get the security id for this index
@@ -74,12 +74,27 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         )
 
         # partials over id methods; partials preserve types
-        self.get_manifest = partial(self.get_index_manifest, index_id=self.index_id)
-        self.get_model = partial(self.get_index_model, index_id=self.index_id)
-        self.post_model_from_existing = partial(self.index_post_model_from_existing, index_id=self.index_id)
-        self.lock = partial(self.lock_index, index_id=self.index_id)
-        self.unlock = partial(self.unlock_index, index_id=self.index_id)
-        self.partial_update = partial(self.patch_index, index_id=self.index_id)
+        self.get_manifest = partial(self.get_index_manifest, index_id=self._index_id)
+        self.post_model_from_existing = partial(self.index_post_model_from_existing, index_id=self._index_id)
+        self.lock = partial(self.lock_index, index_id=self._index_id)
+        self.unlock = partial(self.unlock_index, index_id=self._index_id)
+        self.partial_update = partial(self.patch_index, index_id=self._index_id)
+
+    @property
+    def model(self) -> Index:
+        return self._model
+
+    @property
+    def id(self) -> str:
+        return self._index_id
+
+    @property
+    def name(self) -> str:
+        return self._index_name
+
+    @property
+    def is_intraday(self) -> bool:
+        return self._is_intraday
 
     def get_metrics(
         self,
@@ -126,14 +141,14 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         Get list of portfolios for specified index id
         Each entry in the array has a date, and it's the portfolio that was active on that (rebalance) date
         """
-        return self.session.get_collection(f"/index/{self.index_id}/portfolio")
+        return self.session.get_collection(f"/index/{self._index_id}/portfolio")
 
     def get_portfolio_allocations(self) -> list[dict[str, Any]]:
         """
         Get list of portfolio allocations for specified index id
         This is a view of how the portfolio has changed over time
         """
-        return self.session.get_collection(f"/index/{self.index_id}/portfolio_allocations")
+        return self.session.get_collection(f"/index/{self._index_id}/portfolio_allocations")
 
     def get_target_portfolio(
         self, start_date: pd.Timestamp | None = None, end_date: pd.Timestamp | None = None
@@ -150,19 +165,19 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         if end_date is not None:
             opts["end_date"] = end_date.isoformat()
 
-        return self.session.get_collection(f"/index/{self.index_id}/target_portfolio", options=opts)
+        return self.session.get_collection(f"/index/{self._index_id}/target_portfolio", options=opts)
 
     def get_caps(self) -> list[dict[str, Any]]:
         """
         Get list of caps for specified index id (only applies to buffer indices)
         """
-        return self.session.get_collection(f"/index/{self.index_id}/caps")
+        return self.session.get_collection(f"/index/{self._index_id}/caps")
 
     def get_stats(self) -> list[dict[str, Any]]:
         """
         Get stats, which are historical returns over different time periods, of the index
         """
-        return self.session.get_collection(f"/index/{self.index_id}/stats")
+        return self.session.get_collection(f"/index/{self._index_id}/stats")
 
     def get_data_collections(self) -> list[dict[str, Any]]:
         """
@@ -172,7 +187,7 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
 
         This is not available for all indices
         """
-        return self.session.get_collection(f"/index/{self.index_id}/data_collections")
+        return self.session.get_collection(f"/index/{self._index_id}/data_collections")
 
     def replace_portfolio(self, target_portfolio: dict[str, Any] | EquityBasketPortfolio) -> dict[str, Any]:
         """
@@ -183,7 +198,7 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
             if isinstance(target_portfolio, EquityBasketPortfolio)
             else target_portfolio
         )
-        return self.replace_target_portfolio(index_id=self.index_id, target_portfolio=tp)
+        return self.replace_target_portfolio(index_id=self._index_id, target_portfolio=tp)
 
 
 client_cache: LRUCache = LRUCache(maxsize=256)  # type: ignore

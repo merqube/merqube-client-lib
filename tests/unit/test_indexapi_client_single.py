@@ -167,7 +167,7 @@ def test_manifest_fetching(monkeypatch):
     mocked = _setup(monkeypatch=monkeypatch)
     cl = mocked.client
     assert cl.get_manifest() == mocked.man
-    assert pydantic_to_dict(cl.get_model()) == mocked.man
+    assert pydantic_to_dict(cl.model) == mocked.man
 
 
 def test_from_existing(monkeypatch):

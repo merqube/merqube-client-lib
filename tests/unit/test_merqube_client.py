@@ -30,7 +30,7 @@ def test_single():
     assert client.get_manifest() == manifest
 
     # show some pydantic models:
-    model = client.get_model()
+    model = client.model
     assert model.status == Status(
         created_at="2022-06-07T23:15:31.212502",
         created_by="test@merqube.com",

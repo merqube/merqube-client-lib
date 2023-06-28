@@ -1,6 +1,7 @@
 """
 Base class for all Merqube API Clients
 """
+import logging
 import operator
 from collections import abc
 from copy import deepcopy
@@ -13,10 +14,11 @@ from cachetools import TTLCache, cachedmethod
 # import like this so monkeypatch works as expected
 from merqube_client_lib import session
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
+from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.pydantic_types import IndexDefinitionPost
 from merqube_client_lib.session import MerqubeAPISession
-from merqube_client_lib.types import HTTPResJson, Manifest, ManifestList
+from merqube_client_lib.types import Manifest, ManifestList, ResponseJson
 from merqube_client_lib.types.secapi import (
     AddlSecapiOptions,
     MappingTable,
@@ -25,9 +27,12 @@ from merqube_client_lib.types.secapi import (
 )
 from merqube_client_lib.util import (
     batch_post_payload,
-    freezable_utcnow_iso,
+    freezable_utcnow_ts,
     pydantic_to_dict,
 )
+
+EMPTY_RES: ResponseJson = {}
+logger = get_module_logger(__name__, level=logging.DEBUG)
 
 
 def _name_or_id(func: Callable[..., Any]) -> Callable[..., Any]:
@@ -112,22 +117,22 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         res = self.session.get_collection(url)
         return {i["id"]: i for i in res}
 
-    def create_index(self, index_def: IndexDefinitionPost) -> HTTPResJson:
+    def create_index(self, index_def: IndexDefinitionPost) -> ResponseJson:
         """
         Create an index
         Returns a dictionary containing the id of the index and its related securities (index, intraday_index)
 
         TODO: examples and index templates to be added to this repo.
         """
-        return cast(HTTPResJson, self.session.post("/index", json=pydantic_to_dict(index_def)).json())
+        return cast(ResponseJson, self.session.post("/index", json=pydantic_to_dict(index_def)).json())
 
-    def replace_index(self, index_def: Index) -> HTTPResJson:
+    def replace_index(self, index_def: Index) -> ResponseJson:
         """
         Update (full object replacement) an index
         """
         return cast(dict[str, str], self.session.put(f"/index/{index_def.id}", json=pydantic_to_dict(index_def)).json())
 
-    def replace_target_portfolio(self, index_id: str, target_portfolio: dict[str, Any]) -> HTTPResJson:
+    def replace_target_portfolio(self, index_id: str, target_portfolio: dict[str, Any]) -> ResponseJson:
         """
         Target portfolios are a PUT, not a POST, because an index can only have one active portfolio at a given time.
         "Last one wins", and it is not defined to have two+ active portfolios for the same timestamp.
@@ -138,7 +143,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
 
         (You can get the index id by doing get_index_manifest(index_name)["id"])
         """
-        return cast(HTTPResJson, self.session.put(f"/index/{index_id}/target_portfolio", json=target_portfolio).json())
+        return cast(ResponseJson, self.session.put(f"/index/{index_id}/target_portfolio", json=target_portfolio).json())
 
     @_name_or_id
     def get_index_manifest(self, index_name: str | None = None, index_id: str | None = None) -> Manifest:
@@ -181,17 +186,17 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         return model
 
     @_name_or_id
-    def delete_index(self, index_name: str | None = None, index_id: str | None = None) -> HTTPResJson:
+    def delete_index(self, index_name: str | None = None, index_id: str | None = None) -> ResponseJson:
         """
         Delete an index
         """
         if index_name:
             index_id = self.get_index_manifest(index_name)["id"]
 
-        return cast(HTTPResJson, self.session.delete(f"/index/{index_id}").json())
+        return cast(ResponseJson, self.session.delete(f"/index/{index_id}").json())
 
     @_name_or_id
-    def lock_index(self, index_name: str | None = None, index_id: str | None = None) -> HTTPResJson:
+    def lock_index(self, index_name: str | None = None, index_id: str | None = None) -> ResponseJson:
         """
         Lock an index.
 
@@ -203,26 +208,29 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         model = self.get_index_model(index_name=index_name, index_id=index_id)
 
         if (status := model.status).locked_after:
-            raise ValueError("Index is already locked")
+            logger.info("Index is already locked")
+            return EMPTY_RES
 
-        status.locked_after = freezable_utcnow_iso()
+        # we add a few seconds to handle clock skew - the server does not allow locks set in the past
+        status.locked_after = (freezable_utcnow_ts() + pd.Timedelta(seconds=3)).isoformat()
         payload = {"status": pydantic_to_dict(status)}
-        return cast(HTTPResJson, self.patch_index(index_id=model.id, updates=payload, auto_status=False))
+        return cast(ResponseJson, self.patch_index(index_id=model.id, updates=payload, auto_status=False))
 
     @_name_or_id
-    def unlock_index(self, index_name: str | None = None, index_id: str | None = None) -> HTTPResJson:
+    def unlock_index(self, index_name: str | None = None, index_id: str | None = None) -> ResponseJson:
         """
         Unlock an index; see "lock_index"
         """
         model = self.get_index_model(index_name=index_name, index_id=index_id)
 
         if (status := model.status).locked_after is None:
-            raise ValueError("Index is already unlocked")
+            logger.info("Index is already unlocked")
+            return EMPTY_RES
 
         status.locked_after = None
         # None is a default and we want to explicitly set it:
         payload = {"status": pydantic_to_dict(status, exclude_none=False, exclude_defaults=False)}
-        return cast(HTTPResJson, self.patch_index(index_id=model.id, updates=payload, auto_status=False))
+        return cast(ResponseJson, self.patch_index(index_id=model.id, updates=payload, auto_status=False))
 
     @_name_or_id
     def patch_index(
@@ -232,7 +240,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         index_id: str | None = None,
         updates: Manifest | None = None,
         auto_status: bool = True,
-    ) -> HTTPResJson:
+    ) -> ResponseJson:
         """
         Patch an index - updates is a partial index manifest
         (You can get the index id by doing get_index_manifest(index_name)["id"])
@@ -241,12 +249,12 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         the object youre updating is the latest version. You probably always want this to be set
         """
         if not updates:
-            return cast(HTTPResJson, {})
+            return EMPTY_RES
 
         if auto_status:
             updates["status"] = self.get_index_manifest(index_name=index_name, index_id=index_id)["status"]
 
-        return cast(HTTPResJson, self.session.patch(f"/index/{index_id}", json=updates).json())
+        return cast(ResponseJson, self.session.patch(f"/index/{index_id}", json=updates).json())
 
 
 class _SecAPIClient(_MerqubeApiClientBase):
