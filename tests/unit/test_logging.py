@@ -7,6 +7,7 @@ import os
 import tempfile
 import time
 
+import tzlocal
 from freezegun import freeze_time
 
 from merqube_client_lib.constants import (
@@ -33,7 +34,7 @@ def test_instantiate_logger_file():
         # If you call time.localtime, it will take the stored UTC datetime and return it in local time based on the machine's timezone (time.timezone).
         # So if you want to set what time.localtime will return you need to pass in a timezone aware datetime set to the machine's timezone.
         # In this test case the log Formatter uses time.localtime to show the log timestamp.
-        local_timezone = datetime.datetime.now(datetime.timezone.utc).astimezone().tzinfo
+        local_timezone = tzlocal.get_localzone()
         local_time = time.localtime()
         is_dst = local_time.tm_isdst == 1
         if is_dst:
