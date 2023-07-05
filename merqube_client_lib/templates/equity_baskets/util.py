@@ -136,6 +136,9 @@ def configure_index(
     for k in SPEC_KEYS:
         inner_spec[k] = getattr(index_info, k)
 
+    if index_info.base_value is not None:
+        inner_spec["base_val"] = index_info.base_value
+
     # some indices want "calendar" instead of "holiday_spec"
     inner_spec["holiday_spec"] = inner_spec["calendar"] = index_info.holiday_spec
 

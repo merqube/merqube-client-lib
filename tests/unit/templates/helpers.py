@@ -27,6 +27,7 @@ def eb_test(
     client_owned_underlying=None,
     expected_target_portfolios=None,
     corax_conf=None,
+    base_value=None,
 ):
     """shared helper used for all equity basket tests"""
 
@@ -66,6 +67,10 @@ def eb_test(
 
             if corax_conf is not None:
                 conf["corporate_actions"] = corax_conf
+
+            if base_value is not None:
+                conf["base_value"] = base_value
+                expected["spec"]["index_class_args"]["spec"]["base_val"] = float(base_value)
 
             f.write(json.dumps(conf))
 
