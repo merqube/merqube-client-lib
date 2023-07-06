@@ -5,7 +5,7 @@ from enum import Enum
 
 import pytz
 from pydantic import BaseModel, Extra, Field, StrictBool, StrictStr, validator
-from pydantic.types import T
+from pydantic.types import PositiveFloat, T
 
 from merqube_client_lib.pydantic_types import HolidayCalendarSpec
 
@@ -30,7 +30,7 @@ class ClientIndexConfigBase(BaseModel):
 
     base_date: date
     # not all indices have this eg a single stock tr indices is just shares * price on the base_date
-    base_value: int | float | None = None
+    base_value: PositiveFloat | None = None
     bbg_ticker: StrictStr | None = None
     currency: StrictStr = "USD"
     description: StrictStr

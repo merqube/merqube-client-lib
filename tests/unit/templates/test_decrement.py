@@ -46,7 +46,7 @@ expected_no_ticker = {
         "index_class_args": {
             "spec": {
                 "base_date": "2000-01-04",
-                "base_val": 1000,
+                "base_val": 100.0,
                 "day_count_convention": "f360",
                 "fee": {"fee_value": 0.005, "fee_type": "percentage_pre"},
                 "holiday_spec": cal,
@@ -140,7 +140,7 @@ fake_underlying = {
 
 
 @freeze_time("2023-06-01")
-# normally a bool, being tricky for testing
+@pytest.mark.parametrize("base_value", [None, 1000, 100.0, 1])
 @pytest.mark.parametrize(
     "client_owned, should_work",
     [(False, True), (False, False), ("missing", False), (fake_underlying, True)],
@@ -157,7 +157,7 @@ fake_underlying = {
     ids=["no_ticker", "no_ticker_with_email", "with_ticker", "with_ticker_with_email"],
 )
 def test_decrement(
-    bbg_ticker, email_list, expected, expec_bbg_post, client_owned, should_work, v1_decrement, monkeypatch
+    bbg_ticker, email_list, expected, expec_bbg_post, client_owned, should_work, v1_decrement, base_value, monkeypatch
 ):
     fake_s3 = partial(fake_s3_download, valid=(not client_owned and should_work))
     monkeypatch.setattr("merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3)
@@ -168,11 +168,12 @@ def test_decrement(
             config=good_config,
             bbg_ticker=bbg_ticker,
             email_list=email_list,
-            expected=expected,
+            expected=deepcopy(expected),
             template=v1_decrement,
             monkeypatch=monkeypatch,
             expected_bbg_post=expec_bbg_post,
             client_owned_underlying=client_owned,
+            base_value=base_value,
         )
 
     if should_work:
