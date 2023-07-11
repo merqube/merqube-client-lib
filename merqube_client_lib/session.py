@@ -278,9 +278,24 @@ class MerqubeAPISession(_BaseAPISession):
         """get where the result is json (as opposed to bytes for csv etc)"""
         return cast(dict[str, Any], self.get(url, options=options, **kwargs).json())
 
-    def get_collection(self, url: str, options: Optional[dict[str, Any]] = None, **kwargs: Any) -> list[Any]:
+    def get_collection(
+        self,
+        url: str,
+        options: Optional[dict[str, Any]] = None,
+        raise_on_permission_errors: bool = False,
+        **kwargs: Any,
+    ) -> list[Any]:
         """get the inner results array from a collection API"""
-        return cast(list[Any], self.get(url, options=options, **kwargs).json()["results"])
+        res = self.get(url, options=options, **kwargs).json()
+        # TODO: the official listing of these codes is in the internal infra. Should be moved here.
+        if (
+            raise_on_permission_errors
+            and (ecs := res.get("error_codes"))
+            and any(c["message"] == "RESULTS_WERE_FILTERED" for c in ecs)
+        ):
+            raise PermissionError("User does not have permission to one or more objects in the query result set")
+
+        return res["results"]
 
     def get_data(self, url: str, options: Optional[dict[str, Any]] = None, **kwargs: Any) -> str:
         """return raw data , most commonly used when options contains format=csv"""
