@@ -149,7 +149,7 @@ def test_session_methods(session_class, method, prefix, headers, monkeypatch):
         elif prefix:
             exp_headers["X-Request-ID"] = prefix + "_testid"
         else:
-            exp_headers["X-Request-ID"] = "merqube_py_cli_testid"
+            exp_headers["X-Request-ID"] = "mqu_py_client_testid"
     if headers:
         exp_headers.update(headers)
 
@@ -203,4 +203,4 @@ def test_merq_session_req_ids(direct_req_id, prefix, monkeypatch):
     elif prefix:
         assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == "testprefix_testid"
     else:
-        assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == "merqube_py_cli_testid"
+        assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == "mqu_py_client_testid"

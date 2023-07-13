@@ -13,4 +13,4 @@ MERQ_RUN_ID_ENV_VAR: Final[str] = "MERQ-RUN-ID"
 
 DEFAULT_CACHE_TTL: Final[int] = 600
 
-MERQ_CLIENT_PREFIX = "merqube_py_cli"
+MERQ_CLIENT_PREFIX = "mqu_py_client"
