@@ -9,6 +9,15 @@ jobs:
       - image: cimg/python:3.11.2
     steps:
       - checkout
+      - run:
+          name: Check relevant file changes
+          command: |
+            changed_files=$(git diff --name-only $CIRCLE_COMPARE_URL)
+            if ! echo "$changed_files" | grep -qE '^merqube_client_lib/|^tests/'; then
+              # No files in src/ or tests/ have changed
+              echo "Skipping tox job because no files in merqube_client_lib/ or tests/ have changed."
+              circleci step halt
+            fi
       - restore_cache:
           keys:
             # Need this to invalidate cache when lock changes, see:
@@ -31,19 +40,27 @@ jobs:
     docker:
       - image: cimg/python:3.11.2
     steps:
-          - checkout
-          - python/install-packages:
-              pkg-manager: pip
-              pip-dependency-file: .circleci/circle-ci-deps.txt
-          - run:
-              name: Install dependencies
-              command: poetry install
-          - run:
-              name: Publish package to PyPI
-              command: poetry publish --build -u __token__ -p $PYPI_API_TOKEN
-          - run:
-              name: Git tag
-              command: make tag
+      - checkout
+      - run:
+          name: Check pyproject changes
+          command: |
+            changed_files=$(git diff --name-only $CIRCLE_COMPARE_URL)
+            if ! echo "$changed_files" | grep -qE '^pyproject.toml$'; then
+              echo "Skipping merge job because pyproject has not changed, so there is no new release"
+              circleci step halt
+            fi
+      - python/install-packages:
+         pkg-manager: pip
+         pip-dependency-file: .circleci/circle-ci-deps.txt
+      - run:
+         name: Install dependencies
+         command: poetry install
+      - run:
+         name: Publish package to PyPI
+         command: poetry publish --build -u __token__ -p $PYPI_API_TOKEN
+      - run:
+         name: Git tag
+         command: make tag
 
 # Helpful:
 # https://circleci.com/docs/variables
