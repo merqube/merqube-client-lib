@@ -8,6 +8,7 @@ import pandas as pd
 from cachetools import LRUCache, cached
 
 from merqube_client_lib.api_client import base
+from merqube_client_lib.constants import MERQ_CLIENT_PREFIX
 from merqube_client_lib.pydantic_types import EquityBasketPortfolio, IdentifierUUIDPost
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.pydantic_types import Provider
@@ -21,6 +22,9 @@ class MerqubeAPIClient(base._IndexAPIClient, base._SecAPIClient):  # noqa
     (general queries, CRUD of indices, etc)
     For a client pertaining to a specific existing index, use MerqubeAPIClientSingleIndex
     """
+
+    def __init__(self, *args: Any, req_id_prefix: str = MERQ_CLIENT_PREFIX, **kwargs: Any) -> None:
+        super().__init__(*args, req_id_prefix=req_id_prefix, **kwargs)
 
     def create_identifier(
         self, provider: Provider, identifier_post: IdentifierUUIDPost | dict[str, Any]
@@ -52,8 +56,15 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
     Instantiate with an index name ("name" field in the index manifest) and indicate if it is a realtime index
     """
 
-    def __init__(self, index_name: str, is_intraday: bool = False, *args: Any, **kwargs: Any) -> None:
-        super().__init__(*args, **kwargs)
+    def __init__(
+        self,
+        index_name: str,
+        is_intraday: bool = False,
+        *args: Any,
+        req_id_prefix: str = MERQ_CLIENT_PREFIX,
+        **kwargs: Any,
+    ) -> None:
+        super().__init__(*args, req_id_prefix=req_id_prefix, **kwargs)
 
         self._model: Index = self.get_index_model(index_name=index_name)
         self._index_id = self._model.id
