@@ -121,20 +121,35 @@ SESSION_CLASSES = [
 
 @pytest.mark.parametrize("session_class", SESSION_CLASSES)
 @pytest.mark.parametrize("method", SESSION_METHODS)
-@pytest.mark.parametrize("headers", [{"header1": "value2"}, {"header2": "value2", "foo": "bar"}])
-def test_session_methods(session_class, method, headers, monkeypatch):
-    monkeypatch.setattr("uuid.uuid4", lambda: "testid")
+@pytest.mark.parametrize("prefix", ["", "apiclient"])
+@pytest.mark.parametrize(
+    "headers", [{"header1": "value2"}, {"header2": "value2", "foo": "bar"}, {"foo": "bar", "X-Request-ID": "testid"}]
+)
+def test_session_methods(session_class, method, prefix, headers, monkeypatch):
+    class FakeUUID:
+        hex = "testid"
+
+    monkeypatch.setattr("uuid.uuid4", lambda: FakeUUID())
     mock_retry = MagicMock()
     monkeypatch.setattr("merqube_client_lib.session._RetrySession", mock_retry)
 
     token = "a token"
-    sess = session_class(token=token)
+
+    kwargs = {"token": token}
+    if session_class is MerqubeAPISession and prefix:
+        kwargs["req_id_prefix"] = prefix
+    sess = session_class(**kwargs)
 
     url = "/test"
     getattr(sess, method)(url=url, headers=headers, options={"a": "b", "c": "d"}, some_kwarg="foo")
     exp_headers = {"Authorization": f"APIKEY {token}"}
     if session_class is MerqubeAPISession:
-        exp_headers["X-Request-ID"] = "testid"
+        if "X-Request-ID" in headers:
+            exp_headers["X-Request-ID"] = headers["X-Request-ID"]
+        elif prefix:
+            exp_headers["X-Request-ID"] = prefix + "_testid"
+        else:
+            exp_headers["X-Request-ID"] = "merqube_py_cli_testid"
     if headers:
         exp_headers.update(headers)
 
@@ -163,3 +178,29 @@ def test_retries_and_fail(caplog, retries, expected_retries):
             f"Retrying (Retry(total={expected}, connect={expected}, read={expected_retries}, redirect=None, status=None))"
             in caplog.records[i].message
         )
+
+
+@pytest.mark.parametrize("direct_req_id", [None, "my-own-req-id"])
+@pytest.mark.parametrize("prefix", [None, "testprefix"])
+def test_merq_session_req_ids(direct_req_id, prefix, monkeypatch):
+    class FakeUUID:
+        hex = "testid"
+
+    monkeypatch.setattr("uuid.uuid4", lambda: FakeUUID())
+
+    kwargs = {"token": "token"}
+    if prefix:
+        kwargs["req_id_prefix"] = prefix
+    session = MerqubeAPISession(**kwargs)
+
+    low_lvl_request = MagicMock()
+    session.request = low_lvl_request
+
+    session.get_collection("/index", headers={"X-Request-ID": direct_req_id})
+
+    if direct_req_id:
+        assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == direct_req_id
+    elif prefix:
+        assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == "testprefix_testid"
+    else:
+        assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == "merqube_py_cli_testid"

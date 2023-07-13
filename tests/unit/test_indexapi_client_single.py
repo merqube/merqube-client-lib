@@ -9,6 +9,7 @@ from unittest.mock import MagicMock, call
 
 import pandas as pd
 import pytest
+from freezegun import freeze_time
 
 from merqube_client_lib.api_client.merqube_client import (
     MerqubeAPIClientSingleIndex,
@@ -89,7 +90,7 @@ class ClientMocked:
     client: MerqubeAPIClientSingleIndex
 
 
-def _setup(monkeypatch, with_name_call: bool = True, get_coll_return=[]):
+def _setup(monkeypatch, with_name_call: bool = True, get_coll_return=[], lock: bool = False):
     ret = [[{"name": "MQEFAB01", "id": sid}], get_coll_return] if with_name_call else [get_coll_return]
     mock_get_collection = MagicMock(side_effect=ret)
 
@@ -101,6 +102,9 @@ def _setup(monkeypatch, with_name_call: bool = True, get_coll_return=[]):
     man = deepcopy(manifest)
     man["name"] = "MQEFAB01"
     man["id"] = sid
+
+    if lock:
+        man["status"]["locked_after"] = pd.Timestamp.now().isoformat()
 
     mock_secapi(
         monkeypatch,
@@ -192,3 +196,57 @@ def test_update(monkeypatch):
         call("/index/testid", json={"description": "test"}),
         call("/index/testid", json={"description": "test", "status": exis_status}),
     ]
+
+
+@freeze_time(now := pd.Timestamp.now())
+@pytest.mark.parametrize("already_locked", [True, False])
+def test_lock(monkeypatch, already_locked):
+    mocked = _setup(monkeypatch=monkeypatch, lock=already_locked)
+    cl, mock_patch = mocked.client, mocked.patch
+
+    # patch
+    cl.lock_index(index_id="testid")
+    assert (
+        mock_patch.call_args_list == []
+        if already_locked
+        else [
+            call(
+                "/index/testid",
+                json={
+                    "status": {
+                        "created_at": "2022-06-07T23:15:31.212502",
+                        "created_by": "test@merqube.com",
+                        "last_modified": "2023-01-25T22:40:25.552308",
+                        "last_modified_by": "test@merqube.com",
+                        "locked_after": (now + pd.Timedelta(seconds=3)).isoformat(),
+                    }
+                },
+            )
+        ]
+    )
+
+
+@pytest.mark.parametrize("already_unlocked", [True, False])
+def test_unlock(already_unlocked, monkeypatch):
+    mocked = _setup(monkeypatch=monkeypatch, lock=not already_unlocked)
+    cl, mock_patch = mocked.client, mocked.patch
+
+    # patch
+    cl.unlock_index(index_id="testid")
+    assert (
+        mock_patch.call_args_list == []
+        if already_unlocked
+        else [
+            call(
+                "/index/testid",
+                json={
+                    "status": {
+                        "created_at": "2022-06-07T23:15:31.212502",
+                        "created_by": "test@merqube.com",
+                        "last_modified": "2023-01-25T22:40:25.552308",
+                        "last_modified_by": "test@merqube.com",
+                    }
+                },
+            )
+        ]
+    )

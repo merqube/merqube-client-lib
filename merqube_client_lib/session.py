@@ -17,6 +17,7 @@ from urllib3.util.retry import Retry
 
 from merqube_client_lib.constants import (
     API_URL,
+    MERQ_CLIENT_PREFIX,
     MERQ_REQUEST_ID_ENV_VAR,
     REQUEST_ID_HEADER,
 )
@@ -223,10 +224,19 @@ class MerqubeAPISession(_BaseAPISession):
     def __init__(
         self,
         token: str | None = None,
+        req_id_prefix: str | None = MERQ_CLIENT_PREFIX,
         **kwargs: Any,
     ):
-        """can specify your own oauth token,default is no token (only public APIs)"""
+        """
+        Can specify your own oauth token,default is no token (only public APIs)
+
+        req_id_prefix: if no request id is explicitly passed in any function call (get,post etc), and this is set, this prefix will be used with a uuid4.hex to generate a request id
+        This is useful for aggregating server side logs for different sources of calls - eg requests generated from merqube.com vs this CLI can easily be distinguished
+        It defaults to a constant.
+        You can remove the prefix by explcitly setting None and the server will generate (and return) one, though there is not a great reason to do that..
+        """
         super().__init__(token=token, **kwargs)
+        self._req_id_prefix = req_id_prefix
 
     def handle_nonrecoverable(self, res: Response, exc: Exception, req_id: str) -> None:
         """helper function that handles a non recoverable error"""
@@ -247,15 +257,19 @@ class MerqubeAPISession(_BaseAPISession):
         # if this isnt set by a client making a call to one of our APIs, the API itself will generate one (eg customer call)
         # order is: 1) explicitly specified 2) set via chain, 3) generate new
         headers = deepcopy(kwargs.pop("headers", {})) or {}
-        headers[REQUEST_ID_HEADER] = (
-            req_id := headers.get(REQUEST_ID_HEADER, os.getenv(MERQ_REQUEST_ID_ENV_VAR, str(uuid.uuid4())))
-        )
+        if REQUEST_ID_HEADER not in headers or not headers[REQUEST_ID_HEADER]:
+            if (from_env := os.getenv(MERQ_REQUEST_ID_ENV_VAR)) is not None:
+                headers[REQUEST_ID_HEADER] = from_env
+            elif rip := self._req_id_prefix:
+                headers[REQUEST_ID_HEADER] = f"{rip}_{uuid.uuid4().hex}"
+            else:  # do not allow explicit None or ""
+                headers.pop(REQUEST_ID_HEADER, None)
 
         res = self.request(method=method, url=url, headers=headers, **kwargs)
         try:
             res.raise_for_status()
         except HTTPError as e:
-            self.handle_nonrecoverable(res=res, exc=e, req_id=req_id)
+            self.handle_nonrecoverable(res=res, exc=e, req_id=res.headers.get(REQUEST_ID_HEADER, ""))
 
         return res
 
@@ -302,8 +316,10 @@ class MerqubeAPISession(_BaseAPISession):
 
 
 @cached(cache=LRUCache(maxsize=256))
-def get_merqube_session(token: str | None = None, **session_args: Any) -> MerqubeAPISession:
+def get_merqube_session(
+    token: str | None = None, req_id_prefix: str = MERQ_CLIENT_PREFIX, **session_args: Any
+) -> MerqubeAPISession:
     """
     Cached; returns a session with the given token
     """
-    return MerqubeAPISession(token=token, **session_args)
+    return MerqubeAPISession(token=token, req_id_prefix=req_id_prefix, **session_args)
