@@ -2,49 +2,45 @@
 Create an equity basket index
 """
 import logging
-import os
-import tempfile
-from typing import cast
+from typing import Final, cast
 
-import boto3
-import pandas as pd
-
-from merqube_client_lib.exceptions import APIError
+from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
+from merqube_client_lib.exceptions import IndexNotFound
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.schema import ClientDecrementConfig
 from merqube_client_lib.templates.equity_baskets.util import create_index, load_template
-from merqube_client_lib.types import CreateReturn, Records
+from merqube_client_lib.types import CreateReturn
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
 
-def _download_tr_map(tdir: str) -> str:
-    """broken out for ease of unit testing"""
-    s3 = boto3.client("s3")
-    s3.download_file("merq-api-assets", "tr_indices.csv", (pth := os.path.join(tdir, "tr.csv")))
-    return pth
+MERQ_PROVIDED_TR_NS: Final = "merqubetr"
 
 
-def _get_trs(tr: str | None = None) -> Records:
+def _tr_exists(client: MerqubeAPIClient, ric: str) -> str | None:
     """
-    Returns the list of all MerQube TRs decrements can be on
+    returns the name of the TR index on `ric` if it exists, else None
     """
-    with tempfile.TemporaryDirectory() as tdir:
-        trs = pd.read_csv(_download_tr_map(tdir))
+    logger.info(f"Checking that a permissioned underlying TR on {ric} exists")
+    for t in client.get_indices_in_namespace(namespace=MERQ_PROVIDED_TR_NS):
+        if (
+            t.spec
+            and t.spec.index_class_args
+            and (cs := t.spec.index_class_args.get("spec").get("portfolios", {}).get("constituents"))  # type: ignore
+            and len(cs) == 1
+            and cs[0]["identifier"] == ric
+        ):
+            return t.name
+    return None
 
-    if trs.empty:
-        raise ValueError("No TRs found")
 
-    trs = trs.sort_values(by=["underlying_ric"])
+def _validate_dec_params(client: MerqubeAPIClient, tr_name: str, index_info: ClientDecrementConfig) -> None:
+    """
+    Validates that the decrement parameters are valid based on the underlying TR
+    """
 
-    if not tr:
-        return cast(Records, trs.to_dict(orient="records"))
-
-    row = trs[trs["index_name"] == tr]
-    if row.empty:
-        raise ValueError(f"{tr} is not a valid TR")
-
-    return cast(Records, row.to_dict(orient="records"))
+    # end_date = min(base_date, start_date)?
+    mets = client.get_security_metrics(sec_type="index", sec_names=[tr_name], metrics="total_return")
 
 
 def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
@@ -58,26 +54,19 @@ def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
 
     index_info = cast(ClientDecrementConfig, index_info)
 
-    uin = index_info.underlying_index_name
-    if index_info.client_owned_underlying:
-        # check that the underlying index exists
-        logger.info(f"Checking that the underlying index {uin} exists")
-        try:
-            client.get_index_model(index_name=uin)
-        except APIError:
-            raise ValueError(f"{uin} is not a valid index or you are not permissioned for it")
+    if not (tr_name := _tr_exists(client, index_info.ric)):
+        raise IndexNotFound(f"Could not find a TR on {index_info.ric}. Please contact MerQube support.")
 
-        underlying_secapi_metric = "price_return"
-    else:
-        logger.info(f"Checking that the underlying index {uin} is a permissioned MerQube provided TR")
-        tr = _get_trs(uin)[0]
-        underlying_secapi_metric = tr["metric"]
+    _validate_dec_params(client, tr_name, index_info)
 
     # set the metric to the TR metric
     template.plot_metric = inner_spec.get("output_metric", (getattr(template, "plot_metric", "price_return")))
 
-    inner_spec["metric"] = underlying_secapi_metric  # the decrement index looks up the returns of the tr via this
-    inner_spec["underlying_ticker"] = uin
+    # ???
+    # inner_spec["output_metric"] = underlying_secapi_metric
+    # inner_spec["metric"] = underlying_secapi_metric  # the decrement index looks up the returns of the tr via this
+    # inner_spec["underlying_level_type"] = "total_return"
+    inner_spec["underlying_ticker"] = tr_name
     inner_spec["day_count_convention"] = index_info.day_count_convention
     inner_spec["fee"] = {"fee_value": index_info.fee_value, "fee_type": index_info.fee_type.value}
 

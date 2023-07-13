@@ -93,7 +93,7 @@ class ClientDecrementConfig(ClientIndexConfigBase):
     fee_value: float
     fee_type: DecrementFeeType
     day_count_convention: StrictStr
-    client_owned_underlying: bool = True
+    ric: StrictStr
 
 
 class ClientMultiEquityBasketConfig(ClientIndexConfigBase):

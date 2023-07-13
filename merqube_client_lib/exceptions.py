@@ -15,3 +15,11 @@ class APIError(Exception):
         self.code = code
         self.response_json = response_json
         self.request_id = request_id
+
+
+class PermissionsError(Exception):
+    """Exception for when the user does not have the required permissions to perform an action"""
+
+
+class IndexNotFound(Exception):
+    """Exception for when an index is not found"""

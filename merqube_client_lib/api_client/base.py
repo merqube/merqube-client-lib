@@ -11,9 +11,11 @@ from typing import Any, Callable, Iterable, Optional, cast
 import pandas as pd
 from cachetools import TTLCache, cachedmethod
 
-# import like this so monkeypatch works as expected
 from merqube_client_lib import session
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
+
+# import like this so monkeypatch works as expected
+from merqube_client_lib.exceptions import PermissionsError
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.pydantic_types import IndexDefinitionPost
@@ -116,6 +118,18 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         url = f"/index?names={names_arg}{prod_clause}"
         res = self.session.get_collection(url)
         return {i["id"]: i for i in res}
+
+    def get_indices_in_namespace(self, namespace: str) -> list[Index]:
+        """
+        Get all indices in a given namespace
+        """
+        try:
+            return [
+                Index.parse_obj(x)
+                for x in self.session.get_collection(f"/index?namespace={namespace}", raise_on_permission_errors=True)
+            ]
+        except PermissionsError as exc:
+            raise PermissionsError(f"You do not have access to namespace {namespace}") from exc
 
     def create_index(self, index_def: IndexDefinitionPost) -> ResponseJson:
         """
