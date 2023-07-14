@@ -1,7 +1,7 @@
 """
 Create an equity basket index
 """
-from typing import cast
+from typing import Any, cast
 
 import pandas as pd
 
@@ -23,13 +23,13 @@ from merqube_client_lib.types import CreateReturn
 logger = get_module_logger(__name__)
 
 
-def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
+def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     """
     client, template, index_info, inner_spec = load_template(
         template_name="EQUITY_BASKET_TEMPLATE_V1",
-        config_file_path=config_file_path,
+        config=config,
         model=ClientMultiEquityBasketConfig,
     )
 

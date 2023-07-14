@@ -2,7 +2,7 @@
 Create an equity basket index
 """
 import logging
-from typing import cast
+from typing import Any, cast
 
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.schema import ClientSSTRConfig
@@ -12,13 +12,13 @@ from merqube_client_lib.types import CreateReturn
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
 
-def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
+def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.
     """
     client, template, index_info, inner_spec = load_template(
-        template_name="SINGLE_STOCK_TR_TEMPLATE_VERSION_1", config_file_path=config_file_path, model=ClientSSTRConfig
+        template_name="SINGLE_STOCK_TR_TEMPLATE_VERSION_1", config=config, model=ClientSSTRConfig
     )
 
     index_info = cast(ClientSSTRConfig, index_info)

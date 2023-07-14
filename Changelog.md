@@ -4,6 +4,10 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.4] - 2023-07-14
+- move json parsing into cli script, so we can programatically use the underlying functions to create indices in a loop
+- update to latest types
+
 ## [0.16.3] - 2023-07-13
 - allow specifying a default request id prefix, so all requests made from the same "project" can be tracked easily
 - circleci improvements

@@ -1,6 +1,7 @@
 """
 Create an equity basket index
 """
+import json
 import logging
 import os
 from typing import Any, Callable, Final
@@ -37,7 +38,13 @@ logger = get_module_logger(__name__, level=logging.DEBUG)
 def main(index_type: str, config_file_path: str, prod_run: bool) -> None:
     """main entrypoint"""
     assert os.path.exists(config_file_path), f"Config file path does not exist: {config_file_path}"
-    func: Callable[[str, bool], Any]
+    try:
+        config = json.load(open(config_file_path, "r"))
+    except json.JSONDecodeError as err:
+        logger.exception(f"Failed to parse config file: {config_file_path}")
+        raise err
+
+    func: Callable[[dict[str, Any], bool], Any]
     match index_type:
         case "decrement":
             func = dec_index
@@ -47,7 +54,7 @@ def main(index_type: str, config_file_path: str, prod_run: bool) -> None:
             # "multiple_equity_basket"
             func = mult_index
 
-    func(config_file_path=config_file_path, prod_run=prod_run)
+    func(config=config, prod_run=prod_run)
 
 
 if __name__ == "__main__":  # pragma: no cover

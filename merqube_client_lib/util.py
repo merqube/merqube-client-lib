@@ -56,12 +56,17 @@ def get_token() -> str:
     return api_key
 
 
-def pydantic_to_dict(pydantic_obj: Any, exclude_none: bool = True, exclude_defaults: bool = True) -> dict[str, Any]:
+def pydantic_to_dict(
+    pydantic_obj: Any, exclude_none: bool = True, exclude_defaults: bool = True, exclude_unset: bool = True
+) -> dict[str, Any]:
     """
     helper function to convert pydantic objects to dictionaries
     you would think .dict() would work - but that can still contain objects such as Enums,
     which are not json serializable
     """
     return cast(
-        dict[str, Any], json.loads(pydantic_obj.json(exclude_none=exclude_none, exclude_defaults=exclude_defaults))
+        dict[str, Any],
+        json.loads(
+            pydantic_obj.json(exclude_none=exclude_none, exclude_defaults=exclude_defaults, exclude_unset=exclude_unset)
+        ),
     )
