@@ -77,7 +77,7 @@ def inline_to_tp(portfolio: dict[str, Any]) -> TargetPortfoliosDates:
                 )
             )
 
-        target_port_val = EquityBasketPortfolio(timestamp=date, unit_of_measure=uom, positions=positions)
+        target_port_val = EquityBasketPortfolio(timestamp=date, unit_of_measure=uom, positions=positions)  # type: ignore
 
         EquityBasketPortfolio.parse_obj(target_port_val)  # validate
         target_portfolios.append((date, target_port_val))

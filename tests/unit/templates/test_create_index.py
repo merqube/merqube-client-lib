@@ -1,3 +1,4 @@
+import json
 import os
 import tempfile
 from copy import deepcopy
@@ -35,9 +36,9 @@ def test_click_cli(prod_run, monkeypatch):
 
     with tempfile.TemporaryDirectory() as tmpdir:
         with open((pth := os.path.join(tmpdir, "config.json")), "w") as f:
-            f.write("mocked")
+            f.write(json.dumps({"my": "config"}))
 
-        expected_call = call(config_file_path=pth, prod_run=prod_run)
+        expected_call = call(config={"my": "config"}, prod_run=prod_run)
 
         args = ["--index-type", "decrement", "--config-file-path", pth]
         if prod_run:
@@ -88,6 +89,13 @@ def test_cli_fail():
 
     result = cli.invoke(main, ["--index-type", "decrement", "--config-file-path", "noooot/exist"])
     assert result.exit_code == 1
+
+    with tempfile.TemporaryDirectory() as tmpdir:
+        with open((pth := os.path.join(tmpdir, "config.json")), "w") as f:
+            f.write("nooooootajson")
+
+        result = cli.invoke(main, ["--index-type", "decrement", "--config-file-path", pth])
+        assert result.exit_code == 1
 
 
 iinfo = {

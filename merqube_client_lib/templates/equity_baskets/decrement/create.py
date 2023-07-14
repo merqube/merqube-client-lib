@@ -4,7 +4,7 @@ Create an equity basket index
 import logging
 import os
 import tempfile
-from typing import cast
+from typing import Any, cast
 
 import boto3
 import pandas as pd
@@ -47,13 +47,13 @@ def _get_trs(tr: str | None = None) -> Records:
     return cast(Records, row.to_dict(orient="records"))
 
 
-def create(config_file_path: str, prod_run: bool = False) -> CreateReturn:
+def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.
     """
     client, template, index_info, inner_spec = load_template(
-        template_name="DECREMENT_TEMPLATE_VERSION_1", config_file_path=config_file_path, model=ClientDecrementConfig
+        template_name="DECREMENT_TEMPLATE_VERSION_1", config=config, model=ClientDecrementConfig
     )
 
     index_info = cast(ClientDecrementConfig, index_info)

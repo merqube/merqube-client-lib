@@ -44,28 +44,27 @@ def log_index(index: IndexDefinitionPost) -> None:
     logger.info("Index spec: \n" + json_formatted_str)
 
 
-def get_index_info(config_file_path: str, model: Type[ClientIndexConfigBase]) -> ClientIndexConfigBase:
+def get_index_info(config: dict[str, Any], model: Type[ClientIndexConfigBase]) -> ClientIndexConfigBase:
     """
     load index specific info from config file + validate the data
     """
     # validate:
-    config = json.load(open(config_file_path, "r"))
 
     index_info = model.parse_obj(config)
 
-    swaps_monitor_codes, calendar_identifiers = None, None
+    kwargs = {}
     if hc := getattr(index_info, "holiday_calendar", None):
-        calendar_identifiers = [f"MIC:{mic}" for mic in hc.mics] or []
-        swaps_monitor_codes = hc.swaps_monitor_codes or None
+        if hc.mics:
+            kwargs["calendar_identifiers"] = [f"MIC:{mic}" for mic in hc.mics]
+        if hc.swaps_monitor_codes:
+            kwargs["swaps_monitor_codes"] = hc.swaps_monitor_codes
 
-    if not swaps_monitor_codes and not calendar_identifiers:
-        calendar_identifiers = ["MIC:XNYS"]  # default to nyse
+    if kwargs == {}:
+        logger.warning("Warning, no calendar identifiers or swaps monitor codes found, defaulting to nyse")
+        kwargs["calendar_identifiers"] = ["MIC:XNYS"]
 
     # TODO: we may have to allow configuration of the weekmask
-    index_info.holiday_spec = HolidayCalendarSpec(
-        calendar_identifiers=calendar_identifiers,
-        swaps_monitor_codes=swaps_monitor_codes,
-    )  # type: ignore
+    index_info.holiday_spec = HolidayCalendarSpec(**kwargs)  # type: ignore
 
     return index_info
 
@@ -80,13 +79,13 @@ def get_inner_spec(template: IndexDefinitionPost) -> dict[str, Any]:
 
 def load_template(
     template_name: str,
-    config_file_path: str,
+    config: dict[str, Any],
     model: Type[ClientIndexConfigBase],
 ) -> tuple[MerqubeAPIClient, IndexDefinitionPost, BaseModel, dict[str, Any]]:
     """
     Loads a template index model to edit and then create a new index from
     """
-    index_info = get_index_info(config_file_path=config_file_path, model=model)
+    index_info = get_index_info(config=config, model=model)
     token = get_token()
 
     client = MerqubeAPIClient(token=token)
