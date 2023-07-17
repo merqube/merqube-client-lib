@@ -26,7 +26,7 @@ from merqube_client_lib.util import freezable_utcnow_ts, get_token, pydantic_to_
 SPEC_KEYS = ["base_date"]
 DATE_KEYS = ["base_date"]
 TOP_LEVEL = ["namespace", "name", "title", "base_date", "description"]
-
+TOP_LEVEL_OPTIONAL = ["currency"]
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
@@ -130,6 +130,10 @@ def configure_index(
         if k == "base_date":
             v = pd.Timestamp(v).strftime("%Y/%m/%d")
         setattr(template, k, v)
+
+    for k in TOP_LEVEL_OPTIONAL:
+        if v := getattr(index_info, k, None):
+            setattr(template, k, v)
 
     inner_spec["index_id"] = index_info.name
     for k in SPEC_KEYS:

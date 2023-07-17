@@ -14,6 +14,7 @@ cal = {"swaps_monitor_codes": ["LnB"], "calendar_identifiers": ["MIC:XPAR"]}
 expected_no_ticker = {
     "administrative": {"role": "development"},
     "base_date": "2000/01/04",
+    "currency": "EUR",
     "description": "SSEB 1",
     "family": "MerQube Single Stock TR indices",
     "family_description": "MerQube Single Stock TR indices",

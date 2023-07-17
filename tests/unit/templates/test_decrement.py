@@ -15,6 +15,7 @@ expected_no_ticker = {
     "administrative": {"role": "development"},
     "base_date": "2000/01/04",
     "calc_freq": "Daily, EOD",
+    "currency": "USD",
     "description": "DEC 1",
     "documents": {},
     "family": "merqube",
