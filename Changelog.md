@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.5] - 2023-07-17
+- duplicate `currency` to top level also; that's where merqube.com reads it from (not the inner spec which is needed for runtime)
+
 ## [0.16.4] - 2023-07-14
 - move json parsing into cli script, so we can programatically use the underlying functions to create indices in a loop
 - update to latest types

@@ -16,6 +16,7 @@ cal = {"calendar_identifiers": ["MIC:XNYS"]}
 expected_base = {
     "administrative": {"role": "calculation"},
     "base_date": "2000/01/04",
+    "currency": "EUR",
     "description": "wonderful index",
     "family": "Equity Baskets",
     "family_description": "Equity Baskets",
