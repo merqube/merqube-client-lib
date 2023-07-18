@@ -4,6 +4,8 @@ Merqube custom exceptions
 
 from typing import Any
 
+PERMISSION_ERROR_RES = {"code": "00001", "message": "RESULTS_WERE_FILTERED"}
+
 
 class APIError(Exception):
     """Generic exception for when our client library hits a non 2xx code from our APIs"""

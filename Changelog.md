@@ -4,6 +4,9 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.16.6] - 2023-07-18
+- add `raise_perm_errors` (defaults to `False`, current behavior) to `get_security_metrics` calls
+
 ## [0.16.5] - 2023-07-17
 - duplicate `currency` to top level also; that's where merqube.com reads it from (not the inner spec which is needed for runtime)
 

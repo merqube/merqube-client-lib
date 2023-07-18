@@ -70,6 +70,7 @@ class _MerqubeApiClientBase:
         *,
         url: str,
         query_options: dict[str, str | Iterable[str] | None] | None = None,
+        raise_perm_errors: bool = False,
     ) -> ManifestList:
         """
         common function to /security metrics and definitions
@@ -80,7 +81,7 @@ class _MerqubeApiClientBase:
             if v is not None:
                 options[qo] = v if isinstance(v, str) else ",".join(v)
 
-        return self.session.get_collection(url=url, options=options)
+        return self.session.get_collection(url=url, options=options, raise_perm_errors=raise_perm_errors)
 
 
 class _IndexAPIClient(_MerqubeApiClientBase):
@@ -356,6 +357,7 @@ class _SecAPIClient(_MerqubeApiClientBase):
         start_date: str | pd.Timestamp | None = None,
         end_date: str | pd.Timestamp | None = None,
         addl_options: AddlSecapiOptions | None = None,
+        raise_perm_errors: bool = False,
     ) -> SecAPIRecordsResponse:
         """
         if sec_names and sec_ids are both []/None, it gets ALL securities.
@@ -377,7 +379,9 @@ class _SecAPIClient(_MerqubeApiClientBase):
         if addl_options:
             query_options.update(addl_options)
 
-        return self._collection_helper(url=f"/security/{sec_type}", query_options=query_options)
+        return self._collection_helper(
+            url=f"/security/{sec_type}", query_options=query_options, raise_perm_errors=raise_perm_errors
+        )
 
     def get_metrics_for_security(
         self,
@@ -401,6 +405,7 @@ class _SecAPIClient(_MerqubeApiClientBase):
         sec_names: str | Iterable[str] | None = None,
         sec_ids: str | Iterable[str] | None = None,
         addl_options: AddlSecapiOptions | None = None,
+        raise_perm_errors: bool = False,
     ) -> MappingTable:
         """
         Lists defined (and permissioned) securities for a type.
@@ -417,6 +422,7 @@ class _SecAPIClient(_MerqubeApiClientBase):
         rec_data = self._collection_helper(
             url=f"/security/{sec_type}",
             query_options=query_options,
+            raise_perm_errors=raise_perm_errors,
         )
 
         return {c["id"]: c["name"] for c in rec_data} if sec_ids else {c["name"]: c["id"] for c in rec_data}
@@ -436,6 +442,7 @@ class _SecAPIClient(_MerqubeApiClientBase):
         normalize_level: int | None = None,
         metrics_chunk_size: int | None = None,
         securities_chunk_size: int | None = None,
+        raise_perm_errors: bool = False,
     ) -> pd.DataFrame:
         """fetch security metrics from the SecAPI"""
 
@@ -456,6 +463,7 @@ class _SecAPIClient(_MerqubeApiClientBase):
             "start_date": start_date,
             "end_date": end_date,
             "addl_options": addl_options,
+            "raise_perm_errors": raise_perm_errors,
         }
 
         if metrics_chunk_size is None and securities_chunk_size is None:

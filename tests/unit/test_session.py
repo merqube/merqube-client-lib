@@ -5,18 +5,11 @@ import pytest
 import requests
 
 from merqube_client_lib import session
-from merqube_client_lib.exceptions import APIError
+from merqube_client_lib.api_client import base
+from merqube_client_lib.exceptions import PERMISSION_ERROR_RES, APIError
 from merqube_client_lib.session import MerqubeAPISession, _BaseAPISession, _RetrySession
 from merqube_client_lib.types import HTTP_METHODS
-
-
-class MockRequestsResponse(object):
-    def __init__(self, status_code, json):
-        self.status_code = status_code
-        self._json = json
-
-    def json(self):
-        return self._json
+from tests.unit.helpers import MockRequestsResponse
 
 
 def test_handle_nonrecoverable():
@@ -191,6 +184,7 @@ def test_merq_session_req_ids(direct_req_id, prefix, monkeypatch):
     kwargs = {"token": "token"}
     if prefix:
         kwargs["req_id_prefix"] = prefix
+
     session = MerqubeAPISession(**kwargs)
 
     low_lvl_request = MagicMock()
@@ -204,3 +198,37 @@ def test_merq_session_req_ids(direct_req_id, prefix, monkeypatch):
         assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == "testprefix_testid"
     else:
         assert low_lvl_request.call_args_list[0].kwargs["headers"]["X-Request-ID"] == "mqu_py_client_testid"
+
+
+@pytest.mark.parametrize(
+    "options, expected", [(None, {}), ({"foo": "bar"}, {"foo": "bar"}), ({"names": ["n1", "n2"]}, {"names": "n1,n2"})]
+)
+def test_options(options, expected):
+    ch = MagicMock(return_value=[{"foo1": "bar1"}, {"foo2": "bar2"}])
+
+    class mock_session:
+        def __init__(self):
+            self.get_collection = ch
+
+    cl = base._MerqubeApiClientBase(user_session=mock_session())
+
+    assert cl._collection_helper(url="test_url", query_options=options) == [{"foo1": "bar1"}, {"foo2": "bar2"}]
+    assert ch.call_args_list == [call(url="test_url", options=expected, raise_perm_errors=False)]
+
+
+@pytest.mark.parametrize("raise_perm_errors, has_error", [(True, True), (True, False), (False, True), (False, False)])
+def test_collection_perm_errors(raise_perm_errors, has_error):
+    """Test that the collection helper raises PermissionError when raise_perm_errors is True and the response has the error code"""
+    sess = MerqubeAPISession()
+
+    mock_res_j = {"results": [{"foo": "bar"}]}
+    if has_error:
+        mock_res_j["error_codes"] = [PERMISSION_ERROR_RES]
+
+    sess.get = MagicMock(return_value=MockRequestsResponse(status_code=200, json=mock_res_j))
+
+    if raise_perm_errors and has_error:
+        with pytest.raises(PermissionError):
+            sess.get_collection("/index", raise_perm_errors=raise_perm_errors)
+    else:
+        sess.get_collection("/index", raise_perm_errors=raise_perm_errors)
