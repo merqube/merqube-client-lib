@@ -47,8 +47,8 @@ jobs:
       - run:
           name: Check pyproject changes
           command: |
-            cur_branch=$(git rev-parse --abbrev-ref HEAD)
-            changed_files=$(git diff $cur_branch --name-only -r main)
+            # this lookup is different, since we are looking for the last commit
+            changed_files=$(git diff --name-only HEAD HEAD~1)
             if ! grep -q 'pyproject.toml' $changed_files; then
               echo "Skipping merge job since no version bump occurred"
               circleci step halt
