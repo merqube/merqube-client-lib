@@ -18,6 +18,22 @@ from tests.unit.fixtures.gsm_fixtures import (
 )
 
 
+@pytest.mark.parametrize("should_raise", [True, False])
+def test_permission_raise(should_raise):
+    """Test that a permission error is raised when trying to access a private namespace if the flag is set"""
+    public = get_client()
+
+    if should_raise:
+        with pytest.raises(PermissionError):
+            public.get_security_metrics(sec_type="index", metrics=["price_return"])
+        with pytest.raises(PermissionError):
+            public.get_security_definitions_mapping_table(sec_type="index")
+
+    else:
+        public.get_security_metrics(sec_type="index", metrics=["price_return"])
+        public.get_security_definitions_mapping_table(sec_type="index")
+
+
 def test_mapping_table():
     """
     Test the mapping table for the security definitions

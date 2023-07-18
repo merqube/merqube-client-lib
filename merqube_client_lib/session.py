@@ -21,7 +21,7 @@ from merqube_client_lib.constants import (
     MERQ_REQUEST_ID_ENV_VAR,
     REQUEST_ID_HEADER,
 )
-from merqube_client_lib.exceptions import APIError
+from merqube_client_lib.exceptions import PERMISSION_ERROR_RES, APIError
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.types import HTTP_METHODS
 from merqube_client_lib.types import HTTPMethod as httpm
@@ -292,9 +292,16 @@ class MerqubeAPISession(_BaseAPISession):
         """get where the result is json (as opposed to bytes for csv etc)"""
         return cast(dict[str, Any], self.get(url, options=options, **kwargs).json())
 
-    def get_collection(self, url: str, options: Optional[dict[str, Any]] = None, **kwargs: Any) -> list[Any]:
+    def get_collection(
+        self, url: str, options: Optional[dict[str, Any]] = None, raise_perm_errors: bool = False, **kwargs: Any
+    ) -> list[Any]:
         """get the inner results array from a collection API"""
-        return cast(list[Any], self.get(url, options=options, **kwargs).json()["results"])
+        res = self.get(url, options=options, **kwargs).json()
+
+        if PERMISSION_ERROR_RES in res.get("error_codes", []) and raise_perm_errors:
+            raise PermissionError("This session does not have permission to view some or all of this data")
+
+        return cast(list[Any], res["results"])
 
     def get_data(self, url: str, options: Optional[dict[str, Any]] = None, **kwargs: Any) -> str:
         """return raw data , most commonly used when options contains format=csv"""

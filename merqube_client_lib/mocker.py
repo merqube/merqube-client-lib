@@ -99,6 +99,7 @@ def mock_secapi_builder(
         client = client_module.get_client(**get_client_kwargs)
 
         if "get_supported_secapi_types" not in method_name_function_map:
+            logger.debug("Mocking get_supported_secapi_types")
             setattr(client, "get_supported_secapi_types", _sec_types)
 
         for method_name, func in method_name_function_map.items():

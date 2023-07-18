@@ -5,7 +5,9 @@ import pandas as pd
 import pytest
 from pandas.testing import assert_frame_equal
 
+from merqube_client_lib.api_client import merqube_client
 from merqube_client_lib.api_client.merqube_client import get_client
+from merqube_client_lib.exceptions import PERMISSION_ERROR_RES
 from tests.conftest import mock_secapi
 from tests.unit.fixtures.gsm_chunked_fixtures import (
     chunked_id,
@@ -30,6 +32,7 @@ from tests.unit.fixtures.gsm_fixtures import (
     sing_mult_assertion,
     sing_sing_assertion,
 )
+from tests.unit.helpers import MockRequestsResponse
 
 
 def test_public_client():
@@ -56,7 +59,7 @@ def test_get_metrics_for_security(security_type):
     ]
 
     class FakeSession:
-        def get_collection(self, url):
+        def get_collection(self, url, **kwargs):
             if url == "/security":
                 return [
                     {"name": "custom"},
@@ -75,12 +78,35 @@ def test_get_metrics_for_security(security_type):
     assert result == metrics
 
 
-def gsm_call(monkeypatch, fixture=None):
-    mock_secapi(monkeypatch, method_name_function_map={})
-    public = get_client()
+@pytest.mark.parametrize("func", ["get_security_metrics", "get_security_definitions_mapping_table"])
+@pytest.mark.parametrize("raise_perm_errors, has_error", [(True, True), (True, False), (False, True), (False, False)])
+def test_gsm_perm_errors(func, raise_perm_errors, has_error):
+    """tests raising on permission errors in client gsm calls"""
+    mock_res_j = {"results": [{"name": "foo", "id": "bar"}]}
+    if has_error:
+        mock_res_j["error_codes"] = [PERMISSION_ERROR_RES]
 
+    cl = get_client()
+    cl.get_supported_secapi_types = MagicMock(return_value=[{"name": "index"}])
+    cl.session.get = MagicMock(return_value=MockRequestsResponse(status_code=200, json=mock_res_j))
+
+    sm = partial(getattr(cl, func), sec_type="index", raise_perm_errors=raise_perm_errors)
+
+    kwargs = {} if func == "get_security_definitions_mapping_table" else {"metrics": ["foo"]}
+    if raise_perm_errors and has_error:
+        with pytest.raises(PermissionError):
+            sm(**kwargs)
+    else:
+        sm(**kwargs)
+
+
+def gsm_call(monkeypatch, fixture=None):
+    sess_func_map = {}
     if fixture:
-        public.session.get_collection = lambda url, options: fixture
+        sess_func_map["get_collection"] = lambda *args, **kwargs: fixture
+
+    mock_secapi(monkeypatch, method_name_function_map={}, session_func_map=sess_func_map)
+    public = get_client()
 
     sm = partial(
         public.get_security_metrics,
@@ -238,6 +264,7 @@ def test_chunked_ids(monkeypatch):
                 "end_date": "2023-05-03T00:00:00",
                 "as_of": "2023-05-04T12:00:00",
             },
+            raise_perm_errors=False,
         ),
         call(
             url="/security/index",
@@ -250,6 +277,7 @@ def test_chunked_ids(monkeypatch):
                 "end_date": "2023-05-03T00:00:00",
                 "as_of": "2023-05-04T12:00:00",
             },
+            raise_perm_errors=False,
         ),
     ]
     assert_frame_equal(left=mult_mult, right=chunked, check_like=True)
@@ -284,6 +312,7 @@ def test_chunked_names(monkeypatch):
                 "end_date": "2023-05-03T00:00:00",
                 "as_of": "2023-05-04T12:00:00",
             },
+            raise_perm_errors=False,
         ),
         call(
             url="/security/index",
@@ -296,6 +325,7 @@ def test_chunked_names(monkeypatch):
                 "end_date": "2023-05-03T00:00:00",
                 "as_of": "2023-05-04T12:00:00",
             },
+            raise_perm_errors=False,
         ),
     ]
 
@@ -306,7 +336,7 @@ def test_mapping_table():
     """Tests mapping table of ids to names / names to ids"""
 
     class FakeSession:
-        def get_collection(self, url, options=None):
+        def get_collection(self, url, options=None, **kwargs):
             if url == "/security":
                 return [
                     {"name": "index"},
@@ -328,3 +358,36 @@ def test_mapping_table():
         "id2": "name2",
         "id3": "name3",
     }
+
+
+@pytest.mark.parametrize(
+    "params, func, should_work",
+    [
+        ({"sec_type": "nooo"}, "_validate_secapi_type", False),
+        ({"sec_type": "sectype1"}, "_validate_secapi_type", True),
+        ({"sec_type": "sectype1"}, "_validate_single", False),
+        ({"sec_type": "nooo", "sec_id": "1234"}, "_validate_single", False),
+        ({"sec_type": "sectype1", "sec_id": None}, "_validate_single", False),
+        ({"sec_type": "sectype1", "sec_id": "1234"}, "_validate_single", True),
+        ({"sec_type": "sectype1", "sec_id": "1234", "sec_name": "myname"}, "_validate_single", False),
+        ({"sec_type": "sectype1", "sec_id": None, "sec_name": "myname"}, "_validate_single", True),
+        ({"sec_type": "sectype1"}, "_validate_multiple", True),  # does a security listing
+        ({"sec_type": "nooo", "sec_ids": "1234"}, "_validate_multiple", False),
+        ({"sec_type": "sectype2", "sec_ids": "1234"}, "_validate_multiple", True),
+        ({"sec_type": "sectype2", "sec_ids": ["1234", "234"]}, "_validate_multiple", True),
+    ],
+)
+def test_arg_validation(params, func, should_work):
+    ch = MagicMock(return_value=[{"name": "sectype1"}, {"name": "sectype2"}])
+
+    class mock_session:
+        def __init__(self):
+            self.get_collection = ch
+
+    cl = merqube_client.MerqubeAPIClient(user_session=mock_session())
+
+    if should_work:
+        getattr(cl, func)(**params)
+    else:
+        with pytest.raises(AssertionError):
+            getattr(cl, func)(**params)
