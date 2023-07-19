@@ -13,12 +13,14 @@
     "launch_date": "2023/06/01",
     "name": "DECREMENT_TEMPLATE_VERSION_1",
     "namespace": "merqube",
+    "plot_metric": "total_return",
     "related": [],
     "run_configuration": {
         "index_reports": [
             {
                 "program_args": {
                     "diss_config": "{\\\"email\\\": [{\\\"subject\\\": \\\"{INDEX_NAME} Report: {DATE:%Y-%m-%d}\\\"}]}",
+                    "metric_name": "total_return",
                     "num_days": -1
                 },
                 "uuid": "4e37d683-0bee-4810-a852-f3d946da2e90"
@@ -38,7 +40,7 @@
         "index_class": "merq.indices.merqube.overlay_index_ext.OverlayIndexExt",
         "index_class_args": {
             "spec": {
-                "base_date": "2000-01-04",
+                "base_date": "2005-01-04",
                 "base_val": 1000,
                 "day_count_convention": "f360",
                 "fee": {
@@ -47,21 +49,12 @@
                 },
                 "holiday_spec": {
                     "calendar_identifiers": [
-                        "MIC:XNYS",
-                        "MIC:XNAS"
-                    ],
-                    "holidays_to_add": [],
-                    "holidays_to_remove": [
-                        "2012-10-29",
-                        "2007-10-08"
-                    ],
-                    "swaps_monitor_codes": [
-                        "LnB"
+                        "MQI:TR_INDEX_NAME"
                     ]
                 },
                 "index_id": "DECREMENT_TEMPLATE_VERSION_1",
-                "metric": "total_return",
-                "output_metric": "total_return",
+                "metric": "price_return",
+                "start_date": "2005-01-04",
                 "underlying_ticker": "INDEX"
             }
         }
@@ -69,8 +62,8 @@
     "stage": "development",
     "status": {
         "created_at": "2023-06-05T17:59:21.451835",
-        "created_by": "john@merqube.com",
-        "last_modified": "2023-06-06T13:18:43.960134",
+        "created_by": "foo@merqube.com",
+        "last_modified": "2023-07-20T20:57:35.503487",
         "last_modified_by": "foo@merqube.com"
     },
     "tags": "custom",

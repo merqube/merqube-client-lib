@@ -12,5 +12,5 @@
     "run_minute": 0,
     "timezone": "Europe/Paris",
     "title": "Demonstration LVMH TR Index",
-    "underlying_ric": "LVMH.PA"
+    "ric": "LVMH.PA"
 }

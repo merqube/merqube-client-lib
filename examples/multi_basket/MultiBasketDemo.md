@@ -12,28 +12,43 @@ The client can choose to
 
 ## Creating the Index
 
-Fill out this template (there are more details inside the template for each class in the `templates` directory):
+You can generate an example template with:
+
+```fish
+poetry run get_eb_template --index-type multiple_equity_basket"
+```
+
+which prints a json like:
 
 ```json
 {
-    "base_date": "2000-01-04",
-    "base_value": 100,
-    "constituents_csv_path": "/Users/foo/Desktop/foo_index_templates/basket_no_corax/portfolios_initial.csv",
+    "base_date": "2000-01-01",
+    "base_value": 1000.0,
+    "bbg_ticker": ".MYINDEX",
+    "currency": "USD",
+    "description": "My Index Description",
+    "email_list": [
+        "bob@mycompany.com",
+        "alice@mycompany.com"
+    ],
+    "holiday_calendar": {
+        "mics": [
+            "XNYS"
+        ],
+        "swaps_monitor_codes": []
+    },
+    "is_intraday": false,
+    "name": "My Index",
+    "namespace": "mycompany",
+    "run_hour": 16,
+    "run_minute": 0,
+    "timezone": "US/Eastern",
+    "title": "My Index Title",
+    "constituents_csv_path": "/path/to/my.csv",
     "corporate_actions": {
         "reinvest_dividends": true
     },
-    "currency": "USD",
-    "description": "wonderful description of my Multi basket index",
-    "email_list": [
-        "bob@yourco.com", "alice@yourco.com", "pat@yourco.com"
-    ],
-    "level_overrides_csv_path": "/Users/foo/Desktop/foo_index_templates/basket_no_corax/level_overrides.csv",
-    "name": "tjc_multi_basket_index",
-    "namespace": "test",
-    "run_hour": 18,
-    "run_minute": 0,
-    "timezone": "US/Eastern",
-    "title": "title of my Multi basket index that shows on MerQube's website"
+    "level_overrides_csv_path": null
 }
 ```
 

@@ -1,15 +1,17 @@
-import os
 from copy import deepcopy
-from functools import partial
+from unittest.mock import MagicMock
 
+import pandas as pd
 import pytest
 from freezegun import freeze_time
 
 from merqube_client_lib.templates.equity_baskets.decrement import create
+from tests.conftest import mock_secapi
+from tests.unit.fixtures.test_tr_manifest_for_dec import tr
 
 from .helpers import eb_test, eb_test_bad
 
-cal = {"calendar_identifiers": ["MIC:XNYS"]}
+TEST_RIC = "AXAF.PA"
 
 expected_no_ticker = {
     "administrative": {"role": "development"},
@@ -32,6 +34,7 @@ expected_no_ticker = {
                 "uuid": "4e37d683-0bee-4810-a852-f3d946da2e90",
                 "program_args": {
                     "diss_config": '{\\"email\\": [{\\"subject\\": \\"{INDEX_NAME} Report: {DATE:%Y-%m-%d}\\"}]}',
+                    "metric_name": "total_return",
                     "num_days": -1,
                 },
             }
@@ -50,12 +53,11 @@ expected_no_ticker = {
                 "base_val": 100.0,
                 "day_count_convention": "f360",
                 "fee": {"fee_value": 0.005, "fee_type": "percentage_pre"},
-                "holiday_spec": cal,
-                "calendar": cal,
+                "holiday_spec": {"calendar_identifiers": ["MQI:MQU_AXAF_TR_Index_Test_1"]},
                 "index_id": "TEST_1",
                 "metric": "price_return",
-                "output_metric": "total_return",
-                "underlying_ticker": "MY_WONDERFUL_UNDERLYING_TR",
+                "start_date": "2000-01-04",
+                "underlying_ticker": "MQU_AXAF_TR_Index_Test_1",
             }
         },
     },
@@ -81,8 +83,7 @@ expected_with_ticker_with_email["run_configuration"]["index_reports"][0]["progra
 good_config = {
     "base_date": "2000-01-04",
     "description": "DEC 1",
-    "client_owned_underlying": False,
-    "holiday_calendar": {"mics": ["XNYS"]},
+    "ric": TEST_RIC,
     "name": "TEST_1",
     "namespace": "test",
     "run_hour": 18,
@@ -90,7 +91,6 @@ good_config = {
     "timezone": "US/Eastern",
     "title": "TEST_1",
     "day_count_convention": "f360",
-    "underlying_index_name": "MY_WONDERFUL_UNDERLYING_TR",
     "base_value": 100,
     "fee_value": 0.005,
     "fee_type": "percentage_pre",
@@ -99,54 +99,8 @@ good_config = {
 expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
 
 
-def fake_s3_download(tdir, valid: bool = True):
-    with open(p := os.path.join(tdir, "tr.csv"), "w") as f:
-        f.write(
-            "underlying_ric,index_name,metric\nZ.Y,TOMMY_EB_TEST_2,price_return\nLVMH.PA,MY_WONDERFUL_UNDERLYING_TR,price_return"
-            if valid
-            else ""
-        )
-    return p
-
-
-def test_get_trs(monkeypatch):
-    monkeypatch.setattr(
-        "merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3_download
-    )
-
-    assert create._get_trs() == [
-        {"underlying_ric": "LVMH.PA", "index_name": "MY_WONDERFUL_UNDERLYING_TR", "metric": "price_return"},
-        {"underlying_ric": "Z.Y", "index_name": "TOMMY_EB_TEST_2", "metric": "price_return"},
-    ]
-
-    assert create._get_trs(tr="TOMMY_EB_TEST_2") == [
-        {"underlying_ric": "Z.Y", "index_name": "TOMMY_EB_TEST_2", "metric": "price_return"},
-    ]
-
-    with pytest.raises(ValueError):
-        create._get_trs(tr="TOMMY_EB_TEST_3")
-
-
-fake_underlying = {
-    "id": "123",
-    "description": "test",
-    "status": {"last_modified": "2020"},
-    "title": "",
-    "family": "",
-    "administrative": {"role": "calculation"},
-    "name": "t",
-    "launch_date": "2020",
-    "stage": "prod",
-}
-
-
 @freeze_time("2023-06-01")
 @pytest.mark.parametrize("base_value", [None, 1000, 100.0, 1])
-@pytest.mark.parametrize(
-    "client_owned, should_work",
-    [(False, True), (False, False), ("missing", False), (fake_underlying, True)],
-    ids=["mqu", "missing-mqu", "invalid-client", "valid-client"],
-)
 @pytest.mark.parametrize(
     "bbg_ticker,email_list,expected,expec_bbg_post",
     [
@@ -157,11 +111,15 @@ fake_underlying = {
     ],
     ids=["no_ticker", "no_ticker_with_email", "with_ticker", "with_ticker_with_email"],
 )
-def test_decrement(
-    bbg_ticker, email_list, expected, expec_bbg_post, client_owned, should_work, v1_decrement, base_value, monkeypatch
-):
-    fake_s3 = partial(fake_s3_download, valid=(not client_owned and should_work))
-    monkeypatch.setattr("merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3)
+def test_decrement(bbg_ticker, email_list, expected, expec_bbg_post, base_value, v1_decrement, monkeypatch):
+    mock_secapi(
+        monkeypatch,
+        method_name_function_map={
+            "get_indices_in_namespace": lambda namespace: [tr],
+            "get_index_manifest": MagicMock(return_value=v1_decrement),
+            "get_security_metrics": MagicMock(return_value=pd.DataFrame({"close": [100.0]})),
+        },
+    )
 
     def t():
         eb_test(
@@ -170,22 +128,15 @@ def test_decrement(
             bbg_ticker=bbg_ticker,
             email_list=email_list,
             expected=deepcopy(expected),
-            template=v1_decrement,
-            monkeypatch=monkeypatch,
             expected_bbg_post=expec_bbg_post,
-            client_owned_underlying=client_owned,
             base_value=base_value,
         )
 
-    if should_work:
-        t()
-    else:
-        with pytest.raises(ValueError):
-            t()
+    t()
 
 
 bad_1 = deepcopy(good_config)
-del bad_1["underlying_index_name"]
+del bad_1["ric"]
 b1 = (bad_1, "pydantic")
 
 bad_2 = deepcopy(good_config)
@@ -201,8 +152,9 @@ bad_4["fee_value"] = "noooo"
 b4 = (bad_4, "pydantic")
 
 bad_5 = deepcopy(good_config)
-bad_5["underlying_index_name"] = "nooot in file"
-b5 = (bad_5, "nooot in file is not a valid TR")
+bad_5["start_date"] = "2000-01-01"
+bad_5["base_date"] = "1999-01-02"
+b5 = (bad_5, "The start date of the decrement index, if specified, must be before the base date")
 
 bad_6 = deepcopy(good_config)
 bad_6["email_list"] = [666]
@@ -223,12 +175,54 @@ b9 = (bad_9, "pydantic")
 
 @pytest.mark.parametrize("case,err", [b1, b2, b3, b4, b5, b6, b7, b8, b9])
 def test_multi_bad(case, err, v1_decrement, monkeypatch):
-    monkeypatch.setattr(
-        "merqube_client_lib.templates.equity_baskets.decrement.create._download_tr_map", fake_s3_download
-    )
-
     actual = eb_test_bad(func=create.create, config=case, template=v1_decrement, monkeypatch=monkeypatch)
     if err == "pydantic":
         assert "pydantic.error_wrappers.ValidationError" in actual
     else:
         assert actual == f"ValueError: {err}"
+
+
+disabled_tr = deepcopy(tr)
+disabled_tr.run_configuration.job_enabled = False
+
+no_rc_tr = deepcopy(tr)
+no_rc_tr.run_configuration = None
+
+diff_stock_tr = deepcopy(tr)
+diff_stock_tr.spec.index_class_args["spec"]["portfolios"]["constituents"] = [
+    {"date": "2005-12-30", "identifier": "NOOOOTAXAF.PA", "quantity": 1}
+]
+
+not_a_ss_tr = deepcopy(tr)
+not_a_ss_tr.spec.index_class_args["spec"]["portfolios"]["constituents"] = [
+    {"date": "2005-12-30", "identifier": "AXAF.PA", "quantity": 1},
+    {"date": "2005-12-30", "identifier": "different", "quantity": 1},
+]
+
+
+@pytest.mark.parametrize(
+    "inds, should_match",
+    [
+        ([tr], True),
+        ([diff_stock_tr, tr], True),  # matches second
+        ([disabled_tr], False),
+        ([], False),
+        ([no_rc_tr], False),
+        ([diff_stock_tr], False),
+        ([not_a_ss_tr], False),  # has two constituents
+    ],
+)
+def test_get_trs(inds, should_match):
+    """
+    tests _tr_exists
+    """
+
+    class Cl:
+        def get_indices_in_namespace(self, namespace):
+            return inds
+
+    res = create._tr_exists(Cl(), TEST_RIC)
+    if should_match:
+        assert res == "MQU_AXAF_TR_Index_Test_1"
+    else:
+        assert res is None

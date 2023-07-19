@@ -6,7 +6,7 @@ from typing import Any, Type, cast
 import pandas as pd
 from pydantic import BaseModel
 
-from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
+from merqube_client_lib.api_client import merqube_client as mc
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import (
     HolidayCalendarSpec,
@@ -59,12 +59,8 @@ def get_index_info(config: dict[str, Any], model: Type[ClientIndexConfigBase]) -
         if hc.swaps_monitor_codes:
             kwargs["swaps_monitor_codes"] = hc.swaps_monitor_codes
 
-    if kwargs == {}:
-        logger.warning("Warning, no calendar identifiers or swaps monitor codes found, defaulting to nyse")
-        kwargs["calendar_identifiers"] = ["MIC:XNYS"]
-
-    # TODO: we may have to allow configuration of the weekmask
-    index_info.holiday_spec = HolidayCalendarSpec(**kwargs)  # type: ignore
+    if kwargs:
+        index_info._holiday_spec_ = HolidayCalendarSpec(**kwargs)  # type: ignore
 
     return index_info
 
@@ -81,14 +77,14 @@ def load_template(
     template_name: str,
     config: dict[str, Any],
     model: Type[ClientIndexConfigBase],
-) -> tuple[MerqubeAPIClient, IndexDefinitionPost, BaseModel, dict[str, Any]]:
+) -> tuple[mc.MerqubeAPIClient, IndexDefinitionPost, BaseModel, dict[str, Any]]:
     """
     Loads a template index model to edit and then create a new index from
     """
     index_info = get_index_info(config=config, model=model)
     token = get_token()
 
-    client = MerqubeAPIClient(token=token)
+    client = mc.get_client(token=token)  # imported this way for mocking
 
     template = client.index_post_model_from_existing(index_name=template_name)
 
@@ -143,7 +139,8 @@ def configure_index(
         inner_spec["base_val"] = index_info.base_value
 
     # some indices want "calendar" instead of "holiday_spec"
-    inner_spec["holiday_spec"] = inner_spec["calendar"] = index_info.holiday_spec
+    if index_info._holiday_spec_:
+        inner_spec["holiday_spec"] = inner_spec["calendar"] = index_info._holiday_spec_
 
     name = index_info.name
     bbg_ticker = index_info.bbg_ticker
@@ -193,7 +190,7 @@ def configure_index(
 
 
 def create_index(
-    client: MerqubeAPIClient,
+    client: mc.MerqubeAPIClient,
     template: IndexDefinitionPost,
     index_info: ClientIndexConfigBase,
     inner_spec: dict[str, Any],

@@ -10,28 +10,43 @@ This document represents a full demo of creating a TR (single stock total return
 
 ## Creating the TR
 
-Fill out this template (there are more details inside the template for each class in the `templates` directory). There is an example working file in this directory.
+You can generate an example template with:
+
+```fish
+poetry run get_eb_template --index-type single_stock_total_return"
+```
+
+which prints a json like this:
 
 ```json
 {
-    "base_date": "2000-01-04",
-    "bbg_ticker": null,
-    "currency": "EUR",
-    "description": "LVMH TR Index",
-    "email_list": ["foo@merqube.com"],
+    "base_date": "2000-01-01",
+    "base_value": 1000.0,
+    "bbg_ticker": ".MYINDEX",
+    "currency": "USD",
+    "description": "My Index Description",
+    "email_list": [
+        "bob@mycompany.com",
+        "alice@mycompany.com"
+    ],
+    "holiday_calendar": {
+        "mics": [
+            "XNYS"
+        ],
+        "swaps_monitor_codes": []
+    },
     "is_intraday": false,
-    "holiday_calendar": {"mics": ["XPAR"]},
-    "name": "Demo_LVMH_TR_Index",
-    "namespace": "test",
-    "run_hour": 18,
+    "name": "My Index",
+    "namespace": "mycompany",
+    "run_hour": 16,
     "run_minute": 0,
-    "timezone": "Europe/Paris",
-    "title": "title of my LVMH TR Index that shows on MerQube's website",
-    "underlying_ric": "LVMH.PA"
+    "timezone": "US/Eastern",
+    "title": "My Index Title",
+    "ric": "LMVH.PA"
 }
 ```
 
-Make sure to change `namespace` to the namespace your key is permissioned for.
+Fill out this template. Make sure to change `namespace` to the namespace your key is permissioned for.
 
 Run the tool to create the index:
 
@@ -92,27 +107,42 @@ which produces a dataframe:
 
 ## Creating the decrement
 
-Next, fill out this template (changing the fee etc). There is an example working file in this directory.
+You can generate an example template with:
+
+    poetry run get_eb_template --index-type decrement
+
+which prints a json like this:
 
 ```json
 {
-    "base_date": "2000-01-04",
-    "description": "50 bps decrement on top of demo LVMH",
-    "email_list": ["yourname@yourco.com"],
-    "holiday_calendar": {"mics": ["XNYS"]},
-    "name": "Demo_LVMH_Decrement_Index",
-    "namespace": "test",
-    "run_hour": 18,
+    "base_date": "2000-01-01",
+    "base_value": 1000.0,
+    "bbg_ticker": ".MYINDEX",
+    "currency": "USD",
+    "description": "My Index Description",
+    "email_list": [
+        "bob@mycompany.com",
+        "alice@mycompany.com"
+    ],
+    "holiday_calendar": {
+        "mics": [
+            "XNYS"
+        ],
+        "swaps_monitor_codes": []
+    },
+    "is_intraday": false,
+    "name": "My Index",
+    "namespace": "mycompany",
+    "run_hour": 16,
     "run_minute": 0,
     "timezone": "US/Eastern",
-    "title": "LVMH 50bps Decrement",
+    "title": "My Index Title",
+    "fee_value": 0.05,
+    "fee_type": "fixed",
     "day_count_convention": "f360",
-    "underlying_index_name": "Demo_LVMH_TR_Index",
-    "client_owned_underlying": true,
-    "base_value": 1000,
-    "fee_value": 50,
-    "fee_type": "fixed"
- }
+    "ric": "LMVH.PA",
+    "start_date": "2000-01-01"
+}
 ```
 
 Run the tool to create the index:

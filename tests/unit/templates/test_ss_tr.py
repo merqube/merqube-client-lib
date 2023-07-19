@@ -6,6 +6,7 @@ from freezegun import freeze_time
 from merqube_client_lib.templates.equity_baskets.single_stock_total_return_corax import (
     create,
 )
+from tests.conftest import mock_secapi
 
 from .helpers import eb_test, eb_test_bad
 
@@ -82,7 +83,7 @@ good_config = {
     "run_minute": 0,
     "timezone": "US/Eastern",
     "title": "TEST_1",
-    "underlying_ric": "LVMH.PA",
+    "ric": "LVMH.PA",
 }
 
 expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
@@ -95,19 +96,26 @@ expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test",
     ids=["no_ticker", "with_ticker"],
 )
 def test_ss_tr(bbg_ticker, expected, expected_bbg_post, v1_ss, monkeypatch):
+    def _get_collection_single(*args, **kwargs):
+        return v1_ss
+
+    mock_secapi(
+        monkeypatch,
+        method_name_function_map={},
+        session_func_map={"get_collection_single": _get_collection_single},
+    )
+
     eb_test(
         func=create.create,
         config=good_config,
         bbg_ticker=bbg_ticker,
         expected=expected,
-        template=v1_ss,
-        monkeypatch=monkeypatch,
         expected_bbg_post=expected_bbg_post,
     )
 
 
 bad_1 = deepcopy(good_config)
-del bad_1["underlying_ric"]
+del bad_1["ric"]
 
 bad_2 = deepcopy(good_config)
 bad_2["base_date"] = "2000REEEEEEE"

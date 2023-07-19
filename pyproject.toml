@@ -25,6 +25,7 @@ requests = "*"
 [tool.poetry.scripts]
 create = "merqube_client_lib.templates.equity_baskets.create_index:main"
 update_portfolio = "merqube_client_lib.templates.equity_baskets.multiple_equity_basket.update_portfolio:main"
+get_eb_template = "merqube_client_lib.templates.equity_baskets.get_eb_template:main"
 
 [tool.poetry.dev-dependencies]
 coverage =  {version="*"}
