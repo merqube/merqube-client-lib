@@ -66,12 +66,6 @@ class ClientIndexConfigBase(BaseModel):
         example=["bob@mycompany.com", "alice@mycompany.com"],
     )
 
-    holiday_calendar: HolidayCalendar | None = Field(
-        None,
-        description="set to the holiday calendar for the index, default is M_F (weekdays)",
-        example={"mics": ["XNYS"]},
-    )
-
     is_intraday: StrictBool = Field(False, description="set to True if the index is intraday", example=False)
 
     name: StrictStr = Field(
@@ -127,11 +121,22 @@ class ClientIndexConfigBase(BaseModel):
         return v
 
 
+class _ClientIndexWithCalendarBase(BaseModel):
+    class Config:
+        extra = Extra.forbid
+
+    holiday_calendar: HolidayCalendar | None = Field(
+        None,
+        description="set to the holiday calendar for the index, default is M_F (weekdays)",
+        example={"mics": ["XNYS"]},
+    )
+
+
 class CorporateActions(BaseModel):
     reinvest_dividends: StrictBool = True
 
 
-class ClientSSTRConfig(ClientIndexConfigBase):
+class ClientSSTRConfig(ClientIndexConfigBase, _ClientIndexWithCalendarBase):
     """
     Single stock total return index
     """
@@ -145,6 +150,7 @@ class ClientSSTRConfig(ClientIndexConfigBase):
 class ClientDecrementConfig(ClientIndexConfigBase):
     """
     Decrement index on top of an SSTR
+    Calendar automatically set to that of the underlying
     """
 
     class Config:
@@ -171,7 +177,7 @@ class ClientDecrementConfig(ClientIndexConfigBase):
     )
 
 
-class ClientMultiEquityBasketConfig(ClientIndexConfigBase):
+class ClientMultiEquityBasketConfig(ClientIndexConfigBase, _ClientIndexWithCalendarBase):
     """
     Equity Basket
     """

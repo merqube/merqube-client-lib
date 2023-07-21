@@ -2,6 +2,9 @@
 
 This document represents a full demo of creating a TR (single stock total return) index, and then a Decrement index overlay onto it.
 
+NOTE: if you are only trying to create a decrement index on the universe of MerQube supplied TRs, jump to ##Creating the decrement.
+This section only applies if you are also subscribed to create TR indices.
+
 ## Prequisites:
 
 1. Must have an apikey with permission to create indices in some namespace
@@ -23,7 +26,7 @@ which prints a json like this:
     "base_date": "2000-01-01",
     "base_value": 1000.0,
     "bbg_ticker": ".MYINDEX",
-    "currency": "USD",
+    "currency": "EUR",
     "description": "My Index Description",
     "email_list": [
         "bob@mycompany.com",
@@ -31,7 +34,7 @@ which prints a json like this:
     ],
     "holiday_calendar": {
         "mics": [
-            "XNYS"
+            "XPAR"
         ],
         "swaps_monitor_codes": []
     },
@@ -47,6 +50,7 @@ which prints a json like this:
 ```
 
 Fill out this template. Make sure to change `namespace` to the namespace your key is permissioned for.
+Make sure to set the calendar correctly.
 
 Run the tool to create the index:
 
@@ -107,7 +111,7 @@ which produces a dataframe:
 
 ## Creating the decrement
 
-You can generate an example template with:
+You can generate an example template for a decrement index with:
 
     poetry run get_eb_template --index-type decrement
 
@@ -118,18 +122,12 @@ which prints a json like this:
     "base_date": "2000-01-01",
     "base_value": 1000.0,
     "bbg_ticker": ".MYINDEX",
-    "currency": "USD",
+    "currency": "EUR",
     "description": "My Index Description",
     "email_list": [
         "bob@mycompany.com",
         "alice@mycompany.com"
     ],
-    "holiday_calendar": {
-        "mics": [
-            "XNYS"
-        ],
-        "swaps_monitor_codes": []
-    },
     "is_intraday": false,
     "name": "My Index",
     "namespace": "mycompany",
@@ -144,6 +142,12 @@ which prints a json like this:
     "start_date": "2000-01-01"
 }
 ```
+(Note: decrements on general indices are not currently supported, but may be in the future. This is a single stock decrement)
+
+In the backround, the library searches for a TR index with the same RIC.
+It will raise an error if one (with that RIC) does not exist, or if there are no returns on or before the decrement `base_date`.
+
+The same calendar as the underlying TR will be automatically applied.
 
 Run the tool to create the index:
 

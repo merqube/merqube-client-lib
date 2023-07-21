@@ -7,6 +7,7 @@ from typing import Any, Final, cast
 import pandas as pd
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
+from merqube_client_lib.constants import PRICE_RETURN
 from merqube_client_lib.exceptions import IndexNotFound
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.schema import ClientDecrementConfig
@@ -52,7 +53,7 @@ def _validate_dec_params(client: MerqubeAPIClient, index_info: ClientDecrementCo
 
     # validate that the start date of the decrement index is after the start date of the TR
     mets = client.get_security_metrics(
-        sec_type="index", sec_names=[tr_name], metrics="total_return", end_date=pd.Timestamp(pr_check_date)
+        sec_type="index", sec_names=[tr_name], metrics=PRICE_RETURN, end_date=pd.Timestamp(pr_check_date)
     )
     if mets.empty:
         raise ValueError(f"There are no returns for the tr {tr_name} before {pr_check_date}")
