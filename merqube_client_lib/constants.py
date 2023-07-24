@@ -17,3 +17,5 @@ MERQ_CLIENT_PREFIX = "mqu_py_client"
 
 PRICE_RETURN: Final[str] = "price_return"
 TOTAL_RETURN: Final[str] = "total_return"
+
+INDEX_RUN_STATUS_METRIC: Final[str] = "index_run_status"

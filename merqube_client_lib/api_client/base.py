@@ -16,7 +16,7 @@ from merqube_client_lib import session
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
-from merqube_client_lib.pydantic_types import IndexDefinitionPost
+from merqube_client_lib.pydantic_types import IndexDefinitionPost, RunState
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types import Manifest, ManifestList, ResponseJson
 from merqube_client_lib.types.secapi import (
@@ -194,6 +194,16 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         model.namespace = "test"
 
         return model
+
+    @_name_or_id
+    def get_last_index_run_state(self, index_name: str | None = None, index_id: str | None = None) -> RunState:
+        """
+        Get the status of the last index run
+        """
+        if index_name:
+            index_id = self.get_index_manifest(index_name)["id"]
+
+        return RunState.parse_obj(self.session.get_json(f"/index/{index_id}/run_state"))
 
     @_name_or_id
     def delete_index(self, index_name: str | None = None, index_id: str | None = None) -> ResponseJson:

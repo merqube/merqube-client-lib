@@ -11,19 +11,23 @@ from merqube_client_lib.pydantic_types import (
     IdentifierUUIDPost,
     IndexDefinitionPost,
     Provider,
+    RunState,
 )
+from merqube_client_lib.pydantic_types import RunStateStatus as RSS
+from merqube_client_lib.templates.equity_baskets import util
 from merqube_client_lib.templates.equity_baskets.create_index import main
 from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.base import (
     inline_to_tp,
 )
-from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.create import (
+from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.multieb_create import (
     create_index,
 )
 from merqube_client_lib.templates.equity_baskets.schema import ClientIndexConfigBase
 
 
 @pytest.mark.parametrize("prod_run", [True, False])
-def test_click_cli(prod_run, monkeypatch):
+@pytest.mark.parametrize("poll", [0, 10])
+def test_click_cli(prod_run, poll, monkeypatch):
     dec = MagicMock()
     mult = MagicMock()
     ss = MagicMock()
@@ -38,9 +42,9 @@ def test_click_cli(prod_run, monkeypatch):
         with open((pth := os.path.join(tmpdir, "config.json")), "w") as f:
             f.write(json.dumps({"my": "config"}))
 
-        expected_call = call(config={"my": "config"}, prod_run=prod_run)
+        expected_call = call(config={"my": "config"}, poll=poll, prod_run=prod_run)
 
-        args = ["--index-type", "decrement", "--config-file-path", pth]
+        args = ["--index-type", "decrement", "--config-file-path", pth, "--poll", poll]
         if prod_run:
             args.append("--prod-run")
 
@@ -53,7 +57,7 @@ def test_click_cli(prod_run, monkeypatch):
 
         # run a mult
 
-        args = ["--index-type", "multiple_equity_basket", "--config-file-path", pth]
+        args = ["--index-type", "multiple_equity_basket", "--config-file-path", pth, "--poll", poll]
         if prod_run:
             args.append("--prod-run")
 
@@ -65,7 +69,7 @@ def test_click_cli(prod_run, monkeypatch):
         assert ss.call_args_list == []
 
         # run an ss twice
-        args = ["--index-type", "single_stock_total_return", "--config-file-path", pth]
+        args = ["--index-type", "single_stock_total_return", "--config-file-path", pth, "--poll", poll]
         if prod_run:
             args.append("--prod-run")
 
@@ -234,3 +238,38 @@ def test_prod_run_ticker_tp(v1_multi):
             },
         ),
     ]
+
+
+@pytest.mark.parametrize(
+    "seq",
+    [
+        [RSS.PENDING_CREATION],
+        [RSS.RUNNING],
+        [RSS.PENDING_CREATION, RSS.FAILED],
+        [RSS.PENDING_CREATION, RSS.RUNNING],
+        [RSS.PENDING_CREATION, RSS.RUNNING, RSS.FAILED],
+        # good
+        [RSS.PENDING_CREATION, RSS.RUNNING, RSS.SUCCEEDED],
+        [RSS.PENDING_CREATION, RSS.SUCCEEDED],  # could happen if run takes <60s
+        [RSS.SUCCEEDED],
+    ],
+)
+def test_poll(seq, monkeypatch):
+    monkeypatch.setattr("time.sleep", lambda x: None)
+    count = 0
+
+    class FakeClient:
+        def get_last_index_run_state(self, index_id: str) -> RunState:
+            nonlocal count
+            if count >= len(seq):
+                return RunState(status=seq[-1], error=None)
+
+            res = seq[count]
+            count += 1
+            return RunState(status=res, error=None)
+
+    if seq[-1] == RSS.SUCCEEDED:
+        util._poll(client=FakeClient(), new_id="asdf", poll=5)
+    else:
+        with pytest.raises(RuntimeError):
+            util._poll(client=FakeClient(), new_id="asdf", poll=5)
