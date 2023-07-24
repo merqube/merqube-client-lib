@@ -50,7 +50,7 @@ class ClientIndexConfigBase(BaseModel):
     bbg_ticker: StrictStr | None = Field(
         None,
         description="due to the limitations of the Bloomberg ticker creation process (no API), this must be a pre-created ticker. You can email MerQube a list of tickers to create on your behalf at support@merqube.com. Then, you provide those as input to these indices",
-        example=".MYINDEX",
+        example="MY_TICKER",
     )
 
     currency: StrictStr = Field("USD", description="set to the currency of the index", example="USD")

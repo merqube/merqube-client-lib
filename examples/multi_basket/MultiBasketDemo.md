@@ -24,7 +24,7 @@ which prints a json like:
 {
     "base_date": "2000-01-01",
     "base_value": 1000.0,
-    "bbg_ticker": ".MYINDEX",
+    "bbg_ticker": "MY_TICKER",
     "currency": "USD",
     "description": "My Index Description",
     "email_list": [
