@@ -105,7 +105,6 @@ iinfo = {
     "title": "testtitle",
     "base_date": "2022-01-01",
     "description": "testdesc",
-    "holiday_spec": None,
     "run_hour": 16,
     "run_minute": 0,
 }

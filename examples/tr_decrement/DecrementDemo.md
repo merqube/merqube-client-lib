@@ -2,6 +2,9 @@
 
 This document represents a full demo of creating a TR (single stock total return) index, and then a Decrement index overlay onto it.
 
+NOTE: if you are only trying to create a decrement index on the universe of MerQube supplied TRs, jump to ##Creating the decrement.
+This section only applies if you are also subscribed to create TR indices.
+
 ## Prequisites:
 
 1. Must have an apikey with permission to create indices in some namespace
@@ -10,28 +13,44 @@ This document represents a full demo of creating a TR (single stock total return
 
 ## Creating the TR
 
-Fill out this template (there are more details inside the template for each class in the `templates` directory). There is an example working file in this directory.
+You can generate an example template with:
+
+```fish
+poetry run get_eb_template --index-type single_stock_total_return"
+```
+
+which prints a json like this:
 
 ```json
 {
-    "base_date": "2000-01-04",
-    "bbg_ticker": null,
+    "base_date": "2000-01-01",
+    "base_value": 1000.0,
+    "bbg_ticker": "MY_TICKER",
     "currency": "EUR",
-    "description": "LVMH TR Index",
-    "email_list": ["foo@merqube.com"],
+    "description": "My Index Description",
+    "email_list": [
+        "bob@mycompany.com",
+        "alice@mycompany.com"
+    ],
+    "holiday_calendar": {
+        "mics": [
+            "XPAR"
+        ],
+        "swaps_monitor_codes": []
+    },
     "is_intraday": false,
-    "holiday_calendar": {"mics": ["XPAR"]},
-    "name": "Demo_LVMH_TR_Index",
-    "namespace": "test",
-    "run_hour": 18,
+    "name": "My Index",
+    "namespace": "mycompany",
+    "run_hour": 16,
     "run_minute": 0,
-    "timezone": "Europe/Paris",
-    "title": "title of my LVMH TR Index that shows on MerQube's website",
-    "underlying_ric": "LVMH.PA"
+    "timezone": "US/Eastern",
+    "title": "My Index Title",
+    "ric": "LMVH.PA"
 }
 ```
 
-Make sure to change `namespace` to the namespace your key is permissioned for.
+Fill out this template. Make sure to change `namespace` to the namespace your key is permissioned for.
+Make sure to set the calendar correctly.
 
 Run the tool to create the index:
 
@@ -92,28 +111,43 @@ which produces a dataframe:
 
 ## Creating the decrement
 
-Next, fill out this template (changing the fee etc). There is an example working file in this directory.
+You can generate an example template for a decrement index with:
+
+    poetry run get_eb_template --index-type decrement
+
+which prints a json like this:
 
 ```json
 {
-    "base_date": "2000-01-04",
-    "description": "50 bps decrement on top of demo LVMH",
-    "email_list": ["yourname@yourco.com"],
-    "holiday_calendar": {"mics": ["XNYS"]},
-    "name": "Demo_LVMH_Decrement_Index",
-    "namespace": "test",
-    "run_hour": 18,
+    "base_date": "2000-01-01",
+    "base_value": 1000.0,
+    "bbg_ticker": "MY_TICKER",
+    "currency": "EUR",
+    "description": "My Index Description",
+    "email_list": [
+        "bob@mycompany.com",
+        "alice@mycompany.com"
+    ],
+    "is_intraday": false,
+    "name": "My Index",
+    "namespace": "mycompany",
+    "run_hour": 16,
     "run_minute": 0,
     "timezone": "US/Eastern",
-    "title": "LVMH 50bps Decrement",
+    "title": "My Index Title",
+    "fee_value": 0.05,
+    "fee_type": "fixed",
     "day_count_convention": "f360",
-    "underlying_index_name": "Demo_LVMH_TR_Index",
-    "client_owned_underlying": true,
-    "base_value": 1000,
-    "fee_value": 50,
-    "fee_type": "fixed"
- }
+    "ric": "LMVH.PA",
+    "start_date": "2000-01-01"
+}
 ```
+(Note: decrements on general indices are not currently supported, but may be in the future. This is a single stock decrement)
+
+In the backround, the library searches for a TR index with the same RIC.
+It will raise an error if one (with that RIC) does not exist, or if there are no returns on or before the decrement `base_date`.
+
+The same calendar as the underlying TR will be automatically applied.
 
 Run the tool to create the index:
 

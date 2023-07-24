@@ -26,7 +26,7 @@ def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
     inner_spec["portfolios"]["constituents"] = [
         {
             "date": index_info.base_date,
-            "identifier": index_info.underlying_ric,
+            "identifier": index_info.ric,
             "quantity": 1,
         }
     ]

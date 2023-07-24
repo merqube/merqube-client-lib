@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.0] - 2023-07-21
+- Huge cleanup to template.jsons - all info was moved into the pydantic model and there is now a function to neatly generate a template from those models
+- Decrement input parameters have changed
+- Remove XNYS as the default since it does not make sense in this global library (which in fact to date has mostly been used for EUR stocks)
+
 ## [0.16.7] - 2023-07-18
 - fix merge job since branch is different
 

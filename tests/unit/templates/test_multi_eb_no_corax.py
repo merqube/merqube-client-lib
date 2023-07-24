@@ -6,6 +6,7 @@ import pytest
 from freezegun import freeze_time
 
 from merqube_client_lib.templates.equity_baskets.multiple_equity_basket import create
+from tests.conftest import mock_secapi
 
 from .helpers import eb_test, eb_test_bad
 
@@ -121,6 +122,7 @@ good_config = {
     "run_minute": 0,
     "timezone": "US/Eastern",
     "title": "TEST_1",
+    "holiday_calendar": {"mics": ["XNYS"], "swaps_monitor_codes": []},
 }
 
 
@@ -150,14 +152,21 @@ def test_multi(intraday, bbg_ticker, corax_conf, has_corax, v1_multi, monkeypatc
         expected["identifiers"] = [{"name": bbg_ticker, "provider": "bloomberg"}]
         ebbg = expected_bbg_post
 
+    def _get_collection_single(*args, **kwargs):
+        return v1_multi
+
+    mock_secapi(
+        monkeypatch,
+        method_name_function_map={},
+        session_func_map={"get_collection_single": _get_collection_single},
+    )
+
     eb_test(
         func=create.create,
         config=good_config,
         bbg_ticker=bbg_ticker,
         expected=expected,
         expected_bbg_post=ebbg,
-        template=v1_multi,
-        monkeypatch=monkeypatch,
         intraday=intraday,
         expected_target_portfolios=expected_tp,
         corax_conf=corax_conf,
