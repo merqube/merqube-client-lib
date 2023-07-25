@@ -4,19 +4,19 @@ Create an equity basket index
 import json
 import logging
 import os
-from typing import Any, Callable, Final
+from typing import Final
 
 import click
 
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.decrement_create import (
-    create as dec_index,
+    DecrementIndexCreator as DC,
 )
-from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.multieb_create import (
-    create as mult_index,
+from merqube_client_lib.templates.equity_baskets.multieb_create import (
+    MultiEquityBasketIndexCreator as MEB,
 )
-from merqube_client_lib.templates.equity_baskets.sstr_create import create as ss_index
-from merqube_client_lib.types import CreateReturn
+from merqube_client_lib.templates.equity_baskets.sstr_create import SSTRCreator as SSTR
+from merqube_client_lib.templates.equity_baskets.util import EquityBasketIndexCreator
 
 SUPPORTED_INDEX_TYPES: Final[list[str]] = ["decrement", "single_stock_total_return", "multiple_equity_basket"]
 
@@ -50,17 +50,17 @@ def main(index_type: str, config_file_path: str, prod_run: bool, poll: int) -> N
         logger.exception(f"Failed to parse config file: {config_file_path}")
         raise err
 
-    func: Callable[[dict[str, Any], bool, int], CreateReturn]
+    cls: EquityBasketIndexCreator
     match index_type:
         case "decrement":
-            func = dec_index
+            cls = DC()
         case "single_stock_total_return":
-            func = ss_index
+            cls = SSTR()
         case _:
             # "multiple_equity_basket"
-            func = mult_index
+            cls = MEB()
 
-    func(config=config, prod_run=prod_run, poll=poll)
+    cls.create(config=config, prod_run=prod_run, poll=poll)
 
 
 if __name__ == "__main__":  # pragma: no cover

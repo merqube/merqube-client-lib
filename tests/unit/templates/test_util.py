@@ -2,9 +2,8 @@ import os
 
 import pandas as pd
 
-from merqube_client_lib.templates.equity_baskets.multiple_equity_basket.base import (
-    get_constituents,
-    inline_to_tp,
+from merqube_client_lib.templates.equity_baskets.multieb_create import (
+    MultiEquityBasketIndexCreator,
 )
 from merqube_client_lib.util import pydantic_to_dict
 
@@ -13,8 +12,11 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 def test_inline_to_tp():
     constituents_csv_path = os.path.join(here, "portfolios.csv")
+
+    cr = MultiEquityBasketIndexCreator()
+
     ports = {
-        "constituents": get_constituents(
+        "constituents": cr._get_constituents(
             constituents_csv_path=constituents_csv_path,
             base_date=pd.Timestamp("2000-01-04"),
             base_value=100.0,
@@ -26,7 +28,7 @@ def test_inline_to_tp():
         "specification_type": "API",
     }
 
-    tp = inline_to_tp(ports)
+    tp = cr._inline_to_tp(ports)
 
     assert [(X, pydantic_to_dict(Y)) for X, Y in tp] == [
         (
