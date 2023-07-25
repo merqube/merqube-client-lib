@@ -12,7 +12,7 @@ from merqube_client_lib.types import CreateReturn
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
 
-def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
+def create(config: dict[str, Any], prod_run: bool = False, poll: int = 0) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.
@@ -34,7 +34,7 @@ def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
     inner_spec["currency"] = index_info.currency
 
     post_template, ident_ppost = create_index(
-        client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run
+        client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run, poll=poll
     )
 
     return CreateReturn(post_template, ident_ppost)

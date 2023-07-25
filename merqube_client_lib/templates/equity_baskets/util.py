@@ -1,5 +1,6 @@
 import json
 import logging
+import time
 from copy import deepcopy
 from typing import Any, Type, cast
 
@@ -17,6 +18,7 @@ from merqube_client_lib.pydantic_types import (
     IntradayPublishConfigBloombergTarget,
     IntradayPublishConfigTarget,
     Provider,
+    RunStateStatus,
     Stage,
 )
 from merqube_client_lib.templates.equity_baskets.schema import ClientIndexConfigBase
@@ -115,6 +117,34 @@ def _configure_report(template: IndexDefinitionPost, email_list: list[str] | Non
     template.run_configuration.index_reports = updated_reports
 
 
+def _poll(client: mc.MerqubeAPIClient, new_id: str, poll: int) -> None:
+    """
+    polls {poll} minutes until either
+    1) it succeeds
+    2) it fails
+    3) poll minutes have passed
+    """
+    logger.info(f"Polling for {poll} minutes for the index to finish")
+    lrs = client.get_last_index_run_state(index_id=new_id)
+    for _ in range(poll):
+        match lrs.status:
+            case RunStateStatus.PENDING_CREATION:
+                logger.info("Index is still pending creation, please wait...")
+            case RunStateStatus.RUNNING:
+                logger.info("Index is running, please wait...")
+            case RunStateStatus.FAILED:
+                break
+            case RunStateStatus.SUCCEEDED:
+                logger.info("Index created and ran successfully!")
+                return
+        time.sleep(60)
+        lrs = client.get_last_index_run_state(index_id=new_id)
+
+    raise RuntimeError(
+        f"Index failed to create and run successfully in {poll} minutes: {lrs.error or 'unknown error'}. Last status: {lrs.status}"
+    )
+
+
 def configure_index(
     template: IndexDefinitionPost, index_info: ClientIndexConfigBase, inner_spec: dict[str, Any]
 ) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
@@ -196,6 +226,7 @@ def create_index(
     inner_spec: dict[str, Any],
     prod_run: bool,
     initial_target_portfolios: TargetPortfoliosDates | None = None,
+    poll: int = 0,
 ) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
     """
     Creates an index from a template
@@ -211,7 +242,7 @@ def create_index(
             logger.info(f"{date}: {formatted}")
 
     if not prod_run:
-        logger.debug("Dry run; exiting without creating the index")
+        logger.debug("Dry run; exiting without creating the index. Poll, if specified, will be ignored")
         return template, bbg_post
 
     # if we are posting to bloomberg, we need to create the identifier first
@@ -227,4 +258,8 @@ def create_index(
         logger.info(f"Pushing target portfolio for {date}")
         client.replace_target_portfolio(index_id=new_id, target_portfolio=pydantic_to_dict(itp))
 
+    if poll == 0:
+        return template, bbg_post
+
+    _poll(client=client, new_id=new_id, poll=poll)
     return template, bbg_post

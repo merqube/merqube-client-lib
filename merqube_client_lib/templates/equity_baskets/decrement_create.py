@@ -61,7 +61,7 @@ def _validate_dec_params(client: MerqubeAPIClient, index_info: ClientDecrementCo
     return tr_name
 
 
-def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
+def create(config: dict[str, Any], prod_run: bool = False, poll: int = 0) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     This class does not handle Corax.
@@ -84,7 +84,7 @@ def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
     inner_spec["fee"] = {"fee_value": index_info.fee_value, "fee_type": index_info.fee_type.value}
 
     post_template, ident_ppost = create_index(
-        client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run
+        client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run, poll=poll
     )
 
     return CreateReturn(post_template, ident_ppost)

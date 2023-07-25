@@ -87,6 +87,7 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         # partials over id methods; partials preserve types
         self.get_manifest = partial(self.get_index_manifest, index_id=self._index_id)
         self.post_model_from_existing = partial(self.index_post_model_from_existing, index_id=self._index_id)
+        self.get_last_run_state = partial(self.get_last_index_run_state, index_id=self._index_id)
         self.lock = partial(self.lock_index, index_id=self._index_id)
         self.unlock = partial(self.unlock_index, index_id=self._index_id)
         self.partial_update = partial(self.patch_index, index_id=self._index_id)

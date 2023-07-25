@@ -3,9 +3,7 @@ from copy import deepcopy
 import pytest
 from freezegun import freeze_time
 
-from merqube_client_lib.templates.equity_baskets.single_stock_total_return_corax import (
-    create,
-)
+from merqube_client_lib.templates.equity_baskets import sstr_create as create
 from tests.conftest import mock_secapi
 
 from .helpers import eb_test, eb_test_bad

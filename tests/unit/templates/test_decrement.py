@@ -5,7 +5,7 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from merqube_client_lib.templates.equity_baskets.decrement import create
+from merqube_client_lib.templates.equity_baskets import decrement_create as create
 from tests.conftest import mock_secapi
 from tests.unit.fixtures.test_tr_manifest_for_dec import tr
 

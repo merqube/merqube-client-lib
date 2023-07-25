@@ -5,7 +5,9 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from merqube_client_lib.templates.equity_baskets.multiple_equity_basket import create
+from merqube_client_lib.templates.equity_baskets.multiple_equity_basket import (
+    multieb_create as create,
+)
 from tests.conftest import mock_secapi
 
 from .helpers import eb_test, eb_test_bad

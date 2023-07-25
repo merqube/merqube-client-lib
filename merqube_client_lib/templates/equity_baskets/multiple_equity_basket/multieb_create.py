@@ -23,7 +23,7 @@ from merqube_client_lib.types import CreateReturn
 logger = get_module_logger(__name__)
 
 
-def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
+def create(config: dict[str, Any], prod_run: bool = False, poll: int = 0) -> CreateReturn:
     """
     Creates a new Equity Basket with multiple entries
     """
@@ -73,6 +73,7 @@ def create(config: dict[str, Any], prod_run: bool = False) -> CreateReturn:
         inner_spec=inner_spec,
         prod_run=prod_run,
         initial_target_portfolios=target_portfolios,
+        poll=poll,
     )
 
     return CreateReturn(template=post_template, ident=ident, initial_target_ports=target_portfolios)
