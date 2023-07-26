@@ -24,7 +24,7 @@ requests = "*"
 
 [tool.poetry.scripts]
 create = "merqube_client_lib.templates.equity_baskets.bin.create_index:main"
-update_portfolio = "merqube_client_lib.templates.equity_baskets.in.update_portfolio:main"
+update_portfolio = "merqube_client_lib.templates.equity_baskets.bin.update_portfolio:main"
 get_eb_template = "merqube_client_lib.templates.equity_baskets.bin.get_eb_template:main"
 
 [tool.poetry.dev-dependencies]
