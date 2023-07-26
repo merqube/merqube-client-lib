@@ -11,7 +11,7 @@ from merqube_client_lib.constants import PRICE_RETURN
 from merqube_client_lib.exceptions import IndexNotFound
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.schema import ClientDecrementConfig
-from merqube_client_lib.templates.equity_baskets.util import create_index, load_template
+from merqube_client_lib.templates.equity_baskets.util import EquityBasketIndexCreator
 from merqube_client_lib.types import CreateReturn
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
@@ -61,30 +61,33 @@ def _validate_dec_params(client: MerqubeAPIClient, index_info: ClientDecrementCo
     return tr_name
 
 
-def create(config: dict[str, Any], prod_run: bool = False, poll: int = 0) -> CreateReturn:
-    """
-    Creates a new Equity Basket with multiple entries
-    This class does not handle Corax.
-    """
-    client, template, index_info, inner_spec = load_template(
-        template_name="DECREMENT_TEMPLATE_VERSION_1", config=config, model=ClientDecrementConfig
-    )
+class DecrementIndexCreator(EquityBasketIndexCreator):
+    """create a decrement index on top of a SSTR"""
 
-    index_info = cast(ClientDecrementConfig, index_info)
+    def create(self, config: dict[str, Any], prod_run: bool = False, poll: int = 0) -> CreateReturn:
+        """
+        Creates a new Equity Basket with multiple entries
+        This class does not handle Corax.
+        """
+        client, template, index_info, inner_spec = self._load_template(
+            template_name="DECREMENT_TEMPLATE_VERSION_1", config=config, model=ClientDecrementConfig
+        )
 
-    tr_name = _validate_dec_params(client, index_info)
+        index_info = cast(ClientDecrementConfig, index_info)
 
-    inner_spec["holiday_spec"]["calendar_identifiers"] = [f"MQI:{tr_name}"]
+        tr_name = _validate_dec_params(client, index_info)
 
-    inner_spec["start_date"] = index_info.start_date or index_info.base_date
+        inner_spec["holiday_spec"]["calendar_identifiers"] = [f"MQI:{tr_name}"]
 
-    # the decrement index looks up the returns of the tr via this
-    inner_spec["underlying_ticker"] = tr_name
-    inner_spec["day_count_convention"] = index_info.day_count_convention
-    inner_spec["fee"] = {"fee_value": index_info.fee_value, "fee_type": index_info.fee_type.value}
+        inner_spec["start_date"] = index_info.start_date or index_info.base_date
 
-    post_template, ident_ppost = create_index(
-        client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run, poll=poll
-    )
+        # the decrement index looks up the returns of the tr via this
+        inner_spec["underlying_ticker"] = tr_name
+        inner_spec["day_count_convention"] = index_info.day_count_convention
+        inner_spec["fee"] = {"fee_value": index_info.fee_value, "fee_type": index_info.fee_type.value}
 
-    return CreateReturn(post_template, ident_ppost)
+        post_template, ident_ppost = self._create_index(
+            client=client, template=template, index_info=index_info, inner_spec=inner_spec, prod_run=prod_run, poll=poll
+        )
+
+        return CreateReturn(post_template, ident_ppost)

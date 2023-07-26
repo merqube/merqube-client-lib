@@ -11,7 +11,7 @@ from tests.conftest import mock_secapi
 
 
 def eb_test(
-    func,
+    cls,
     config,
     bbg_ticker,
     expected,
@@ -39,7 +39,7 @@ def eb_test(
         conf["base_value"] = base_value
         expected["spec"]["index_class_args"]["spec"]["base_val"] = float(base_value)
 
-    cr = func(config=conf)
+    cr = cls().create(config=conf)
 
     # assert the index template
     assert pydantic_to_dict(cr.template) == expected
@@ -57,7 +57,7 @@ def eb_test(
         assert [(x, pydantic_to_dict(y)) for (x, y) in cr.initial_target_ports] == expected_target_portfolios
 
 
-def eb_test_bad(func, config, template, monkeypatch):
+def eb_test_bad(cls, config, template, monkeypatch):
     """shared helper used for all equity basket tests"""
     mock_secapi(
         monkeypatch,
@@ -66,6 +66,6 @@ def eb_test_bad(func, config, template, monkeypatch):
     )
 
     with pytest.raises(ValueError) as e:
-        func(config=config)
+        cls().create(config=config)
 
     return e.exconly()

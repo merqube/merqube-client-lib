@@ -3,7 +3,7 @@ from copy import deepcopy
 import pytest
 from freezegun import freeze_time
 
-from merqube_client_lib.templates.equity_baskets import sstr_create as create
+from merqube_client_lib.templates.equity_baskets.sstr_create import SSTRCreator
 from tests.conftest import mock_secapi
 
 from .helpers import eb_test, eb_test_bad
@@ -104,7 +104,7 @@ def test_ss_tr(bbg_ticker, expected, expected_bbg_post, v1_ss, monkeypatch):
     )
 
     eb_test(
-        func=create.create,
+        cls=SSTRCreator,
         config=good_config,
         bbg_ticker=bbg_ticker,
         expected=expected,
@@ -128,4 +128,4 @@ bad_4["run_minute"] = 184
 
 @pytest.mark.parametrize("case", [bad_1, bad_2, bad_3, bad_4])
 def test_multi_bad(case, v1_ss, monkeypatch):
-    eb_test_bad(func=create.create, config=case, template=v1_ss, monkeypatch=monkeypatch)
+    eb_test_bad(cls=SSTRCreator, config=case, template=v1_ss, monkeypatch=monkeypatch)

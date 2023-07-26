@@ -5,7 +5,10 @@ import pandas as pd
 import pytest
 from freezegun import freeze_time
 
-from merqube_client_lib.templates.equity_baskets import decrement_create as create
+from merqube_client_lib.templates.equity_baskets.decrement_create import (
+    DecrementIndexCreator,
+    _tr_exists,
+)
 from tests.conftest import mock_secapi
 from tests.unit.fixtures.test_tr_manifest_for_dec import tr
 
@@ -123,7 +126,7 @@ def test_decrement(bbg_ticker, email_list, expected, expec_bbg_post, base_value,
 
     def t():
         eb_test(
-            func=create.create,
+            cls=DecrementIndexCreator,
             config=good_config,
             bbg_ticker=bbg_ticker,
             email_list=email_list,
@@ -175,7 +178,7 @@ b9 = (bad_9, "pydantic")
 
 @pytest.mark.parametrize("case,err", [b1, b2, b3, b4, b5, b6, b7, b8, b9])
 def test_multi_bad(case, err, v1_decrement, monkeypatch):
-    actual = eb_test_bad(func=create.create, config=case, template=v1_decrement, monkeypatch=monkeypatch)
+    actual = eb_test_bad(cls=DecrementIndexCreator, config=case, template=v1_decrement, monkeypatch=monkeypatch)
     if err == "pydantic":
         assert "pydantic.error_wrappers.ValidationError" in actual
     else:
@@ -221,7 +224,7 @@ def test_get_trs(inds, should_match):
         def get_indices_in_namespace(self, namespace):
             return inds
 
-    res = create._tr_exists(Cl(), TEST_RIC)
+    res = _tr_exists(Cl(), TEST_RIC)
     if should_match:
         assert res == "MQU_AXAF_TR_Index_Test_1"
     else:
