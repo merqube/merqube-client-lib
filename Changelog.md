@@ -4,6 +4,11 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.17.1] - 2023-07-27
+- allow specifiying whether dividends are reinvested at open, or close, for TRs
+- fix bug regarding launch date
+- fix bug where the wrong output metric was disseminated to bloomberg for decrements
+
 ## [0.17.0] - 2023-07-21
 - cleanup to a class based architecture - no API change
 - Huge cleanup to template.jsons - all info was moved into the pydantic model and there is now a function to neatly generate a template from those models

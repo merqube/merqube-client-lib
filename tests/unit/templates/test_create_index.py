@@ -21,12 +21,24 @@ def test_click_cli(prod_run, poll, monkeypatch):
     ss = MagicMock()
 
     class DecCl(EquityBasketIndexCreator):
+        @property
+        def output_metric(self) -> str:
+            return "total_return"
+
         create = dec
 
     class MultCl(EquityBasketIndexCreator):
+        @property
+        def output_metric(self) -> str:
+            return "price_return"
+
         create = mult
 
     class SsCl(EquityBasketIndexCreator):
+        @property
+        def output_metric(self) -> str:
+            return "price_return"
+
         create = ss
 
     monkeypatch.setattr("merqube_client_lib.templates.equity_baskets.bin.create_index.DC", DecCl)
@@ -118,6 +130,10 @@ def test_poll(seq, monkeypatch):
     count = 0
 
     class Cl(EquityBasketIndexCreator):
+        @property
+        def output_metric(self) -> str:
+            return "price_return"
+
         def create(self, config: dict[str, Any], prod_run: bool, poll: int):
             pass
 
