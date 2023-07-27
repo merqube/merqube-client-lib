@@ -84,7 +84,13 @@ good_config = {
     "ric": "LVMH.PA",
 }
 
-expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
+expected_bbg_post = {
+    "index_name": "TEST_1",
+    "name": "xxx",
+    "namespace": "test",
+    "ticker": "xxx",
+    "metric": "price_return",
+}
 
 
 @freeze_time("2023-06-01")

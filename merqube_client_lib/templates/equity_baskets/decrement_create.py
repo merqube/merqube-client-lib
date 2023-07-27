@@ -7,7 +7,7 @@ from typing import Any, Final, cast
 import pandas as pd
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClient
-from merqube_client_lib.constants import PRICE_RETURN
+from merqube_client_lib.constants import PRICE_RETURN, TOTAL_RETURN
 from merqube_client_lib.exceptions import IndexNotFound
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.schema import ClientDecrementConfig
@@ -63,6 +63,10 @@ def _validate_dec_params(client: MerqubeAPIClient, index_info: ClientDecrementCo
 
 class DecrementIndexCreator(EquityBasketIndexCreator):
     """create a decrement index on top of a SSTR"""
+
+    @property
+    def output_metric(self) -> str:
+        return TOTAL_RETURN
 
     def create(self, config: dict[str, Any], prod_run: bool = False, poll: int = 0) -> CreateReturn:
         """

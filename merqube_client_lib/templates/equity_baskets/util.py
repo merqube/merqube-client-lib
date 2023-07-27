@@ -56,6 +56,17 @@ def get_inner_spec(template: IndexDefinitionPost) -> dict[str, Any]:
 
 
 class EquityBasketIndexCreator(abc.ABC):
+    """
+    base class for classes that create ebs
+    """
+
+    @property
+    @abc.abstractmethod
+    def output_metric(self) -> str:
+        """
+        The output metric for the index
+        """
+
     def _get_index_info(self, config: dict[str, Any], model: Type[ClientIndexConfigBase]) -> ClientIndexConfigBase:
         """
         load index specific info from config file + validate the data
@@ -217,7 +228,11 @@ class EquityBasketIndexCreator(abc.ABC):
                 )
 
             bbg_identifier_post = IdentifierUUIDPost(
-                name=bbg_ticker, index_name=name, namespace=index_info.namespace, ticker=bbg_ticker
+                name=bbg_ticker,
+                index_name=name,
+                namespace=index_info.namespace,
+                ticker=bbg_ticker,
+                metric=self.output_metric,
             )
 
         self._configure_report(template=template, email_list=index_info.email_list)

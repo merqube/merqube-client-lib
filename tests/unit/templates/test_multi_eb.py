@@ -117,7 +117,13 @@ expected_tp = [
     ),
 ]
 
-expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
+expected_bbg_post = {
+    "index_name": "TEST_1",
+    "name": "xxx",
+    "namespace": "test",
+    "ticker": "xxx",
+    "metric": "price_return",
+}
 
 good_config = {
     "base_date": "2000-01-04",
@@ -269,7 +275,9 @@ def test_prod_run_ticker(v1_multi):
     assert ident.call_args_list == [
         call(
             provider=Provider.bloomberg,
-            identifier_post=IdentifierUUIDPost(index_name="testname", name="TEST", namespace="testns", ticker="TEST"),
+            identifier_post=IdentifierUUIDPost(
+                index_name="testname", name="TEST", namespace="testns", ticker="TEST", metric="price_return"
+            ),
         )
     ]
     assert index.call_args_list == [call(index_def=ANY)]
@@ -304,7 +312,9 @@ def test_prod_run_ticker_tp(v1_multi):
     assert ident.call_args_list == [
         call(
             provider=Provider.bloomberg,
-            identifier_post=IdentifierUUIDPost(index_name="testname", name="TEST", namespace="testns", ticker="TEST"),
+            identifier_post=IdentifierUUIDPost(
+                index_name="testname", name="TEST", namespace="testns", ticker="TEST", metric="price_return"
+            ),
         )
     ]
     assert index.call_args_list == [call(index_def=ANY)]

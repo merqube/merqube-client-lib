@@ -4,6 +4,7 @@ Create an equity basket index
 import logging
 from typing import Any, cast
 
+from merqube_client_lib.constants import PRICE_RETURN
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.templates.equity_baskets.schema import (
     ClientSSTRConfig,
@@ -17,6 +18,10 @@ logger = get_module_logger(__name__, level=logging.DEBUG)
 
 class SSTRCreator(EquityBasketIndexCreator):
     """create a single stock total return index"""
+
+    @property
+    def output_metric(self) -> str:
+        return PRICE_RETURN
 
     def create(self, config: dict[str, Any], prod_run: bool = False, poll: int = 0) -> CreateReturn:
         """

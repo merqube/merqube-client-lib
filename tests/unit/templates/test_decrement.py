@@ -99,7 +99,13 @@ good_config = {
     "fee_type": "percentage_pre",
 }
 
-expected_bbg_post = {"index_name": "TEST_1", "name": "xxx", "namespace": "test", "ticker": "xxx"}
+expected_bbg_post = {
+    "index_name": "TEST_1",
+    "name": "xxx",
+    "namespace": "test",
+    "ticker": "xxx",
+    "metric": "total_return",
+}
 
 
 @freeze_time("2023-06-01")
