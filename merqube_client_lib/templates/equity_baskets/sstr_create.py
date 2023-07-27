@@ -5,7 +5,10 @@ import logging
 from typing import Any, cast
 
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.templates.equity_baskets.schema import ClientSSTRConfig
+from merqube_client_lib.templates.equity_baskets.schema import (
+    ClientSSTRConfig,
+    reinvestment_mapping,
+)
 from merqube_client_lib.templates.equity_baskets.util import EquityBasketIndexCreator
 from merqube_client_lib.types import CreateReturn
 
@@ -33,6 +36,8 @@ class SSTRCreator(EquityBasketIndexCreator):
                 "quantity": 1,
             }
         ]
+
+        inner_spec["corporate_actions"]["dividend"]["reinvest_day"] = reinvestment_mapping[index_info.reinvestment_type]
 
         inner_spec["currency"] = index_info.currency
 

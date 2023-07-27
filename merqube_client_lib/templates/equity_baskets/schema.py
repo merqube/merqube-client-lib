@@ -136,6 +136,17 @@ class CorporateActions(BaseModel):
     reinvest_dividends: StrictBool = True
 
 
+class ReinvestmentType(Enum):
+    AT_OPEN = "AT_OPEN"  # reinvest at previous day's prices
+    AT_CLOSE = "AT_CLOSE"  # reinvest at the end of the effective date
+
+
+reinvestment_mapping = {
+    ReinvestmentType.AT_OPEN: "PREV_DAY",
+    ReinvestmentType.AT_CLOSE: "EFF_DAY",
+}
+
+
 class ClientSSTRConfig(ClientIndexConfigBase, _ClientIndexWithCalendarBase):
     """
     Single stock total return index
@@ -145,6 +156,10 @@ class ClientSSTRConfig(ClientIndexConfigBase, _ClientIndexWithCalendarBase):
         extra = Extra.forbid
 
     ric: StrictStr = Field(description="set to the RIC of the underlying equity", example="LMVH.PA")
+
+    reinvestment_type: ReinvestmentType = Field(
+        default=ReinvestmentType.AT_OPEN, description="set to the type of reinvestment to apply", example="AT_OPEN"
+    )
 
 
 class ClientDecrementConfig(ClientIndexConfigBase):
