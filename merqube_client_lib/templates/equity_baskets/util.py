@@ -161,6 +161,8 @@ class EquityBasketIndexCreator(abc.ABC):
             if v := getattr(index_info, k, None):
                 setattr(template, k, v)
 
+        template.launch_date = freezable_utcnow_ts().strftime("%Y/%m/%d")
+
         inner_spec["index_id"] = index_info.name
         for k in SPEC_KEYS:
             inner_spec[k] = getattr(index_info, k)

@@ -45,7 +45,8 @@ which prints a json like this:
     "run_minute": 0,
     "timezone": "US/Eastern",
     "title": "My Index Title",
-    "ric": "LMVH.PA"
+    "ric": "LMVH.PA",
+    "reinvestment_type": "AT_OPEN"
 }
 ```
 

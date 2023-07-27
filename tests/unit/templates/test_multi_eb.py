@@ -39,7 +39,7 @@ expected_base = {
         "publish_config": {"price_return": [{"target": "db"}, {"target": "secapi"}]},
         "calculation_max_retry_delay": 15,
     },
-    "launch_date": "2099-01-01",
+    "launch_date": "2023/06/01",  # from freeze_time
     "name": "TEST_1",
     "namespace": "test",
     "related": [],
