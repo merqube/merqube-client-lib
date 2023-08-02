@@ -75,11 +75,11 @@ After a few moments, (depending on how far back the `base_date` is), you will re
 To access returns, you have four options:
 1. You can use the daily emails (and the email that was sent upon creation with the historical return)
 
-![Alt text](imgs/tr_returns_email.png?raw=true "Title")
+![Alt text](../tr_decrement/imgs/tr_returns_email.png?raw=true "Title")
 
 2. You can navigate to the website at `https://merqube.com/index/{name}`
 
-![Alt text](imgs/tr_website.png?raw=true "Title")
+![Alt text](../tr_decrement/imgs/tr_website.png?raw=true "Title")
 
 3. You can use the API directly:
 
