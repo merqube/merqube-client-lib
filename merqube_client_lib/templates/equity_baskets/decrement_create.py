@@ -45,7 +45,7 @@ def _validate_dec_params(client: MerqubeAPIClient, index_info: ClientDecrementCo
     """
     pr_check_date = index_info.start_date or index_info.base_date
 
-    if index_info.start_date and index_info.start_date > index_info.base_date:
+    if index_info.start_date and pd.Timestamp(index_info.start_date) > pd.Timestamp(index_info.base_date):
         raise ValueError("The start date of the decrement index, if specified, must be before the base date")
 
     if not (tr_name := _tr_exists(client, index_info.ric)):

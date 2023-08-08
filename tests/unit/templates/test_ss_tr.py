@@ -8,7 +8,7 @@ from tests.conftest import mock_secapi
 
 from .helpers import eb_test, eb_test_bad
 
-cal = {"swaps_monitor_codes": ["LnB"], "calendar_identifiers": ["MIC:XPAR"]}
+cal = {"calendar_identifiers": ["SM:LnB", "MIC:XPAR"]}
 
 expected_no_ticker = {
     "administrative": {"role": "development"},
@@ -74,7 +74,7 @@ good_config = {
     "base_value": 1000,
     "currency": "EUR",
     "description": "SSEB 1",
-    "holiday_calendar": {"swaps_monitor_codes": ["LnB"], "mics": ["XPAR"]},
+    "holiday_calendar": {"calendar_identifiers": ["SM:LnB", "MIC:XPAR"]},
     "name": "TEST_1",
     "namespace": "test",
     "run_hour": 18,
