@@ -6,12 +6,15 @@ from typing import Any, cast
 
 from merqube_client_lib.constants import PRICE_RETURN
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.templates.equity_baskets.schema import (
-    ClientSSTRConfig,
-    reinvestment_mapping,
-)
+from merqube_client_lib.pydantic_types import ReinvestmentType
+from merqube_client_lib.templates.equity_baskets.schema import ClientSSTRConfig
 from merqube_client_lib.templates.equity_baskets.util import EquityBasketIndexCreator
 from merqube_client_lib.types import CreateReturn
+
+reinvestment_mapping = {
+    ReinvestmentType.AT_OPEN: "PREV_DAY",
+    ReinvestmentType.AT_CLOSE: "EFF_DAY",
+}
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 

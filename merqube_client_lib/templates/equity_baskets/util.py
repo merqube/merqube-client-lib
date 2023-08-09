@@ -11,7 +11,6 @@ from pydantic import BaseModel
 from merqube_client_lib.api_client import merqube_client as mc
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_types import (
-    HolidayCalendarSpec,
     IdentifierUUIDPost,
     IdentifierUUIDRef,
     IndexDefinitionPost,
@@ -22,7 +21,9 @@ from merqube_client_lib.pydantic_types import (
     RunStateStatus,
     Stage,
 )
-from merqube_client_lib.templates.equity_baskets.schema import ClientIndexConfigBase
+from merqube_client_lib.templates.equity_baskets.schema import (
+    ClientIndexConfigBaseValidator,
+)
 from merqube_client_lib.types import CreateReturn, TargetPortfoliosDates
 from merqube_client_lib.util import freezable_utcnow_ts, get_token, pydantic_to_dict
 
@@ -67,7 +68,9 @@ class EquityBasketIndexCreator(abc.ABC):
         The output metric for the index
         """
 
-    def _get_index_info(self, config: dict[str, Any], model: Type[ClientIndexConfigBase]) -> ClientIndexConfigBase:
+    def _get_index_info(
+        self, config: dict[str, Any], model: Type[ClientIndexConfigBaseValidator]
+    ) -> ClientIndexConfigBaseValidator:
         """
         load index specific info from config file + validate the data
         """
@@ -75,15 +78,7 @@ class EquityBasketIndexCreator(abc.ABC):
 
         index_info = model.parse_obj(config)
 
-        kwargs = {}
-        if hc := getattr(index_info, "holiday_calendar", None):
-            if hc.mics:
-                kwargs["calendar_identifiers"] = [f"MIC:{mic}" for mic in hc.mics]
-            if hc.swaps_monitor_codes:
-                kwargs["swaps_monitor_codes"] = hc.swaps_monitor_codes
-
-        if kwargs:
-            index_info._holiday_spec_ = HolidayCalendarSpec(**kwargs)  # type: ignore
+        # TODO: perform those other validations here
 
         return index_info
 
@@ -91,7 +86,7 @@ class EquityBasketIndexCreator(abc.ABC):
         self,
         template_name: str,
         config: dict[str, Any],
-        model: Type[ClientIndexConfigBase],
+        model: Type[ClientIndexConfigBaseValidator],
     ) -> tuple[mc.MerqubeAPIClient, IndexDefinitionPost, BaseModel, dict[str, Any]]:
         """
         Loads a template index model to edit and then create a new index from
@@ -157,7 +152,7 @@ class EquityBasketIndexCreator(abc.ABC):
         )
 
     def _configure_index(
-        self, template: IndexDefinitionPost, index_info: ClientIndexConfigBase, inner_spec: dict[str, Any]
+        self, template: IndexDefinitionPost, index_info: ClientIndexConfigBaseValidator, inner_spec: dict[str, Any]
     ) -> tuple[IndexDefinitionPost, IdentifierUUIDPost | None]:
         """
         set up the index from index info
@@ -182,8 +177,8 @@ class EquityBasketIndexCreator(abc.ABC):
             inner_spec["base_val"] = index_info.base_value
 
         # some indices want "calendar" instead of "holiday_spec"
-        if index_info._holiday_spec_:
-            inner_spec["holiday_spec"] = inner_spec["calendar"] = index_info._holiday_spec_
+        if index_info.holiday_calendar:
+            inner_spec["holiday_spec"] = inner_spec["calendar"] = pydantic_to_dict(index_info.holiday_calendar)
 
         name = index_info.name
         bbg_ticker = index_info.bbg_ticker
@@ -243,7 +238,7 @@ class EquityBasketIndexCreator(abc.ABC):
         self,
         client: mc.MerqubeAPIClient,
         template: IndexDefinitionPost,
-        index_info: ClientIndexConfigBase,
+        index_info: ClientIndexConfigBaseValidator,
         inner_spec: dict[str, Any],
         prod_run: bool,
         initial_target_portfolios: TargetPortfoliosDates | None = None,

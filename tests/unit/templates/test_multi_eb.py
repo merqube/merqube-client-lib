@@ -14,7 +14,9 @@ from merqube_client_lib.pydantic_types import (
 from merqube_client_lib.templates.equity_baskets.multieb_create import (
     MultiEquityBasketIndexCreator as MEB,
 )
-from merqube_client_lib.templates.equity_baskets.schema import ClientIndexConfigBase
+from merqube_client_lib.templates.equity_baskets.schema import (
+    ClientIndexConfigBaseValidator,
+)
 from tests.conftest import mock_secapi
 
 from .helpers import eb_test, eb_test_bad
@@ -137,7 +139,7 @@ good_config = {
     "run_minute": 0,
     "timezone": "US/Eastern",
     "title": "TEST_1",
-    "holiday_calendar": {"mics": ["XNYS"], "swaps_monitor_codes": []},
+    "holiday_calendar": {"calendar_identifiers": ["MIC:XNYS"]},
 }
 
 
@@ -207,7 +209,7 @@ def test_multi_bad(case, v1_multi, monkeypatch):
     eb_test_bad(cls=MEB, config=case, monkeypatch=monkeypatch, template=v1_multi)
 
 
-iinfo = {
+index_info = {
     "base_value": 100,
     "namespace": "testns",
     "name": "testname",
@@ -217,8 +219,6 @@ iinfo = {
     "run_hour": 16,
     "run_minute": 0,
 }
-
-iinfo = ClientIndexConfigBase.parse_obj(iinfo)
 
 
 def _get_client():
@@ -236,6 +236,7 @@ def _get_client():
 
 def test_prod_run(v1_multi):
     manifest = deepcopy(v1_multi)
+    iinfo = ClientIndexConfigBaseValidator.parse_obj(index_info)
     del manifest["id"]
     del manifest["status"]
     ind = IndexDefinitionPost.parse_obj(manifest)
@@ -256,6 +257,7 @@ def test_prod_run(v1_multi):
 
 def test_prod_run_ticker(v1_multi):
     manifest = deepcopy(v1_multi)
+    iinfo = ClientIndexConfigBaseValidator.parse_obj(index_info)
     del manifest["id"]
     del manifest["status"]
     ind = IndexDefinitionPost.parse_obj(manifest)
@@ -286,6 +288,7 @@ def test_prod_run_ticker(v1_multi):
 
 def test_prod_run_ticker_tp(v1_multi):
     manifest = deepcopy(v1_multi)
+    iinfo = ClientIndexConfigBaseValidator.parse_obj(index_info)
     del manifest["id"]
     del manifest["status"]
     ind = IndexDefinitionPost.parse_obj(manifest)
