@@ -1,2 +1,0 @@
-[run]
-omit = tests/*,merqube_client_lib/pydantic_types.py
