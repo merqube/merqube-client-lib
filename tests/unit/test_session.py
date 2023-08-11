@@ -13,15 +13,27 @@ from tests.unit.helpers import MockRequestsResponse
 
 
 def test_handle_nonrecoverable():
-    exc = Exception("test")
+    exc = requests.HTTPError("test")
+
+    class FakeRes:
+        @property
+        def status_code(self):
+            return 500
+
+        def raise_for_status(self):
+            raise exc
+
+        def json(self):
+            return {"error": "test"}
 
     sess = session.get_merqube_session()
+    sess.request = MagicMock(return_value=FakeRes())
+
     with pytest.raises(APIError) as e:
-        sess.handle_nonrecoverable(MockRequestsResponse(500, {"error": "test"}), exc, req_id="testid")
+        sess.request_raise("GET", "/test")
 
     assert e.value.code == 500
     assert e.value.response_json == {"error": "test"}
-    assert e.value.request_id == "testid"
 
 
 @pytest.mark.parametrize(

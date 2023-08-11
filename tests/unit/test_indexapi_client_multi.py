@@ -6,7 +6,7 @@ There are more in the integration tests
 import pytest
 
 from merqube_client_lib.api_client.merqube_client import get_client
-from tests.conftest import mock_secapi
+from tests.unit.conftest import mock_secapi
 
 valid1 = {"id": "valid1id", "name": "valid1", "stage": "prod"}
 valid2 = {"id": "valid2id", "name": "valid2", "stage": "prod"}

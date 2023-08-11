@@ -17,7 +17,7 @@ from merqube_client_lib.api_client.merqube_client import (
 )
 from merqube_client_lib.types import Manifest
 from merqube_client_lib.util import pydantic_to_dict
-from tests.conftest import mock_secapi
+from tests.unit.conftest import mock_secapi
 from tests.unit.fixtures.test_manifest import manifest
 
 sid = "testid"
@@ -66,6 +66,10 @@ def test_single_index_returns(monkeypatch):
     )
 
     client = get_client(index_name="MQEFAB01")
+
+    assert client.id is not None
+    assert not client.is_intraday
+    assert client.name == "MQEFAB01"
 
     df = client.get_returns(start_date=pd.Timestamp("2023-04-01"), end_date=pd.Timestamp("2023-04-10"))
 

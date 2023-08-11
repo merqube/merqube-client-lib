@@ -17,6 +17,10 @@ mock_secapi = mock_secapi_builder(
 )
 
 
+def _json_helper(path):
+    return json.load(open(os.path.join(here, "fixtures", path + ".json")))
+
+
 @pytest.fixture(autouse=True)
 def reset_global():
     merqube_client.client_cache.clear()
@@ -24,14 +28,29 @@ def reset_global():
 
 @pytest.fixture
 def v1_multi():
-    return json.load(open(os.path.join(here, "unit/fixtures/v1_multi.json")))
+    return _json_helper("v1_multi")
 
 
 @pytest.fixture
 def v1_ss():
-    return json.load(open(os.path.join(here, "unit/fixtures/v1_ss.json")))
+    return _json_helper("v1_ss")
 
 
 @pytest.fixture
 def v1_decrement():
-    return json.load(open(os.path.join(here, "unit/fixtures/v1_decrement.json")))
+    return _json_helper("v1_decrement")
+
+
+@pytest.fixture
+def templated_ss():
+    return _json_helper("templated_ss")
+
+
+@pytest.fixture
+def templated_mult():
+    return _json_helper("templated_mult")
+
+
+@pytest.fixture
+def templated_mult_ports():
+    return _json_helper("templated_mult_ports")

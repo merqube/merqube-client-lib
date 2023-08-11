@@ -16,37 +16,32 @@ This section only applies if you are also subscribed to create TR indices.
 You can generate an example template with:
 
 ```fish
-poetry run get_eb_template --index-type single_stock_total_return"
+poetry run get_eb_template --index-type single_stock_total_return
 ```
 
 which prints a json like this:
 
 ```json
 {
-    "base_date": "2000-01-01",
+    "base_date": "2000-01-04",
     "base_value": 1000.0,
     "bbg_ticker": "MY_TICKER",
-    "currency": "EUR",
+    "currency": "USD",
     "description": "My Index Description",
     "email_list": [
         "bob@mycompany.com",
         "alice@mycompany.com"
     ],
-    "holiday_calendar": {
-        "mics": [
-            "XPAR"
-        ],
-        "swaps_monitor_codes": []
-    },
+    "holiday_calendar": null,
     "is_intraday": false,
     "name": "My Index",
     "namespace": "mycompany",
+    "ric": "LMVH.PA",
+    "reinvestment_type": "AT_OPEN",
     "run_hour": 16,
     "run_minute": 0,
     "timezone": "US/Eastern",
-    "title": "My Index Title",
-    "ric": "LMVH.PA",
-    "reinvestment_type": "AT_OPEN"
+    "title": "My Index Title"
 }
 ```
 
@@ -56,10 +51,17 @@ Make sure to set the calendar correctly.
 Run the tool to create the index:
 
 ```fish
-poetry run create --index-type=single_stock_total_return  --config-file-path ~/Desktop/single_stock_example.json --prod-run
+poetry run create --index-type=single_stock_total_return  --config-file-path ~/Desktop/single_stock_example.json --prod-run --poll 10
 ```
 
 This will return the unique `uuid` of the index (you can use this on our API to access returns, or the name of the index).
+The `poll` flag can be ommitted if you'd like, but we advise using it; if set it will poll the status of the index and inform about whether it was successful. 
+
+Note: you can just template the manifest without creating anything using:
+
+```fish
+poetry run create --index-type=single_stock_total_return  --config-file-path ~/Desktop/single_stock_example.json
+```
 
 ## Accessing the TR
 
@@ -120,27 +122,28 @@ which prints a json like this:
 
 ```json
 {
-    "base_date": "2000-01-01",
+    "fee_value": 0.05,
+    "fee_type": "fixed",
+    "day_count_convention": "f360",
+    "ric": "LMVH.PA",
+    "start_date": "2004-01-04",
+    "base_date": "2000-01-04",
     "base_value": 1000.0,
     "bbg_ticker": "MY_TICKER",
-    "currency": "EUR",
+    "currency": "USD",
     "description": "My Index Description",
     "email_list": [
         "bob@mycompany.com",
         "alice@mycompany.com"
     ],
+    "holiday_calendar": null,
     "is_intraday": false,
     "name": "My Index",
     "namespace": "mycompany",
     "run_hour": 16,
     "run_minute": 0,
     "timezone": "US/Eastern",
-    "title": "My Index Title",
-    "fee_value": 0.05,
-    "fee_type": "fixed",
-    "day_count_convention": "f360",
-    "ric": "LMVH.PA",
-    "start_date": "2000-01-01"
+    "title": "My Index Title"
 }
 ```
 (Note: decrements on general indices are not currently supported, but may be in the future. This is a single stock decrement)
@@ -153,7 +156,7 @@ The same calendar as the underlying TR will be automatically applied.
 Run the tool to create the index:
 
 ```fish
-poetry run create --index-type=decrement --config-file-path ~/Desktop/decrement.json --prod-run
+poetry run create --index-type=decrement --config-file-path ~/Desktop/decrement.json --prod-run --poll 10
 ```
 
 ## Accessing the decrement

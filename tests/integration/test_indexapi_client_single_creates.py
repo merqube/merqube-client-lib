@@ -1,7 +1,7 @@
 """
 NOTE: in circle CI there is a MERQ_API_KEY set to a test key which has index create access on the test namespace
-You will not be able to run this particular test locally unless you set that ENV to that key locally - but 
-you can run the test in circle ci
+You will not be able to run this particular test locally unless you set that ENV to that key locally
+(but you can run the test in circle ci)
 """
 import random
 import string
@@ -31,7 +31,6 @@ from merqube_client_lib.pydantic_types import (
     RicEquityPosition,
     Role,
 )
-from merqube_client_lib.types import TargetPortfoliosDates
 from merqube_client_lib.util import get_token, pydantic_to_dict
 
 logger = get_module_logger(__name__)
@@ -48,85 +47,73 @@ TEST_IND = IndexDefinitionPost(
     launch_date="2066-06-06",
 )
 
-tp = cast(
-    TargetPortfoliosDates,
-    [
-        (
-            pd.Timestamp("2023-06-12 00:00:00"),
-            EquityBasketPortfolio(
-                positions=[
-                    RicEquityPosition(
-                        amount=15.0,
-                        asset_type=AssetType.EQUITY,
-                        identifier="AA.N",
-                        identifier_type=EquityIdentifierType.RIC,
-                        position_id=None,
-                        real_time_trade_types=None,
-                        use_primary_listing=False,
-                    ),
-                ],
-                timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-12 00:00:00")),
-                unit_of_measure=PortfolioUom.SHARES,
+tp = [
+    EquityBasketPortfolio(
+        positions=[
+            RicEquityPosition(
+                amount=15.0,
+                asset_type=AssetType.EQUITY,
+                identifier="AA.N",
+                identifier_type=EquityIdentifierType.RIC,
+                position_id=None,
+                real_time_trade_types=None,
+                use_primary_listing=False,
             ),
-        ),  # this portfolio will be overshadowed by the second, since it has the same eff_ts. so, we will post it,
-        # but it will not be returned by the get_target_portfolio call
-        (
-            pd.Timestamp("2023-06-12 00:00:00"),
-            EquityBasketPortfolio(
-                positions=[
-                    RicEquityPosition(
-                        amount=1.0,
-                        asset_type=AssetType.EQUITY,
-                        identifier="AA.N",
-                        identifier_type=EquityIdentifierType.RIC,
-                        position_id=None,
-                        real_time_trade_types=None,
-                        use_primary_listing=False,
-                    ),
-                    RicEquityPosition(
-                        amount=2.0,
-                        asset_type=AssetType.EQUITY,
-                        identifier="AAPL.OQ",
-                        identifier_type=EquityIdentifierType.RIC,
-                        position_id=None,
-                        real_time_trade_types=None,
-                        use_primary_listing=False,
-                    ),
-                ],
-                timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-12 00:00:00")),
-                unit_of_measure=PortfolioUom.SHARES,
+        ],
+        timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-12 00:00:00")),
+        unit_of_measure=PortfolioUom.SHARES,
+    ),  # this portfolio will be overshadowed by the second, since it has the same eff_ts. so, we will post it,
+    # but it will not be returned by the get_target_portfolio call
+    EquityBasketPortfolio(
+        positions=[
+            RicEquityPosition(
+                amount=1.0,
+                asset_type=AssetType.EQUITY,
+                identifier="AA.N",
+                identifier_type=EquityIdentifierType.RIC,
+                position_id=None,
+                real_time_trade_types=None,
+                use_primary_listing=False,
             ),
-        ),
-        (
-            pd.Timestamp("2023-06-13 00:00:00"),
-            EquityBasketPortfolio(
-                positions=[
-                    RicEquityPosition(
-                        amount=2.0,
-                        asset_type=AssetType.EQUITY,
-                        identifier="AA.N",
-                        identifier_type=EquityIdentifierType.RIC,
-                        position_id=None,
-                        real_time_trade_types=None,
-                        use_primary_listing=False,
-                    ),
-                    BasketPosition(
-                        amount=100000000.0,
-                        asset_type=AssetType.CASH,
-                        identifier="USD",
-                        identifier_type=EquityIdentifierType.CURRENCY_CODE,
-                        position_id=None,
-                    ),
-                ],
-                timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-13 00:00:00")),
-                unit_of_measure=PortfolioUom.SHARES,
+            RicEquityPosition(
+                amount=2.0,
+                asset_type=AssetType.EQUITY,
+                identifier="AAPL.OQ",
+                identifier_type=EquityIdentifierType.RIC,
+                position_id=None,
+                real_time_trade_types=None,
+                use_primary_listing=False,
             ),
-        ),
-    ],
-)
+        ],
+        timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-12 00:00:00")),
+        unit_of_measure=PortfolioUom.SHARES,
+    ),
+    EquityBasketPortfolio(
+        positions=[
+            RicEquityPosition(
+                amount=2.0,
+                asset_type=AssetType.EQUITY,
+                identifier="AA.N",
+                identifier_type=EquityIdentifierType.RIC,
+                position_id=None,
+                real_time_trade_types=None,
+                use_primary_listing=False,
+            ),
+            BasketPosition(
+                amount=100000000.0,
+                asset_type=AssetType.CASH,
+                identifier="USD",
+                identifier_type=EquityIdentifierType.CURRENCY_CODE,
+                position_id=None,
+            ),
+        ],
+        timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-13 00:00:00")),
+        unit_of_measure=PortfolioUom.SHARES,
+    ),
+]
 
 # the 1: is in reference to the comment above about the first portfolio for the 12th being overshadowed by the second on the client side
-expected = sorted([pydantic_to_dict(x) for x in [y[1] for y in tp[1:]]], key=lambda x: x["timestamp"])
+expected = [pydantic_to_dict(x) for x in tp[1:]]
 for e in expected:
     e["eff_ts"] = e["timestamp"]
     e["target_portfolio"] = {
@@ -139,8 +126,7 @@ for e in expected:
 
 
 def _test_target_ports(sing_cl):
-    for tpd in tp:
-        sing_cl.replace_portfolio(target_portfolio=tpd[1])
+    sing_cl.replace_portfolio(tp)
 
     assert sing_cl.get_target_portfolio() == expected
     # start date before both

@@ -33,7 +33,7 @@ def test_empty_results(names):
     assert len(prod_indices) == 0
 
 
-REAL_PUBLIC_NAMES = ["NWSALTVI", "UBCIPACC", "MQUSTRAV"]
+REAL_PUBLIC_NAMES = ["NWSALTVI", "MQUSTRAV"]
 
 
 @pytest.mark.parametrize(
@@ -41,13 +41,13 @@ REAL_PUBLIC_NAMES = ["NWSALTVI", "UBCIPACC", "MQUSTRAV"]
     [
         ("NWSALTVI", 1),
         (["NWSALTVI"], 1),
-        (["NWSALTVI", "UBCIPACC"], 2),
-        ("NWSALTVI,UBCIPACC", 2),
+        (["NWSALTVI", "MQUSTRAV"], 2),
+        ("NWSALTVI,MQUSTRAV", 2),
         # we include garbage names in these queries; they dont affect the results
         ("NWSALTVI,asdfasdfasdf", 1),
         (["NWSALTVI", "asdfasdfasdf"], 1),
-        (["NWSALTVI", "UBCIPACC", "asdfasdfasdf"], 2),
-        ("NWSALTVI,UBCIPACC,asdfasdfasdf", 2),
+        (["NWSALTVI", "MQUSTRAV", "asdfasdfasdf"], 2),
+        ("NWSALTVI,MQUSTRAV,asdfasdfasdf", 2),
     ],
 )
 def test_results(names, expected):

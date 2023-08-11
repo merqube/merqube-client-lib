@@ -1,0 +1,88 @@
+{
+    "administrative": {
+        "role": "calculation"
+    },
+    "base_date": "2015/01/05",
+    "currency": "USD",
+    "description": "multiple equity basket tp",
+    "family": "Equity Baskets",
+    "family_description": "Equity Baskets",
+    "identifiers": [],
+    "intraday": {
+        "enabled": false,
+        "ticker_period": 15.0,
+        "tzinfo": "US/Eastern",
+        "active_time_ranges": [
+            {
+                "start_time": "09:30:15",
+                "end_time": "16:20",
+                "exclude_holidays": true
+            }
+        ],
+        "publish_config": {
+            "price_return": [
+                {
+                    "target": "db"
+                },
+                {
+                    "target": "secapi"
+                }
+            ]
+        },
+        "calculation_max_retry_delay": 15
+    },
+    "launch_date": "2023/08/14",
+    "name": "tjc_multi_basket_index_wout_fidelity",
+    "namespace": "test",
+    "related": [],
+    "run_configuration": {
+        "index_reports": [
+            {
+                "uuid": "da6057c3-d78e-4975-b1d4-dc40f3c67c83",
+                "program_args": {
+                    "diss_config": "{\\\"s3\\\": [{\\\"bucket\\\": \\\"merq-dissemination-backups\\\", \\\"key_prefix\\\": \\\"bloomberg\\\", \\\"files\\\": [\\\"bloomberg_portfolio\\\"]}], \\\"sftp\\\": [{\\\"files\\\": [\\\"bloomberg_portfolio\\\"], \\\"sftp_targets\\\": [\\\"5f150574-48d4-44c4-b0e0-f92d8956fa6b\\\"]}], \\\"email\\\": [{\\\"files\\\": [\\\"close_portfolio\\\", \\\"open_portfolio\\\", \\\"corporate_actions\\\", \\\"proforma_portfolio\\\"], \\\"subject\\\": \\\"{INDEX_NAME} Index Report{REPORT_DATE:%Y-%m-%d}\\\", \\\"recipients\\\": [\\\"tommy@merqube.com\\\"]}]}"
+                }
+            }
+        ],
+        "job_enabled": true,
+        "pod_image_and_tag": "merq-310:latest",
+        "schedule": {
+            "retries": 25,
+            "retry_interval_min": 10,
+            "schedule_start": "2023-08-09T18:00:00"
+        },
+        "tzinfo": "US/Eastern",
+        "num_days_to_load": 0
+    },
+    "spec": {
+        "index_class": "merq.indices.merqube.equity.EquityBasketIndex",
+        "index_class_args": {
+            "spec": {
+                "base_date": "2015-01-05",
+                "base_val": 1000.0,
+                "corporate_actions": {
+                    "dividend": {
+                        "reinvest_strategy": "NONE"
+                    }
+                },
+                "index_id": "tjc_multi_basket_index_wout_fidelity",
+                "level_overrides": [],
+                "portfolios": {
+                    "constituents": [],
+                    "date_type": "EFFECTIVE",
+                    "identifier_type": "RIC",
+                    "quantity_type": "SHARES",
+                    "specification_type": "API"
+                },
+                "valid_mics": [
+                    "XNYS",
+                    "XNAS",
+                    "ARCX"
+                ]
+            }
+        }
+    },
+    "stage": "prod",
+    "tags": "custom",
+    "title": "multiple equity basket tp"
+}

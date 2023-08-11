@@ -201,16 +201,11 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
         """
         return self.session.get_collection(f"/index/{self._index_id}/data_collections")
 
-    def replace_portfolio(self, target_portfolio: dict[str, Any] | EquityBasketPortfolio) -> dict[str, Any]:
+    def replace_portfolio(self, target_portfolio: list[EquityBasketPortfolio]) -> None:
         """
         set the open portfolio for a given day. see the base class docs for more info
         """
-        tp = (
-            pydantic_to_dict(target_portfolio)
-            if isinstance(target_portfolio, EquityBasketPortfolio)
-            else target_portfolio
-        )
-        return self.replace_target_portfolio(index_id=self._index_id, target_portfolio=tp)
+        return self.replace_target_portfolio(index_id=self._index_id, target_portfolio=target_portfolio)
 
 
 client_cache: LRUCache = LRUCache(maxsize=256)  # type: ignore

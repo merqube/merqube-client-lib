@@ -15,6 +15,7 @@ from cachetools import TTLCache, cachedmethod
 from merqube_client_lib import session
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
 from merqube_client_lib.logging import get_module_logger
+from merqube_client_lib.pydantic_types import EquityBasketPortfolio
 from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
 from merqube_client_lib.pydantic_types import IndexDefinitionPost, RunState
 from merqube_client_lib.session import MerqubeAPISession
@@ -45,7 +46,7 @@ def _name_or_id(func: Callable[..., Any]) -> Callable[..., Any]:
         self: Any, *args: Any, index_id: str | None = None, index_name: str | None = None, **kwargs: Any
     ) -> Any:
         assert (
-            index_name or index_id and (not (index_name and index_id))
+            index_name or index_id and not (index_name and index_id)
         ), "Must specify exactky one of index_name/index_id via kwarg"
         return func(self, *args, index_id=index_id, index_name=index_name, **kwargs)
 
@@ -142,7 +143,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         """
         return cast(dict[str, str], self.session.put(f"/index/{index_def.id}", json=pydantic_to_dict(index_def)).json())
 
-    def replace_target_portfolio(self, index_id: str, target_portfolio: dict[str, Any]) -> ResponseJson:
+    def replace_target_portfolio(self, index_id: str, target_portfolio: list[EquityBasketPortfolio]) -> None:
         """
         Target portfolios are a PUT, not a POST, because an index can only have one active portfolio at a given time.
         "Last one wins", and it is not defined to have two+ active portfolios for the same timestamp.
@@ -153,7 +154,12 @@ class _IndexAPIClient(_MerqubeApiClientBase):
 
         (You can get the index id by doing get_index_manifest(index_name)["id"])
         """
-        return cast(ResponseJson, self.session.put(f"/index/{index_id}/target_portfolio", json=target_portfolio).json())
+
+        for itp in target_portfolio:
+            #  TODO; moving to pydantic 2 will make this __root__nastiness go away (they got rid of it)
+            itp.timestamp = pd.Timestamp(itp.timestamp.__root__).isoformat()
+            logger.info(f"Pushing target portfolio for {itp.timestamp}")
+            self.session.put(f"/index/{index_id}/target_portfolio", json=pydantic_to_dict(itp))
 
     @_name_or_id
     def get_index_manifest(self, index_name: str | None = None, index_id: str | None = None) -> Manifest:
@@ -201,7 +207,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         Get the status of the last index run
         """
         if index_name:
-            index_id = self.get_index_manifest(index_name)["id"]
+            index_id = self.get_index_manifest(index_name=index_name)["id"]
 
         return RunState.parse_obj(self.session.get_json(f"/index/{index_id}/run_state"))
 
@@ -211,7 +217,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         Delete an index
         """
         if index_name:
-            index_id = self.get_index_manifest(index_name)["id"]
+            index_id = self.get_index_manifest(index_name=index_name)["id"]
 
         return cast(ResponseJson, self.session.delete(f"/index/{index_id}").json())
 

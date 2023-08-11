@@ -7,7 +7,7 @@ import pytest
 
 from merqube_client_lib.api_client.merqube_client import client_cache, get_client
 from merqube_client_lib.mocker import _sec_types, mock_secapi_builder
-from tests.conftest import mock_secapi
+from tests.unit.conftest import mock_secapi
 from tests.unit.fixtures.dummy_secapi import get_client as dummy_client
 
 
