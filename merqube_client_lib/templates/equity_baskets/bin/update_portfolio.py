@@ -47,7 +47,7 @@ def _update_portfolio(index_name: str, constituents_csv_path: str, prod_run: boo
     # TODO; moving to pydantic 2 will make this __root__nastiness go away (they got rid of it)
     # it comes from it being a Union of types
     today = pd.Timestamp.utcnow().date()
-    target_portfolios = [tp for tp in target_portfolios if tp.timestamp.__root__.date() >= today]
+    target_portfolios = [tp for tp in target_portfolios if tp.timestamp.__root__.date() >= today]  # type: ignore
     client.replace_portfolio(target_portfolio=target_portfolios)
 
 

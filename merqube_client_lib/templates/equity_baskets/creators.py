@@ -29,7 +29,7 @@ def read_file(filename: str) -> list[Any]:
 class SSTRIndexCreator(EquityBasketIndexCreator):
     """create a SSTR index"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(itype="sstr", model=ClientSSTRConfig)
 
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
@@ -39,7 +39,7 @@ class SSTRIndexCreator(EquityBasketIndexCreator):
 class DecrementIndexCreator(EquityBasketIndexCreator):
     """create a decrement index on top of a SSTR"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(itype="sstr_decrement", model=ClientDecrementConfig)
 
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
@@ -49,7 +49,7 @@ class DecrementIndexCreator(EquityBasketIndexCreator):
 class MultiEBIndexCreator(EquityBasketIndexCreator):
     """create a generic equity basket"""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__(itype="multi_eb", model=ClientMultiEBConfig)
 
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:

@@ -97,6 +97,7 @@ class EquityBasketIndexCreator(abc.ABC):
         bbg_post = templates.bbg_ident_template
         initial_target_portfolios = templates.target_ports
 
+        assert index
         log_index(index)
 
         if initial_target_portfolios:

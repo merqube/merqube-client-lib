@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import json
-from typing import Any
+from typing import Any, cast
 
 from pydantic import Extra, Field
 
@@ -33,7 +33,7 @@ class ClientIndexConfigBaseValidator(_ClientIndexConfigBase):
                 d[field_name] = model_field.field_info.extra["example"]
 
         instance = cls(**d)
-        return {k: v for (k, v) in sorted(json.loads(instance.json()).items(), key=lambda x: x[0])}
+        return cast(dict[str, Any], dict(sorted(json.loads(instance.json()).items(), key=lambda x: x[0])))  # type: ignore
 
 
 class ClientSSTRConfig(ClientIndexConfigBaseValidator, _ClientSSTRConfig):
@@ -55,7 +55,7 @@ class ClientDecrementConfig(ClientIndexConfigBaseValidator, _ClientDecrementConf
         extra = Extra.forbid
 
 
-class ClientMultiEquityBasketConfig(ClientIndexConfigBaseValidator, _ClientMultiEBConfig):
+class ClientMultiEquityBasketConfig(ClientIndexConfigBaseValidator, _ClientMultiEBConfig):  # type: ignore
     """
     Equity Basket
     """
