@@ -1,0 +1,32 @@
+[
+    {
+        "positions": [
+            {
+                "amount": 1000,
+                "asset_type": "CASH",
+                "identifier": "USD",
+                "identifier_type": "CURRENCY_CODE"
+            }
+        ],
+        "timestamp": "2015-01-05T00:00:00",
+        "unit_of_measure": "SHARES"
+    },
+    {
+        "positions": [
+            {
+                "amount": 100,
+                "asset_type": "EQUITY",
+                "identifier": "AAPL.OQ",
+                "identifier_type": "RIC"
+            },
+            {
+                "amount": 100,
+                "asset_type": "EQUITY",
+                "identifier": "GOOG.OQ",
+                "identifier_type": "RIC"
+            }
+        ],
+        "timestamp": "2015-01-10T00:00:00",
+        "unit_of_measure": "SHARES"
+    }
+]

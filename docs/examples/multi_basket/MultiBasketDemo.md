@@ -22,7 +22,24 @@ which prints a json like:
 
 ```json
 {
-    "base_date": "2000-01-01",
+    "constituents": [
+        {
+            "date": "2022-03-11",
+            "identifier": "AAPL.OQ",
+            "quantity": -0.2512355,
+            "security_type": "EQUITY"
+        },
+        {
+            "date": "2022-03-11",
+            "identifier": "USD",
+            "quantity": 60.0,
+            "security_type": "CASH"
+        }
+    ],
+    "corporate_actions": {
+        "reinvest_dividends": true
+    },
+    "base_date": "2000-01-04",
     "base_value": 1000.0,
     "bbg_ticker": "MY_TICKER",
     "currency": "USD",
@@ -31,24 +48,14 @@ which prints a json like:
         "bob@mycompany.com",
         "alice@mycompany.com"
     ],
-    "holiday_calendar": {
-        "mics": [
-            "XNYS"
-        ],
-        "swaps_monitor_codes": []
-    },
+    "holiday_calendar": null,
     "is_intraday": false,
     "name": "My Index",
     "namespace": "mycompany",
     "run_hour": 16,
     "run_minute": 0,
     "timezone": "US/Eastern",
-    "title": "My Index Title",
-    "constituents_csv_path": "/path/to/my.csv",
-    "corporate_actions": {
-        "reinvest_dividends": true
-    },
-    "level_overrides_csv_path": null
+    "title": "My Index Title"
 }
 ```
 

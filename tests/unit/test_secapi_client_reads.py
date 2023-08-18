@@ -8,7 +8,7 @@ from pandas.testing import assert_frame_equal
 from merqube_client_lib.api_client import merqube_client
 from merqube_client_lib.api_client.merqube_client import get_client
 from merqube_client_lib.exceptions import PERMISSION_ERROR_RES
-from tests.conftest import mock_secapi
+from tests.unit.conftest import mock_secapi
 from tests.unit.fixtures.gsm_chunked_fixtures import (
     chunked_id,
     chunked_metric,

@@ -1,0 +1,57 @@
+{
+    "administrative": {
+        "role": "development"
+    },
+    "base_date": "2010/01/04",
+    "currency": "USD",
+    "description": "COST TR Index",
+    "family": "MerQube Single Stock Return Indices",
+    "family_description": "MerQube Single Stock Return Indices",
+    "identifiers": [],
+    "launch_date": "2023/08/14",
+    "name": "MQU_COST_TR",
+    "namespace": "merqubetr",
+    "related": [],
+    "run_configuration": {
+        "index_reports": [
+            {
+                "uuid": "e79c6ea1-2ad0-429c-a4f0-b89915c1839e",
+                "program_args": {
+                    "diss_config": "{\\\"email\\\": [{\\\"files\\\": [\\\"levels\\\", \\\"close_portfolio\\\", \\\"corporate_actions\\\", \\\"proforma_portfolio\\\"], \\\"subject\\\": \\\"{INDEX_NAME} Report: {REPORT_DATE:%Y-%m-%d}\\\", \\\"recipients\\\": [\\\"tommy@merqube.com\\\"]}]}"
+                }
+            }
+        ],
+        "job_enabled": true,
+        "pod_image_and_tag": "merq-310:latest",
+        "schedule": {
+            "retries": 25,
+            "retry_interval_min": 10,
+            "schedule_start": "2023-08-09T18:00:00"
+        },
+        "tzinfo": "US/Eastern",
+        "num_days_to_load": 100
+    },
+    "spec": {
+        "index_class": "merq.indices.merqube.single_stock_index.SingleStockIndex",
+        "index_class_args": {
+            "spec": {
+                "base_date": "2010-01-04",
+                "base_val": 1000,
+                "corporate_actions": {
+                    "dividend": {
+                        "deduct_tax": false,
+                        "reinvest_day": "PREV_DAY",
+                        "reinvest_strategy": "IN_INDEX"
+                    }
+                },
+                "currency": "USD",
+                "identifier": "COST.OQ",
+                "identifier_date": "2023-08-14",
+                "identifier_type": "RIC",
+                "index_id": "MQU_COST_TR"
+            }
+        }
+    },
+    "stage": "prod",
+    "title": "COST TR Index"
+}

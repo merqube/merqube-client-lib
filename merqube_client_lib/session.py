@@ -238,17 +238,6 @@ class MerqubeAPISession(_BaseAPISession):
         super().__init__(token=token, **kwargs)
         self._req_id_prefix = req_id_prefix
 
-    def handle_nonrecoverable(self, res: Response, exc: Exception, req_id: str) -> None:
-        """helper function that handles a non recoverable error"""
-        logger.exception(exc)
-        try:
-            # we may not have a json depending on the response
-            rj = res.json()
-        except (AttributeError, json.decoder.JSONDecodeError):
-            rj = {}
-        logger.error(f"Request failed with status {res.status_code}: {rj}. Request ID: {req_id}")
-        raise APIError(code=res.status_code, response_json=rj, request_id=req_id)
-
     def request_raise(self, method: httpm, url: str, **kwargs: Any) -> Response:
         """request method that logs the status code and raises on non 2XX"""
 
@@ -268,8 +257,15 @@ class MerqubeAPISession(_BaseAPISession):
         res = self.request(method=method, url=url, headers=headers, **kwargs)
         try:
             res.raise_for_status()
-        except HTTPError as e:
-            self.handle_nonrecoverable(res=res, exc=e, req_id=res.headers.get(REQUEST_ID_HEADER, ""))
+        except HTTPError as exc:
+            try:
+                # we may not have a json depending on the response
+                rj = res.json()
+            except (AttributeError, json.decoder.JSONDecodeError):
+                rj = {}
+            req_id = headers.get(REQUEST_ID_HEADER, "unknown")
+            logger.error(f"Request failed with status {res.status_code}: {rj}. Request ID: {req_id}")
+            raise APIError(code=res.status_code, response_json=rj, request_id=req_id) from exc
 
         return res
 

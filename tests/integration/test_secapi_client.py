@@ -25,13 +25,10 @@ def test_permission_raise(should_raise):
 
     if should_raise:
         with pytest.raises(PermissionError):
-            public.get_security_metrics(sec_type="index", metrics=["price_return"])
-        with pytest.raises(PermissionError):
-            public.get_security_definitions_mapping_table(sec_type="index")
+            public.get_security_definitions_mapping_table(sec_type="index", raise_perm_errors=True)
 
     else:
-        public.get_security_metrics(sec_type="index", metrics=["price_return"])
-        public.get_security_definitions_mapping_table(sec_type="index")
+        public.get_security_definitions_mapping_table(sec_type="index", raise_perm_errors=False)
 
 
 def test_mapping_table():

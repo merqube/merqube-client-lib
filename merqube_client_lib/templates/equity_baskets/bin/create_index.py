@@ -9,13 +9,15 @@ from typing import Final
 import click
 
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.templates.equity_baskets.decrement_create import (
+from merqube_client_lib.templates.equity_baskets.creators import (
     DecrementIndexCreator as DC,
 )
-from merqube_client_lib.templates.equity_baskets.multieb_create import (
-    MultiEquityBasketIndexCreator as MEB,
+from merqube_client_lib.templates.equity_baskets.creators import (
+    MultiEBIndexCreator as MEB,
 )
-from merqube_client_lib.templates.equity_baskets.sstr_create import SSTRCreator as SSTR
+from merqube_client_lib.templates.equity_baskets.creators import (
+    SSTRIndexCreator as SSTR,
+)
 from merqube_client_lib.templates.equity_baskets.util import EquityBasketIndexCreator
 
 SUPPORTED_INDEX_TYPES: Final[list[str]] = ["decrement", "single_stock_total_return", "multiple_equity_basket"]
