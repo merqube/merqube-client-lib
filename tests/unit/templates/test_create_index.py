@@ -34,9 +34,6 @@ def SS(ticker: str | None = None):
         "email_list": ["tommy@merqube.com"],
         "name": "MQU_COST_TR",
         "namespace": "merqubetr",
-        "run_hour": 18,
-        "run_minute": 0,
-        "timezone": "US/Eastern",
         "title": "COST TR Index",
         "ric": "COST.OQ",
     }

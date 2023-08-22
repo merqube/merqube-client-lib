@@ -22,26 +22,13 @@ which prints a json like:
 
 ```json
 {
-    "constituents": [
-        {
-            "date": "2022-03-11",
-            "identifier": "AAPL.OQ",
-            "quantity": -0.2512355,
-            "security_type": "EQUITY"
-        },
-        {
-            "date": "2022-03-11",
-            "identifier": "USD",
-            "quantity": 60.0,
-            "security_type": "CASH"
-        }
-    ],
-    "corporate_actions": {
-        "reinvest_dividends": true
-    },
     "base_date": "2000-01-04",
     "base_value": 1000.0,
     "bbg_ticker": "MY_TICKER",
+    "constituents_csv_path": "/path/to/constituents.csv",
+    "corporate_actions": {
+        "reinvest_dividends": true
+    },
     "currency": "USD",
     "description": "My Index Description",
     "email_list": [
@@ -50,10 +37,11 @@ which prints a json like:
     ],
     "holiday_calendar": null,
     "is_intraday": false,
+    "level_overrides_csv_path": "/path/to/overrides.csv",
     "name": "My Index",
     "namespace": "mycompany",
     "run_hour": 16,
-    "run_minute": 0,
+    "run_minute": 30,
     "timezone": "US/Eastern",
     "title": "My Index Title"
 }

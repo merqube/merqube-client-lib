@@ -32,21 +32,19 @@ which prints a json like this:
         "bob@mycompany.com",
         "alice@mycompany.com"
     ],
-    "holiday_calendar": null,
     "is_intraday": false,
     "name": "My Index",
     "namespace": "mycompany",
-    "ric": "LMVH.PA",
     "reinvestment_type": "AT_OPEN",
-    "run_hour": 16,
-    "run_minute": 0,
-    "timezone": "US/Eastern",
+    "ric": "LMVH.PA",
     "title": "My Index Title"
 }
 ```
 
 Fill out this template. Make sure to change `namespace` to the namespace your key is permissioned for.
 Make sure to set the calendar correctly.
+
+Parameters such as the index timezone, index holiday calendar, and daily index runtime are all determined on the server side based on the RIC.
 
 Run the tool to create the index:
 
@@ -55,7 +53,7 @@ poetry run create --index-type=single_stock_total_return  --config-file-path ~/D
 ```
 
 This will return the unique `uuid` of the index (you can use this on our API to access returns, or the name of the index).
-The `poll` flag can be ommitted if you'd like, but we advise using it; if set it will poll the status of the index and inform about whether it was successful. 
+The `poll` flag can be ommitted if you'd like, but we advise using it; if set it will poll the status of the index and inform about whether it was successful.
 
 Note: you can just template the manifest without creating anything using:
 
@@ -122,27 +120,23 @@ which prints a json like this:
 
 ```json
 {
-    "fee_value": 0.05,
-    "fee_type": "fixed",
-    "day_count_convention": "f360",
-    "ric": "LMVH.PA",
-    "start_date": "2004-01-04",
     "base_date": "2000-01-04",
     "base_value": 1000.0,
     "bbg_ticker": "MY_TICKER",
     "currency": "USD",
+    "day_count_convention": "f360",
     "description": "My Index Description",
     "email_list": [
         "bob@mycompany.com",
         "alice@mycompany.com"
     ],
-    "holiday_calendar": null,
+    "fee_type": "fixed",
+    "fee_value": 0.05,
     "is_intraday": false,
     "name": "My Index",
     "namespace": "mycompany",
-    "run_hour": 16,
-    "run_minute": 0,
-    "timezone": "US/Eastern",
+    "ric": "LMVH.PA",
+    "start_date": "2004-01-04",
     "title": "My Index Title"
 }
 ```
@@ -152,6 +146,7 @@ In the backround, the library searches for a TR index with the same RIC.
 It will raise an error if one (with that RIC) does not exist, or if there are no returns on or before the decrement `base_date`.
 
 The same calendar as the underlying TR will be automatically applied.
+Parameters such as the index timezone and daily index runtime are all determined on the server side based on the RIC.
 
 Run the tool to create the index:
 
