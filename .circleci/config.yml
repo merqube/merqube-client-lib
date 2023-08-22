@@ -14,12 +14,13 @@ jobs:
           command: |
             cur_branch=$(git rev-parse --abbrev-ref HEAD)
             changed_files=$(git diff $cur_branch --name-only -r main)
+            echo $changed_files
             if ! grep -q 'merqube_client_lib/|tests/|integration_tests/|.circleci/' $changed_files; then
               # No files in src/ or tests/ have changed
               echo "Skipping tox job because no files in merqube_client_lib/ or tests/ have changed."
               circleci step halt
             else
-                echo "Running tox job because files in merqube_client_lib/ or tests/ have changed."
+                echo "Running tox job"
             fi
       - restore_cache:
           keys:
