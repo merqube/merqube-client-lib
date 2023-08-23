@@ -7,7 +7,7 @@ from typing import Any, Type
 from merqube_client_lib.api_client import merqube_client as mc
 from merqube_client_lib.exceptions import APIError
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     ClientIndexConfigBase,
     ClientTemplateResponse,
     IndexDefinitionPost,
@@ -127,7 +127,7 @@ class EquityBasketIndexCreator(abc.ABC):
 
         return templates
 
-    def switch_to_staging(self):
+    def switch_to_staging(self) -> None:
         """
         points this client at staging
         very helpful for testing server deployments in staging prior to prod

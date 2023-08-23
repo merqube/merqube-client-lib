@@ -8,7 +8,7 @@ import pandas as pd
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClientSingleIndex
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     ClientMultiEBPortUpdate,
     ClientTemplateResponse,
 )
@@ -46,10 +46,8 @@ def _update_portfolio(index_name: str, constituents_csv_path: str, staging: bool
     # in the ongoing update case, we only care about dates >= today since all history is
     # already in on the server, and not relevent to the next run of the index
 
-    # TODO; moving to pydantic 2 will make this __root__nastiness go away (they got rid of it)
-    # it comes from it being a Union of types
-    today = pd.Timestamp.utcnow().date()
-    target_portfolios = [tp for tp in target_portfolios if tp.timestamp.__root__.date() >= today]  # type: ignore
+    today = pd.Timestamp.utcnow().date().isoformat()
+    target_portfolios = [tp for tp in target_portfolios if tp.timestamp >= today]
     client.replace_portfolio(target_portfolio=target_portfolios)
 
 

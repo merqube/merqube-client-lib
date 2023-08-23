@@ -1,4 +1,4 @@
-from merqube_client_lib.pydantic_types import ClientTemplateResponse
+from merqube_client_lib.pydantic_v2_types import ClientTemplateResponse
 from merqube_client_lib.templates.equity_baskets.creators import (
     MultiEBIndexCreator,
     SSTRIndexCreator,

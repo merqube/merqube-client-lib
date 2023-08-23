@@ -1,20 +1,24 @@
 from __future__ import annotations
 
 import json
+import logging
 from typing import Any, cast
 
 from pydantic import Extra, Field
 
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.logging import get_module_logger
+from merqube_client_lib.pydantic_v2_types import (
     ClientDecrementConfig as _ClientDecrementConfig,
 )
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     ClientIndexConfigBase as _ClientIndexConfigBase,
 )
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     ClientMultiEBConfig as _ClientMultiEBConfig,
 )
-from merqube_client_lib.pydantic_types import ClientSSTRConfig as _ClientSSTRConfig
+from merqube_client_lib.pydantic_v2_types import ClientSSTRConfig as _ClientSSTRConfig
+
+logger = get_module_logger(__name__, level=logging.DEBUG)
 
 
 class ClientIndexConfigBaseValidator(_ClientIndexConfigBase):
@@ -28,12 +32,26 @@ class ClientIndexConfigBaseValidator(_ClientIndexConfigBase):
                 adapted from https://github.com/pydantic/pydantic/discussions/4558
         __holiday_spec__"""
         d = {}
-        for field_name, model_field in cls.__fields__.items():
-            if "example" in model_field.field_info.extra:
-                d[field_name] = model_field.field_info.extra["example"]
+        for field_name, model_field in cls.__fields__.items():  # type: ignore
+            logger.info((field_name, model_field))
+            if (
+                (jse := getattr(model_field, "json_schema_extra", {}))
+                and (ex := jse.get("example"))
+                and field_name not in ["constituents", "level_overrides"]
+            ):
+                d[field_name] = ex
 
         instance = cls(**d)
-        return cast(dict[str, Any], dict(sorted(json.loads(instance.json()).items(), key=lambda x: x[0])))  # type: ignore
+
+        example_d = cast(dict[str, Any], dict(sorted(json.loads(instance.json()).items(), key=lambda x: x[0])))  # type: ignore
+
+        # these fields are injected based on the csv path(s), so for the purposes of fetching
+        # an example, they should not be shown to the user
+        for k in ["constituents", "level_overrides"]:
+            if k in d:
+                example_d[k] = d[k]
+
+        return example_d
 
 
 class ClientSSTRConfig(ClientIndexConfigBaseValidator, _ClientSSTRConfig):
@@ -69,9 +87,3 @@ class ClientMultiEquityBasketConfig(ClientIndexConfigBaseValidator, _ClientMulti
         description="optional and only needed if you need to provide specific overrides for your index on given days",
         example="/path/to/overrides.csv",
     )
-
-
-# these are "_csv_path" in the client model, but the client transforms these into the server model _ClientMultiEBConfig
-# https://github.com/pydantic/pydantic/discussions/2686#discussioncomment-6607215
-del ClientMultiEquityBasketConfig.__fields__["constituents"]
-del ClientMultiEquityBasketConfig.__fields__["level_overrides"]

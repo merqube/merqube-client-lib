@@ -15,9 +15,9 @@ from cachetools import TTLCache, cachedmethod
 from merqube_client_lib import session
 from merqube_client_lib.constants import DEFAULT_CACHE_TTL
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import EquityBasketPortfolio
-from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
-from merqube_client_lib.pydantic_types import IndexDefinitionPost, RunState
+from merqube_client_lib.pydantic_v2_types import EquityBasketPortfolio
+from merqube_client_lib.pydantic_v2_types import IndexDefinitionPatchPutGet as Index
+from merqube_client_lib.pydantic_v2_types import IndexDefinitionPost, RunState
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.types import Manifest, ManifestList, ResponseJson
 from merqube_client_lib.types.secapi import (
@@ -156,8 +156,7 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         """
 
         for itp in target_portfolio:
-            #  TODO; moving to pydantic 2 will make this __root__nastiness go away (they got rid of it)
-            itp.timestamp = pd.Timestamp(itp.timestamp.__root__).isoformat()
+            itp.timestamp = pd.Timestamp(itp.timestamp).isoformat()
             logger.info(f"Pushing target portfolio for {itp.timestamp}")
             self.session.put(f"/index/{index_id}/target_portfolio", json=pydantic_to_dict(itp))
 

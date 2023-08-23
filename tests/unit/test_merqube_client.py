@@ -3,7 +3,7 @@ from unittest.mock import MagicMock
 import pytest
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClientSingleIndex
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     Administrative,
     IdentifierUUIDPost,
     Provider,

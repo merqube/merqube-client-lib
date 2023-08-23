@@ -19,14 +19,13 @@ from merqube_client_lib.api_client.merqube_client import (
 from merqube_client_lib.constants import STAGING_API_URL
 from merqube_client_lib.exceptions import APIError
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     Administrative,
     AssetType,
     BasketPosition,
     EquityBasketPortfolio,
     EquityIdentifierType,
     IndexDefinitionPost,
-    MerqTimestamp,
     PortfolioUom,
     RicEquityPosition,
     Role,
@@ -60,7 +59,7 @@ tp = [
                 use_primary_listing=False,
             ),
         ],
-        timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-12 00:00:00")),
+        timestamp="2023-06-12T00:00:00",
         unit_of_measure=PortfolioUom.SHARES,
     ),  # this portfolio will be overshadowed by the second, since it has the same eff_ts. so, we will post it,
     # but it will not be returned by the get_target_portfolio call
@@ -85,7 +84,7 @@ tp = [
                 use_primary_listing=False,
             ),
         ],
-        timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-12 00:00:00")),
+        timestamp="2023-06-12T00:00:00",
         unit_of_measure=PortfolioUom.SHARES,
     ),
     EquityBasketPortfolio(
@@ -107,7 +106,7 @@ tp = [
                 position_id=None,
             ),
         ],
-        timestamp=MerqTimestamp(__root__=pd.Timestamp("2023-06-13 00:00:00")),
+        timestamp="2023-06-13T00:00:00",
         unit_of_measure=PortfolioUom.SHARES,
     ),
 ]
