@@ -13,14 +13,18 @@ jobs:
           name: Check relevant file changes
           command: |
             cur_branch=$(git rev-parse --abbrev-ref HEAD)
-            changed_files=$(git diff $cur_branch --name-only -r main)
-            echo $changed_files
-            if ! grep -q 'merqube_client_lib/|tests/|integration_tests/|.circleci/' $changed_files; then
-              # No files in src/ or tests/ have changed
-              echo "Skipping tox job because no files in merqube_client_lib/ or tests/ have changed."
-              circleci step halt
+            changed_files=$(git diff --name-status $cur_branch main)
+
+            # Extract added and modified files in specified directories
+            relevant_changes=$(echo "$changed_files" | grep -E '^[AMD]\s+(merqube_client_lib/|tests/|integration_tests/|.circleci/)')
+
+            if [ -n "$relevant_changes" ]; then
+                # Files in src/ or tests/ have changed, or new files have been added
+                echo "Running tox job because the following files in merqube_client_lib/, tests/, integration_tests/, or .circleci/ have changed or been added:"
+                echo "$relevant_changes"
             else
-                echo "Running tox job"
+                echo "Skipping tox job because no files in merqube_client_lib/, tests/, integration_tests/, or .circleci/ have changed or been added."
+                circleci step halt
             fi
       - restore_cache:
           keys:

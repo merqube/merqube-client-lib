@@ -8,7 +8,7 @@ import pandas as pd
 
 from merqube_client_lib.api_client.merqube_client import MerqubeAPIClientSingleIndex
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     ClientMultiEBPortUpdate,
     ClientTemplateResponse,
 )
@@ -18,11 +18,13 @@ from merqube_client_lib.util import get_token
 logger = get_module_logger(__name__)
 
 
-def _update_portfolio(index_name: str, constituents_csv_path: str, prod_run: bool = False) -> None:
+def _update_portfolio(index_name: str, constituents_csv_path: str, staging: bool, prod_run: bool = False) -> None:
     """
     Creates a new Equity Basket with multiple entries
     """
-    client = MerqubeAPIClientSingleIndex(index_name=index_name, token=get_token())
+    client = MerqubeAPIClientSingleIndex(
+        index_name=index_name, token=get_token(), prefix_url="https://staging.api.merqube.com" if staging else None
+    )
     payload = {"constituents": read_file(filename=constituents_csv_path)}
     ClientMultiEBPortUpdate.parse_obj(payload)
 
@@ -44,21 +46,22 @@ def _update_portfolio(index_name: str, constituents_csv_path: str, prod_run: boo
     # in the ongoing update case, we only care about dates >= today since all history is
     # already in on the server, and not relevent to the next run of the index
 
-    # TODO; moving to pydantic 2 will make this __root__nastiness go away (they got rid of it)
-    # it comes from it being a Union of types
-    today = pd.Timestamp.utcnow().date()
-    target_portfolios = [tp for tp in target_portfolios if tp.timestamp.__root__.date() >= today]  # type: ignore
+    today = pd.Timestamp.utcnow().date().isoformat()
+    target_portfolios = [tp for tp in target_portfolios if tp.timestamp >= today]
     client.replace_portfolio(target_portfolio=target_portfolios)
 
 
 @click.command()
 @click.option("--index-name", type=str, required=True, help="the index name to update")
 @click.option("--constituents-csv-path", type=str, required=True, help="path to the constituents csv file")
+@click.option("--staging", is_flag=True, default=False, help="Create the index in staging")
 @click.option("--prod-run", is_flag=True, default=False, help="Create the index in production")
-def main(index_name: str, constituents_csv_path: str, prod_run: bool = False) -> None:
+def main(index_name: str, constituents_csv_path: str, staging: bool, prod_run: bool = False) -> None:
     """main entrypoint"""
     assert os.path.exists(constituents_csv_path), f"Constituents csv file does not exist: {constituents_csv_path}"
-    _update_portfolio(index_name=index_name, constituents_csv_path=constituents_csv_path, prod_run=prod_run)
+    _update_portfolio(
+        index_name=index_name, constituents_csv_path=constituents_csv_path, staging=staging, prod_run=prod_run
+    )
 
 
 if __name__ == "__main__":

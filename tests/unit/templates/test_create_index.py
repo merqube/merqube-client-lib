@@ -7,13 +7,13 @@ from unittest.mock import MagicMock, call
 import pytest
 from click.testing import CliRunner
 
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     IdentifierUUIDPost,
     IndexDefinitionPost,
     Provider,
     RunState,
 )
-from merqube_client_lib.pydantic_types import RunStateStatus as RSS
+from merqube_client_lib.pydantic_v2_types import RunStateStatus as RSS
 from merqube_client_lib.templates.equity_baskets.bin.create_index import main
 from merqube_client_lib.templates.equity_baskets.creators import (
     DecrementIndexCreator,

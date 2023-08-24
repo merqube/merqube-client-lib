@@ -7,7 +7,7 @@ from typing import Any
 import pandas as pd
 
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     ClientMultiEBConfig,
     ClientTemplateResponse,
 )

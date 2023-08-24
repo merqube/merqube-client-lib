@@ -7,7 +7,7 @@ from typing import Any, Type
 from merqube_client_lib.api_client import merqube_client as mc
 from merqube_client_lib.exceptions import APIError
 from merqube_client_lib.logging import get_module_logger
-from merqube_client_lib.pydantic_types import (
+from merqube_client_lib.pydantic_v2_types import (
     ClientIndexConfigBase,
     ClientTemplateResponse,
     IndexDefinitionPost,
@@ -126,6 +126,13 @@ class EquityBasketIndexCreator(abc.ABC):
             self._poll(new_id=new_id, poll=poll)
 
         return templates
+
+    def switch_to_staging(self) -> None:
+        """
+        points this client at staging
+        very helpful for testing server deployments in staging prior to prod
+        """
+        self._client = mc.get_client(token=get_token(), prefix_url="https://staging.api.merqube.com")
 
     @abc.abstractmethod
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:

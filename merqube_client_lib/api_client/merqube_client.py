@@ -9,9 +9,12 @@ from cachetools import LRUCache, cached
 
 from merqube_client_lib.api_client import base
 from merqube_client_lib.constants import MERQ_CLIENT_PREFIX
-from merqube_client_lib.pydantic_types import EquityBasketPortfolio, IdentifierUUIDPost
-from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
-from merqube_client_lib.pydantic_types import Provider
+from merqube_client_lib.pydantic_v2_types import (
+    EquityBasketPortfolio,
+    IdentifierUUIDPost,
+)
+from merqube_client_lib.pydantic_v2_types import IndexDefinitionPatchPutGet as Index
+from merqube_client_lib.pydantic_v2_types import Provider
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.util import pydantic_to_dict
 

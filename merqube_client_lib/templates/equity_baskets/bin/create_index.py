@@ -35,7 +35,8 @@ logger = get_module_logger(__name__, level=logging.DEBUG)
 @click.option(
     "--config-file-path", type=str, required=True, help="path to the config file that follows the index template"
 )
-@click.option("--prod-run", is_flag=True, default=False, help="Create the index in production")
+@click.option("--staging", is_flag=True, default=False, help="Create the index in staging")
+@click.option("--prod-run", is_flag=True, default=False, help="Create the index (without this, it is just templated)")
 @click.option(
     "--poll",
     type=click.IntRange(0, 10),
@@ -43,7 +44,7 @@ logger = get_module_logger(__name__, level=logging.DEBUG)
     default=0,
     help="if this is set, this client will wait up to X minutes for the index launch to be successful. It will poll the index status via the API and report on the results. If this is not set, you can use the client to check the status manually",
 )
-def main(index_type: str, config_file_path: str, prod_run: bool, poll: int) -> None:
+def main(index_type: str, config_file_path: str, staging: bool, prod_run: bool, poll: int) -> None:
     """main entrypoint"""
     assert os.path.exists(config_file_path), f"Config file path does not exist: {config_file_path}"
     try:
@@ -61,6 +62,9 @@ def main(index_type: str, config_file_path: str, prod_run: bool, poll: int) -> N
         case _:
             # "multiple_equity_basket"
             cls = MEB()
+
+    if staging:
+        cls.switch_to_staging()
 
     cls.create(config=config, prod_run=prod_run, poll=poll)
 

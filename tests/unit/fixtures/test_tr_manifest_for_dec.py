@@ -1,4 +1,4 @@
-from merqube_client_lib.pydantic_types import IndexDefinitionPatchPutGet as Index
+from merqube_client_lib.pydantic_v2_types import IndexDefinitionPatchPutGet as Index
 
 tr = Index.parse_obj(
     {
