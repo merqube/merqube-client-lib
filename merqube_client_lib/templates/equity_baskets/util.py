@@ -127,6 +127,13 @@ class EquityBasketIndexCreator(abc.ABC):
 
         return templates
 
+    def switch_to_staging(self):
+        """
+        points this client at staging
+        very helpful for testing server deployments in staging prior to prod
+        """
+        self._client = mc.get_client(token=get_token(), prefix_url="https://staging.api.merqube.com")
+
     @abc.abstractmethod
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
         """

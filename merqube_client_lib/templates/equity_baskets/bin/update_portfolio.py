@@ -18,11 +18,13 @@ from merqube_client_lib.util import get_token
 logger = get_module_logger(__name__)
 
 
-def _update_portfolio(index_name: str, constituents_csv_path: str, prod_run: bool = False) -> None:
+def _update_portfolio(index_name: str, constituents_csv_path: str, staging: bool, prod_run: bool = False) -> None:
     """
     Creates a new Equity Basket with multiple entries
     """
-    client = MerqubeAPIClientSingleIndex(index_name=index_name, token=get_token())
+    client = MerqubeAPIClientSingleIndex(
+        index_name=index_name, token=get_token(), prefix_url="https://staging.api.merqube.com" if staging else None
+    )
     payload = {"constituents": read_file(filename=constituents_csv_path)}
     ClientMultiEBPortUpdate.parse_obj(payload)
 
@@ -54,11 +56,14 @@ def _update_portfolio(index_name: str, constituents_csv_path: str, prod_run: boo
 @click.command()
 @click.option("--index-name", type=str, required=True, help="the index name to update")
 @click.option("--constituents-csv-path", type=str, required=True, help="path to the constituents csv file")
+@click.option("--staging", is_flag=True, default=False, help="Create the index in staging")
 @click.option("--prod-run", is_flag=True, default=False, help="Create the index in production")
-def main(index_name: str, constituents_csv_path: str, prod_run: bool = False) -> None:
+def main(index_name: str, constituents_csv_path: str, staging: bool, prod_run: bool = False) -> None:
     """main entrypoint"""
     assert os.path.exists(constituents_csv_path), f"Constituents csv file does not exist: {constituents_csv_path}"
-    _update_portfolio(index_name=index_name, constituents_csv_path=constituents_csv_path, prod_run=prod_run)
+    _update_portfolio(
+        index_name=index_name, constituents_csv_path=constituents_csv_path, staging=staging, prod_run=prod_run
+    )
 
 
 if __name__ == "__main__":
