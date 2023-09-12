@@ -41,7 +41,7 @@ class EquityBasketIndexCreator(abc.ABC):
         token = get_token()
         self._client = mc.get_client(token=token)
 
-        assert itype in ["sstr", "sstr_decrement", "multi_eb"]
+        assert itype in ["sstr", "decrement", "multi_eb"]
         self._itype = itype
 
         self._model = model
