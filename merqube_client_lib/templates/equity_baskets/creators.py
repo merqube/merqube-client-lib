@@ -37,10 +37,10 @@ class SSTRIndexCreator(EquityBasketIndexCreator):
 
 
 class DecrementIndexCreator(EquityBasketIndexCreator):
-    """create a decrement index on top of a SSTR"""
+    """create a decrement index on top of an existing MQ index (such as an SSTR)"""
 
     def __init__(self) -> None:
-        super().__init__(itype="sstr_decrement", model=ClientDecrementConfig)
+        super().__init__(itype="decrement", model=ClientDecrementConfig)
 
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
         return self._create(config=config, prod_run=prod_run, poll=poll)
