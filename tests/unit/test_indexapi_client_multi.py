@@ -51,10 +51,10 @@ def test_get_all(monkeypatch):
     ],
 )
 def test_get_indices(names, expected, inc_nonprod, monkeypatch):
-    def mock_get_collection(url, **kwargs):
-        names = url.split("?names=")[1].split("&")[0].split(",")
+    def mock_get_collection(url, options: dict, **kwargs):
+        names = options["names"].split(",")
         retl = [x for x in valid if x["name"] in names]
-        return retl if "type=all" in url else [x for x in retl if x["stage"] == "prod"]
+        return retl if options.get("type") == "all" else [x for x in retl if x["stage"] == "prod"]
 
     mock_secapi(
         monkeypatch,

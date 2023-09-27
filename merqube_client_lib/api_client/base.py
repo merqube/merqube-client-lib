@@ -91,7 +91,10 @@ class _IndexAPIClient(_MerqubeApiClientBase):
     """
 
     def get_index_defs(
-        self, index_names: str | list[str] | None = None, include_nonprod: bool = False
+        self,
+        index_names: str | list[str] | None = None,
+        include_nonprod: bool = False,
+        fields: list[str] | None = None,
     ) -> dict[str, Manifest]:
         """
         Get index definitions for specified names, or all permissioned indices as a dictionary with ids as keys and index definitions as values
@@ -112,11 +115,14 @@ class _IndexAPIClient(_MerqubeApiClientBase):
             all_indices = self.session.get_collection(endpoint)
             return {i["id"]: i for i in all_indices}
 
-        names_arg = index_names if isinstance(index_names, str) else ",".join(index_names)
+        options: dict[str, str] = {"names": (index_names if isinstance(index_names, str) else ",".join(index_names))}
+        if include_nonprod:
+            options["type"] = "all"
+        if fields:
+            options["fields"] = ",".join(sorted(list(set(fields))))
+        url = "/index"
 
-        prod_clause = "&type=all" if include_nonprod else ""
-        url = f"/index?names={names_arg}{prod_clause}"
-        res = self.session.get_collection(url)
+        res = self.session.get_collection(url, options=options)
         return {i["id"]: i for i in res}
 
     def get_indices_in_namespace(self, namespace: str) -> list[Index]:
