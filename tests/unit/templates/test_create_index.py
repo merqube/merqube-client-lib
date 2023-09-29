@@ -14,12 +14,13 @@ from merqube_client_lib.pydantic_v2_types import (
     RunState,
 )
 from merqube_client_lib.pydantic_v2_types import RunStateStatus as RSS
-from merqube_client_lib.templates.equity_baskets.bin.create_index import main
+from merqube_client_lib.templates.bin.create_index import main
 from merqube_client_lib.templates.equity_baskets.creators import (
     DecrementIndexCreator,
     MultiEBIndexCreator,
     SSTRIndexCreator,
 )
+from merqube_client_lib.templates.options.creators import SimpleBufferCreator
 from merqube_client_lib.util import pydantic_to_dict
 
 here = os.path.dirname(os.path.abspath(__file__))
@@ -27,6 +28,7 @@ here = os.path.dirname(os.path.abspath(__file__))
 
 def SS(ticker: str | None = None):
     return {
+        "base_value": 1000,
         "base_date": "2010-01-04",
         "bbg_ticker": ticker,
         "currency": "USD",
@@ -145,6 +147,7 @@ def test_click_cli(prod_run, poll, monkeypatch):
     dec = MagicMock()
     mult = MagicMock()
     ss = MagicMock()
+    buff = MagicMock()
 
     class DecCl(DecrementIndexCreator):
         create = dec
@@ -155,9 +158,18 @@ def test_click_cli(prod_run, poll, monkeypatch):
     class SsCl(SSTRIndexCreator):
         create = ss
 
-    monkeypatch.setattr("merqube_client_lib.templates.equity_baskets.bin.create_index.DC", DecCl)
-    monkeypatch.setattr("merqube_client_lib.templates.equity_baskets.bin.create_index.MEB", MultCl)
-    monkeypatch.setattr("merqube_client_lib.templates.equity_baskets.bin.create_index.SSTR", SsCl)
+    class BuffCl(SimpleBufferCreator):
+        create = buff
+
+    monkeypatch.setattr(
+        "merqube_client_lib.templates.bin.create_index.mapping",
+        {
+            "decrement": DecCl,
+            "single_stock_total_return": SsCl,
+            "multiple_equity_basket": MultCl,
+            "buffer_simple": BuffCl,
+        },
+    )
 
     cli = CliRunner()
 
@@ -171,7 +183,7 @@ def test_click_cli(prod_run, poll, monkeypatch):
         if prod_run:
             args.append("--prod-run")
 
-        result = cli.invoke(main, args)
+        result = cli.invoke(main, args, catch_exceptions=False)
         assert result.exit_code == 0, (result.output, result.exception, result.stderr_bytes)
 
         assert dec.call_args_list == [expected_call]
@@ -204,6 +216,18 @@ def test_click_cli(prod_run, poll, monkeypatch):
         assert dec.call_args_list == [expected_call]
         assert mult.call_args_list == [expected_call]
         assert ss.call_args_list == [expected_call, expected_call]
+
+        # run a buffer
+        args = ["--index-type", "buffer_simple", "--config-file-path", pth, "--poll", poll]
+        if prod_run:
+            args.append("--prod-run")
+
+        result = cli.invoke(main, args)
+        assert result.exit_code == 0, (result.output, result.exception, result.stderr_bytes)
+        assert dec.call_args_list == [expected_call]
+        assert mult.call_args_list == [expected_call]
+        assert ss.call_args_list == [expected_call, expected_call]
+        assert buff.call_args_list == [expected_call]
 
 
 def test_cli_fail():

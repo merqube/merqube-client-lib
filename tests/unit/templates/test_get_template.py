@@ -1,7 +1,7 @@
 import pytest
 from click.testing import CliRunner
 
-from merqube_client_lib.templates.equity_baskets.bin.get_eb_template import main
+from merqube_client_lib.templates.bin.get_example import main
 
 
 @pytest.mark.parametrize("itype", ["decrement", "multiple_equity_basket", "single_stock_total_return"])

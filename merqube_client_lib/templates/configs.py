@@ -8,6 +8,9 @@ from pydantic import Extra, Field
 
 from merqube_client_lib.logging import get_module_logger
 from merqube_client_lib.pydantic_v2_types import (
+    ClientBufferConfig as _ClientBufferConfig,
+)
+from merqube_client_lib.pydantic_v2_types import (
     ClientDecrementConfig as _ClientDecrementConfig,
 )
 from merqube_client_lib.pydantic_v2_types import (
@@ -73,7 +76,7 @@ class ClientDecrementConfig(ClientIndexConfigBaseValidator, _ClientDecrementConf
         extra = Extra.forbid
 
 
-class ClientMultiEquityBasketConfig(ClientIndexConfigBaseValidator, _ClientMultiEBConfig):  # type: ignore
+class ClientMultiEquityBasketConfig(ClientIndexConfigBaseValidator, _ClientMultiEBConfig):
     """
     Equity Basket
     """
@@ -87,3 +90,12 @@ class ClientMultiEquityBasketConfig(ClientIndexConfigBaseValidator, _ClientMulti
         description="optional and only needed if you need to provide specific overrides for your index on given days",
         example="/path/to/overrides.csv",
     )
+
+
+class ClientBufferSimpleConfig(ClientIndexConfigBaseValidator, _ClientBufferConfig):
+    """
+    Simple buffer index
+    """
+
+    class Config:
+        extra = Extra.forbid
