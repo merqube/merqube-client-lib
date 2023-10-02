@@ -32,7 +32,7 @@ def log_index(index: IndexDefinitionPost) -> None:
     logger.info("Index spec: \n" + json_formatted_str)
 
 
-class EquityBasketIndexCreator(abc.ABC):
+class IndexCreator(abc.ABC):
     """
     base class for classes that create ebs
     """
@@ -40,10 +40,7 @@ class EquityBasketIndexCreator(abc.ABC):
     def __init__(self, *, itype: str, model: Type[ClientIndexConfigBase]) -> None:
         token = get_token()
         self._client = mc.get_client(token=token)
-
-        assert itype in ["sstr", "decrement", "multi_eb"]
         self._itype = itype
-
         self._model = model
 
     def _poll(self, new_id: str, poll: int) -> None:
@@ -134,9 +131,8 @@ class EquityBasketIndexCreator(abc.ABC):
         """
         self._client = mc.get_client(token=get_token(), prefix_url="https://staging.api.merqube.com")
 
-    @abc.abstractmethod
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
         """
-        type specfic create method
-        if no custom logic is needed, just call self._create from the subclass
+        can be overridden to inject type specific logic
         """
+        return self._create(config=config, prod_run=prod_run, poll=poll)

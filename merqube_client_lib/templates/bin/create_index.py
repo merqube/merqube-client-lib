@@ -18,9 +18,11 @@ from merqube_client_lib.templates.equity_baskets.creators import (
 from merqube_client_lib.templates.equity_baskets.creators import (
     SSTRIndexCreator as SSTR,
 )
-from merqube_client_lib.templates.equity_baskets.util import EquityBasketIndexCreator
+from merqube_client_lib.templates.options.creators import SimpleBufferCreator as SB
 
-SUPPORTED_INDEX_TYPES: Final[list[str]] = ["decrement", "single_stock_total_return", "multiple_equity_basket"]
+mapping = {"decrement": DC, "single_stock_total_return": SSTR, "multiple_equity_basket": MEB, "buffer_simple": SB}
+
+SUPPORTED_INDEX_TYPES: Final = sorted(list(mapping.keys()))
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
@@ -45,7 +47,12 @@ logger = get_module_logger(__name__, level=logging.DEBUG)
     help="if this is set, this client will wait up to X minutes for the index launch to be successful. It will poll the index status via the API and report on the results. If this is not set, you can use the client to check the status manually",
 )
 def main(index_type: str, config_file_path: str, staging: bool, prod_run: bool, poll: int) -> None:
-    """main entrypoint"""
+    """
+    main entrypoint
+    example usage:
+
+        poetry run poetry run create --index-type=buffer_simple --config-file-path ~/Desktop/buffer.json --prod-run --poll 10
+    """
     assert os.path.exists(config_file_path), f"Config file path does not exist: {config_file_path}"
     try:
         config = json.load(open(config_file_path, "r"))
@@ -53,20 +60,13 @@ def main(index_type: str, config_file_path: str, staging: bool, prod_run: bool, 
         logger.exception(f"Failed to parse config file: {config_file_path}")
         raise err
 
-    cls: EquityBasketIndexCreator
-    match index_type:
-        case "decrement":
-            cls = DC()
-        case "single_stock_total_return":
-            cls = SSTR()
-        case _:
-            # "multiple_equity_basket"
-            cls = MEB()
+    cls = mapping[index_type]
+    obj = cls()
 
     if staging:
-        cls.switch_to_staging()
+        obj.switch_to_staging()
 
-    cls.create(config=config, prod_run=prod_run, poll=poll)
+    obj.create(config=config, prod_run=prod_run, poll=poll)
 
 
 if __name__ == "__main__":  # pragma: no cover

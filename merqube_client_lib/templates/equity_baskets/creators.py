@@ -11,12 +11,12 @@ from merqube_client_lib.pydantic_v2_types import (
     ClientMultiEBConfig,
     ClientTemplateResponse,
 )
-from merqube_client_lib.templates.equity_baskets.schema import (
+from merqube_client_lib.templates.configs import (
     ClientDecrementConfig,
     ClientMultiEquityBasketConfig,
     ClientSSTRConfig,
 )
-from merqube_client_lib.templates.equity_baskets.util import EquityBasketIndexCreator
+from merqube_client_lib.templates.util import IndexCreator
 
 logger = get_module_logger(__name__, level=logging.DEBUG)
 
@@ -26,27 +26,21 @@ def read_file(filename: str) -> list[Any]:
     return list(pd.read_csv(filename, float_precision="round_trip").to_dict(orient="index").values())
 
 
-class SSTRIndexCreator(EquityBasketIndexCreator):
+class SSTRIndexCreator(IndexCreator):
     """create a SSTR index"""
 
     def __init__(self) -> None:
         super().__init__(itype="sstr", model=ClientSSTRConfig)
 
-    def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
-        return self._create(config=config, prod_run=prod_run, poll=poll)
 
-
-class DecrementIndexCreator(EquityBasketIndexCreator):
+class DecrementIndexCreator(IndexCreator):
     """create a decrement index on top of an existing MQ index (such as an SSTR)"""
 
     def __init__(self) -> None:
         super().__init__(itype="decrement", model=ClientDecrementConfig)
 
-    def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
-        return self._create(config=config, prod_run=prod_run, poll=poll)
 
-
-class MultiEBIndexCreator(EquityBasketIndexCreator):
+class MultiEBIndexCreator(IndexCreator):
     """create a generic equity basket"""
 
     def __init__(self) -> None:
