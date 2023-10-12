@@ -70,7 +70,7 @@
                     "constituents": [],
                     "date_type": "EFFECTIVE",
                     "identifier_type": "RIC",
-                    "quantity_type": "SHARES",
+                    "amount_type": "SHARES",
                     "specification_type": "INLINE"
                 },
                 "valid_mics": [

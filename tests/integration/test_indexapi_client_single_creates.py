@@ -26,6 +26,7 @@ from merqube_client_lib.pydantic_v2_types import (
     EquityBasketPortfolio,
     EquityIdentifierType,
     IndexDefinitionPost,
+    IndexSpec,
     PortfolioUom,
     RicEquityPosition,
     Role,
@@ -44,6 +45,7 @@ TEST_IND = IndexDefinitionPost(
     stage="development",
     title="Client lib int test",
     launch_date="2066-06-06",
+    spec=IndexSpec(index_class_args={"spec": {"portfolios": {"specification_type": "API"}}}),
 )
 
 tp = [

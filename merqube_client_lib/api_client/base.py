@@ -108,8 +108,8 @@ class _IndexAPIClient(_MerqubeApiClientBase):
         """
 
         endpoint = "/index"
-        if include_nonprod:
-            endpoint += "?type=all"
+        if not include_nonprod:
+            endpoint += "?stage=prod"
 
         if not index_names:
             all_indices = self.session.get_collection(endpoint)
@@ -311,7 +311,7 @@ class _SecAPIClient(_MerqubeApiClientBase):
 
     @cachedmethod(operator.attrgetter("type_cache"))
     def _validate_secapi_type(self, sec_type: str) -> None:
-        """Validate security_type"""
+        """Validate asset_type"""
         assert sec_type in (
             supported_types := [x["name"] for x in self.get_supported_secapi_types()]
         ), f"sec_type must be one of {supported_types}"

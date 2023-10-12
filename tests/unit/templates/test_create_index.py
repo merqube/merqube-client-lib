@@ -122,11 +122,41 @@ def test_multi_eb_parsing(templated_mult, templated_mult_ports):
     exp = deepcopy(conf)
 
     exp["constituents"] = [
-        {"date": "2022-03-11", "identifier": "AAPL.OQ", "quantity": -0.2512355, "security_type": "EQUITY"},
-        {"date": "2022-03-11", "identifier": "AMZN.OQ", "quantity": -0.28782633781297995, "security_type": "EQUITY"},
-        {"date": "2022-03-11", "identifier": "GOOG.OQ", "quantity": 0.78687756527879, "security_type": "EQUITY"},
-        {"date": "2022-03-11", "identifier": "A.N", "quantity": 0.8687756527878999, "security_type": "EQUITY"},
-        {"date": "2022-03-11", "identifier": "USD", "quantity": 60.0, "security_type": "CASH"},
+        {
+            "date": "2022-03-11",
+            "identifier": "AAPL.OQ",
+            "amount": -0.2512355,
+            "asset_type": "EQUITY",
+            "identifier_type": "RIC",
+        },
+        {
+            "date": "2022-03-11",
+            "identifier": "AMZN.OQ",
+            "amount": -0.28782633781297995,
+            "asset_type": "EQUITY",
+            "identifier_type": "RIC",
+        },
+        {
+            "date": "2022-03-11",
+            "identifier": "GOOG.OQ",
+            "amount": 0.78687756527879,
+            "asset_type": "EQUITY",
+            "identifier_type": "RIC",
+        },
+        {
+            "date": "2022-03-11",
+            "identifier": "A.N",
+            "amount": 0.8687756527878999,
+            "asset_type": "EQUITY",
+            "identifier_type": "RIC",
+        },
+        {
+            "date": "2022-03-11",
+            "identifier": "USD",
+            "amount": 60.0,
+            "asset_type": "CASH",
+            "identifier_type": "CURRENCY",
+        },
     ]
     assert "constituents_csv_path" not in exp
     exp["level_overrides"] = [{"date": "2022-03-18", "level": 1364.344, "comment": "Level override test"}]
