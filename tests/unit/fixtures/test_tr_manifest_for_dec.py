@@ -44,10 +44,10 @@ tr = Index.parse_obj(
                     "holiday_spec": {"calendar_identifiers": ["MIC:XPAR"]},
                     "index_id": "MQU_AXAF_TR_Index_Test_1",
                     "portfolios": {
-                        "constituents": [{"date": "2005-12-30", "identifier": "AXAF.PA", "quantity": 1}],
+                        "constituents": [{"date": "2005-12-30", "identifier": "AXAF.PA", "amount": 1}],
                         "date_type": "ROLL",
                         "identifier_type": "RIC",
-                        "quantity_type": "WEIGHT",
+                        "amount_type": "WEIGHT",
                         "specification_type": "INLINE",
                     },
                 }

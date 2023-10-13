@@ -16,7 +16,7 @@ valid = [valid1, valid2, valid3]
 
 def test_get_all(monkeypatch):
     def mock_get_collection(url, **kwargs):
-        return valid if "type=all" in url else [x for x in valid if x["stage"] == "prod"]
+        return [x for x in valid if x["stage"] == "prod"] if "stage=prod" in url else valid
 
     mock_secapi(
         monkeypatch,

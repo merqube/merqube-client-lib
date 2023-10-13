@@ -50,12 +50,12 @@
                         {
                             "date": "2000-01-04",
                             "identifier": "XXX",
-                            "quantity": 1
+                            "amount": 1
                         }
                     ],
                     "date_type": "ROLL",
                     "identifier_type": "RIC",
-                    "quantity_type": "WEIGHT",
+                    "amount_type": "WEIGHT",
                     "specification_type": "INLINE"
                 }
             }

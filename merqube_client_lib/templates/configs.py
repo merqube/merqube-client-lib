@@ -31,9 +31,9 @@ class ClientIndexConfigBaseValidator(_ClientIndexConfigBase):
     @classmethod
     def get_example(cls) -> dict[str, Any]:
         """
-                Construct an example from the class schema
-                adapted from https://github.com/pydantic/pydantic/discussions/4558
-        __holiday_spec__"""
+        Construct an example from the class schema
+        adapted from https://github.com/pydantic/pydantic/discussions/4558
+        """
         d = {}
         for field_name, model_field in cls.__fields__.items():  # type: ignore
             logger.info((field_name, model_field))
