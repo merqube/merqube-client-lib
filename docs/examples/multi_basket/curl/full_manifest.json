@@ -1,0 +1,100 @@
+{
+    "administrative": {
+        "client": {},
+        "role": "development"
+    },
+    "base_date": "2022-03-11",
+    "currency": "USD",
+    "description": "My Index Description",
+    "family": "Equity Baskets",
+    "family_description": "Equity Baskets",
+    "identifiers": [],
+    "intraday": {
+        "active_time_ranges": [
+            {
+                "end_time": "16:20",
+                "exclude_holidays": true,
+                "start_time": "09:30:15"
+            }
+        ],
+        "calculation_max_retry_delay": 15,
+        "enabled": false,
+        "publish_config": {
+            "price_return": [
+                {
+                    "target": "db"
+                },
+                {
+                    "target": "secapi"
+                }
+            ]
+        },
+        "ticker_period": 15.0,
+        "tzinfo": "US/Eastern"
+    },
+    "launch_date": "2023-11-16",
+    "name": "MyDemoIndex",
+    "namespace": "test",
+    "related": [],
+    "run_configuration": {
+        "index_reports": [
+            {
+                "program_args": {
+                    "diss_config": "{\\\"s3\\\": [{\\\"bucket\\\": \\\"merq-dissemination-backups\\\", \\\"key_prefix\\\": \\\"bloomberg\\\", \\\"files\\\": [\\\"bloomberg_portfolio\\\"]}], \\\"sftp\\\": [{\\\"files\\\": [\\\"bloomberg_portfolio\\\"], \\\"sftp_targets\\\": [\\\"5f150574-48d4-44c4-b0e0-f92d8956fa6b\\\"]}], \\\"email\\\": [{\\\"files\\\": [\\\"close_portfolio\\\", \\\"open_portfolio\\\", \\\"corporate_actions\\\", \\\"proforma_portfolio\\\"], \\\"subject\\\": \\\"{INDEX_NAME} Index Report {REPORT_DATE:%Y-%m-%d}\\\"}]}"
+                },
+                "uuid": "da6057c3-d78e-4975-b1d4-dc40f3c67c83"
+            }
+        ],
+        "job_enabled": true,
+        "num_days_to_load": 0,
+        "pod_image_and_tag": "merq-310:latest",
+        "schedule": {
+            "retries": 25,
+            "retry_interval_min": 10,
+            "schedule_start": "2023-11-11T16:30:00.533386"
+        },
+        "tzinfo": "US/Eastern"
+    },
+    "spec": {
+        "index_class": "merq.indices.merqube.equity.EquityBasketIndex",
+        "index_class_args": {
+            "spec": {
+                "base_date": "2022-03-11",
+                "base_val": 1000.0,
+                "calendar": {
+                    "calendar_identifiers": [
+                        "MIC:XNYS"
+                    ]
+                },
+                "corporate_actions": {
+                    "dividend": {
+                        "deduct_tax": false,
+                        "reinvest_day": "PREV_DAY",
+                        "reinvest_strategy": "IN_INDEX"
+                    }
+                },
+                "holiday_spec": {
+                    "calendar_identifiers": [
+                        "MIC:XNYS"
+                    ]
+                },
+                "index_id": "MyDemoIndex",
+                "level_overrides": [],
+                "portfolios": {
+                    "constituents": [],
+                    "date_type": "EFFECTIVE",
+                    "quantity_type": "WEIGHT",
+                    "specification_type": "API"
+                },
+                "valid_mics": [
+                    "XNYS",
+                    "XNAS",
+                    "ARCX"
+                ]
+            }
+        }
+    },
+    "stage": "development",
+    "tags": "custom",
+    "title": "My Index Title"
+}

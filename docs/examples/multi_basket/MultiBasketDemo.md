@@ -15,7 +15,7 @@ The client can choose to
 You can generate an example template with:
 
 ```fish
-poetry run get_eb_template --index-type multiple_equity_basket"
+poetry run get_example --index-type multiple_equity_basket"
 ```
 
 which prints a json like:
@@ -25,6 +25,7 @@ which prints a json like:
     "base_date": "2000-01-04",
     "base_value": 1000.0,
     "bbg_ticker": "MY_TICKER",
+    "constituents": [],
     "constituents_csv_path": "/path/to/constituents.csv",
     "corporate_actions": {
         "reinvest_dividends": true
@@ -37,17 +38,21 @@ which prints a json like:
     ],
     "holiday_calendar": null,
     "is_intraday": false,
+    "level_overrides": null,
     "level_overrides_csv_path": "/path/to/overrides.csv",
     "name": "My Index",
     "namespace": "mycompany",
     "run_hour": 16,
     "run_minute": 30,
     "timezone": "US/Eastern",
-    "title": "My Index Title"
+    "title": "My Index Title",
+    "unit_of_measure": "SHARES"
 }
 ```
 
 Make sure to change `namespace` to the namespace your key is permissioned for.
+
+There is a sample file provided (`template.json`)
 
 The `constituents_csv_path` is a CSV containing the initial portfolio.
 There is another script (discussed below) for updating an existing index with a new portfolio (e.g., a rebalance).
@@ -316,3 +321,60 @@ eff_ts
 ```
 
 We can see that the div reinvestment generates about 5.5k in the index from 1/2015 to 6/2023.
+
+# Curl
+
+If you are using python, you should use the client library provided in this package and skip all of the below.
+It is all handled for you.
+
+If you are not - this section demonstrates the same flow using a set of raw `curl` commands, which can be used as the basis for doing this in code via another language.
+
+## Preliminary
+
+A set of example files is in `./curl`
+
+The term `merqcurl` is a convenience alias that passes the authorization header:
+
+
+    function merqcurl
+        curl $argv -H "Authorization: APIKEY MY_MERQ_API_KEY"
+    end
+
+If you don't like shell aliases, you can simply replace all instances of `merqcurl` below with `curl -H "Authorization: APIKEY MY_MERQ_API_KEY" ...`
+
+## Steps
+
+Step 1: do the templating: notice how the initial portfolio is included in the `constituents` field.
+This can have historical values, or all dated as of the `base_date` if no history is desired
+
+    merqcurl -v -X POST -H "Content-Type: application/json" "https://api.merqube.com/helper/index-template/multi_eb" -d @template.json | jq .
+
+A JSON with two fields is returned: the index manifest under the key `post_template`, and the reformatted/adjusted portfolios under `target_ports`.
+This step has not yet created any API resources, this is just a templating engine.
+
+The `target_ports` key will hold an array of size `N+1` where `N` is the number of different dates you gave in the constituents.
+If you have no history, and they are all dated the same, you will have two; the cash position and the first set of equities.
+(This is an implementation detail hidden in the client library above; the index is modelled as holding `base_value` worth of cash prior and up to the `base_date` and purchases the set of equities on the first portfolio date.
+
+Step 2: post the index (using exactly the value under the key `post_template`)
+
+    merqcurl -v -X POST -H "Content-Type: application/json" "https://api.merqube.com/index" -d @curl/full_manifest.json | jq .
+
+This will return a JSON containing the `id` of the index (you can ignore the other fields for this discussion).
+
+Step 3: loop through the `target_ports` key, which is an array, and `PUT` each one.
+
+WARNING: at the current time, this has to be done immediately; in code, grab the templating outputs, form the 3 requests, and initiate them back to back. Do not have a delay between the creation of the index and the posting of the portfolios.
+
+In the below example, the index ID returned from the above was `bf3003f4-8e75-415f-8221-16977619a1bc`, so to post the portfolios (this example uses two .json files that were the return from the above, in code, you do not need files, just use the response)
+
+    merqcurl -v -X PUT -H "Content-Type: application/json" "https://api.merqube.com/index/bf3003f4-8e75-415f-8221-16977619a1bc/target_portfolio" -d @curl/initial_target_port_cash.json | jq .
+    merqcurl -v -X PUT -H "Content-Type: application/json" "https://api.merqube.com/index/bf3003f4-8e75-415f-8221-16977619a1bc/target_portfolio" -d @curl/initial_target_port.json | jq .
+
+Step 4: At any future time, you can trigger a rebalance using the same command, pointing to a different dated portfolio:
+
+    merqcurl -v -X PUT -H "Content-Type: application/json" "https://api.merqube.com/index/bf3003f4-8e75-415f-8221-16977619a1bc/target_portfolio" -d @curl/rebalance_target_port.json | jq .
+
+Note that because these are PUTs, you can also replace a portfolio up until the open date - e.g., I can post a portfolio "today" dated for next week, and I could update that as many times as needed before the open on that date.
+
+Past portfolios are not examined.

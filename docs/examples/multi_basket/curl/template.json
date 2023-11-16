@@ -1,0 +1,52 @@
+{
+    "base_date": "2022-03-10",
+    "base_value": 1000.0,
+    "constituents": [
+        {
+            "amount": -0.2512355,
+            "asset_type": "EQUITY",
+            "date": "2022-03-11",
+            "identifier": "AAPL.OQ",
+            "identifier_type": "RIC"
+        },
+        {
+            "amount": -0.28782633781297995,
+            "asset_type": "EQUITY",
+            "date": "2022-03-11",
+            "identifier": "AMZN.OQ",
+            "identifier_type": "RIC"
+        },
+        {
+            "amount": 0.78687756527879,
+            "asset_type": "EQUITY",
+            "date": "2022-03-11",
+            "identifier": "GOOG.OQ",
+            "identifier_type": "RIC"
+        },
+        {
+            "amount": 0.8687756527878999,
+            "asset_type": "EQUITY",
+            "date": "2022-03-11",
+            "identifier": "A.N",
+            "identifier_type": "RIC"
+        }
+    ],
+    "corporate_actions": {
+        "reinvest_dividends": true
+    },
+    "currency": "USD",
+    "description": "My Index Description",
+    "holiday_calendar": {
+        "calendar_identifiers": [
+            "MIC:XNYS"
+        ]
+    },
+    "is_intraday": false,
+    "name": "MyDemoIndex",
+    "namespace": "test",
+    "run_hour": 16,
+    "run_minute": 30,
+    "timezone": "US/Eastern",
+    "title": "My Index Title",
+    "unit_of_measure": "WEIGHT"
+}

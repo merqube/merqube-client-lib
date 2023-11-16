@@ -76,7 +76,8 @@ class MerqubeAPIClientSingleIndex(MerqubeAPIClient):
 
         # intraday model has a nasty type of [None | Intraday | Bool ..]
         self._has_intraday = self._model.intraday is not None and (
-            (isinstance(self._model.intraday, bool) and self._model.intraday) or self._model.intraday.enabled is True
+            (isinstance(self._model.intraday, bool) and self._model.intraday)
+            or self._model.intraday.enabled is True  # pyright: ignore
         )
 
         # get the security id for this index
