@@ -1,4 +1,4 @@
-date,identifier,amount,asset_type
-2023-12-14,AMZN.OQ,0.5,EQUITY
-2023-12-14,GOOG.OQ,0.5,EQUITY
-2023-12-14,USD,60.0,CASH
+date,identifier,amount,asset_type,identifier_type
+2023-12-14,AMZN.OQ,0.5,EQUITY,RIC
+2023-12-14,GOOG.OQ,0.5,EQUITY,RIC
+2023-12-14,USD,60.0,CASH,CURRENCY_CODE

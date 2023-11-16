@@ -1,0 +1,12 @@
+{
+    "positions": [
+        {
+            "amount": 1000.0,
+            "asset_type": "CASH",
+            "identifier": "USD",
+            "identifier_type": "CURRENCY_CODE"
+        }
+    ],
+    "timestamp": "2022-03-10T00:00:00",
+    "unit_of_measure": "WEIGHT"
+}
