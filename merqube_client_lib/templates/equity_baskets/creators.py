@@ -1,6 +1,7 @@
 """
 equity basket creators
 """
+
 import logging
 from typing import Any
 

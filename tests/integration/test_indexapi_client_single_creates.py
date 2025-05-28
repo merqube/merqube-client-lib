@@ -3,6 +3,7 @@ NOTE: in circle CI there is a MERQ_API_KEY set to a test key which has index cre
 You will not be able to run this particular test locally unless you set that ENV to that key locally
 (but you can run the test in circle ci)
 """
+
 import random
 import string
 import time

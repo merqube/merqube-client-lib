@@ -1,6 +1,7 @@
 """
 Merqube custom types
 """
+
 from enum import Enum, unique
 from typing import Any, Final
 

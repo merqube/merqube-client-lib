@@ -1,6 +1,7 @@
 """
 Create an equity basket index
 """
+
 import json
 import logging
 import os

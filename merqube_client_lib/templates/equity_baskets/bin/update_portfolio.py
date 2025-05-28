@@ -1,6 +1,7 @@
 """
 Replace the portfolio of an equity basket index (or post future portfolios)
 """
+
 import os
 
 import click

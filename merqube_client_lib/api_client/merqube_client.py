@@ -1,6 +1,7 @@
 """
 Combined API Client for all merqube APIs
 """
+
 from functools import partial
 from typing import Any, cast
 

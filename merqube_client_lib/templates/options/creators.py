@@ -1,6 +1,7 @@
 """
 Options based index creators
 """
+
 import logging
 
 from merqube_client_lib.logging import get_module_logger

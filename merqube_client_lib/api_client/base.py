@@ -1,6 +1,7 @@
 """
 Base class for all Merqube API Clients
 """
+
 import logging
 import operator
 from collections import abc

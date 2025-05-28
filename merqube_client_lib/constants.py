@@ -1,6 +1,7 @@
 """
 Merqube API constants
 """
+
 from typing import Final
 
 API_URL: Final[str] = "https://api.merqube.com"

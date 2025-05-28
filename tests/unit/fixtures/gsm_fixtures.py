@@ -13,6 +13,7 @@ fixtures shared between unit and integration tests
     price_return
     total_return
 """
+
 import pandas as pd
 
 ID1 = "6a083435-9118-48ef-a7a9-a7633cdc0a9c"
