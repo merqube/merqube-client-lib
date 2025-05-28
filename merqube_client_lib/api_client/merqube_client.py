@@ -15,7 +15,9 @@ from merqube_client_lib.pydantic_v2_types import (
     IdentifierUUIDPost,
 )
 from merqube_client_lib.pydantic_v2_types import IndexDefinitionPatchPutGet as Index
-from merqube_client_lib.pydantic_v2_types import Provider
+from merqube_client_lib.pydantic_v2_types import (
+    Provider,
+)
 from merqube_client_lib.session import MerqubeAPISession
 from merqube_client_lib.util import pydantic_to_dict
 
