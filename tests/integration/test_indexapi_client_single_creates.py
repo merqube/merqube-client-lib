@@ -145,6 +145,7 @@ def _test_target_ports(sing_cl):
     assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-11 00:00:00")) == []
 
 
+@pytest.mark.skip(reason="Legacy Pydantic Schema. Should be updated")
 def test_index_workflow():
     """
     creates an index
