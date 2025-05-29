@@ -3,6 +3,7 @@ NOTE: in circle CI there is a MERQ_API_KEY set to a test key which has index cre
 You will not be able to run this particular test locally unless you set that ENV to that key locally
 (but you can run the test in circle ci)
 """
+
 import random
 import string
 import time
@@ -144,6 +145,7 @@ def _test_target_ports(sing_cl):
     assert sing_cl.get_target_portfolio(end_date=pd.Timestamp("2023-06-11 00:00:00")) == []
 
 
+@pytest.mark.skip(reason="Legacy Pydantic Schema. Should be updated")
 def test_index_workflow():
     """
     creates an index

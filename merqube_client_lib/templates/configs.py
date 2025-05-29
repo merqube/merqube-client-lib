@@ -62,7 +62,7 @@ class ClientSSTRConfig(ClientIndexConfigBaseValidator, _ClientSSTRConfig):
     Single stock total return index
     """
 
-    class Config:
+    class Config:  # pyright: ignore
         extra = Extra.forbid
 
 
@@ -72,7 +72,7 @@ class ClientDecrementConfig(ClientIndexConfigBaseValidator, _ClientDecrementConf
     Calendar automatically set to that of the underlying
     """
 
-    class Config:
+    class Config:  # pyright: ignore
         extra = Extra.forbid
 
 
@@ -81,11 +81,13 @@ class ClientMultiEquityBasketConfig(ClientIndexConfigBaseValidator, _ClientMulti
     Equity Basket
     """
 
-    class Config:
+    class Config:  # pyright: ignore
         extra = Extra.forbid
 
-    constituents_csv_path: str = Field(..., description="path to constituents csv", example="/path/to/constituents.csv")
-    level_overrides_csv_path: str | None = Field(
+    constituents_csv_path: str = Field(
+        ..., description="path to constituents csv", example="/path/to/constituents.csv"
+    )  # pyright: ignore
+    level_overrides_csv_path: str | None = Field(  # pyright: ignore
         None,
         description="optional and only needed if you need to provide specific overrides for your index on given days",
         example="/path/to/overrides.csv",
@@ -97,5 +99,5 @@ class ClientBufferSimpleConfig(ClientIndexConfigBaseValidator, _ClientBufferConf
     Simple buffer index
     """
 
-    class Config:
+    class Config:  # pyright: ignore
         extra = Extra.forbid

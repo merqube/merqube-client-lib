@@ -1,6 +1,7 @@
 """
 Tests for get_security_metrics when chunking (splitting a call that would result in a massive result set into multiple calls)
 """
+
 from functools import partial
 
 import pandas as pd

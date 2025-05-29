@@ -1,6 +1,7 @@
 """
 simple tests for logger
 """
+
 import datetime
 import logging
 import os

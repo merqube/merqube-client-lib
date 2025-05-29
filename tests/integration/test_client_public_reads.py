@@ -1,6 +1,7 @@
 """
 Integration tests for Indexapi
 """
+
 import pytest
 
 from merqube_client_lib.api_client.merqube_client import get_client

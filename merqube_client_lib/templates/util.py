@@ -129,7 +129,7 @@ class IndexCreator(abc.ABC):
         points this client at staging
         very helpful for testing server deployments in staging prior to prod
         """
-        self._client = mc.get_client(token=get_token(), prefix_url="https://staging.api.merqube.com")
+        self._client = mc.get_client(token=get_token(), prefix_url="https://api.staging.merqube.com")
 
     def create(self, config: dict[str, Any], prod_run: bool, poll: int) -> ClientTemplateResponse:
         """

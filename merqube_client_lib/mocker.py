@@ -1,6 +1,7 @@
 """
 Module for mocking secapi, mostly for unit testing, but also for other components testing against secapi
 """
+
 import importlib
 import logging
 from typing import Any, Callable, Optional

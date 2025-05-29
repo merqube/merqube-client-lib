@@ -1,6 +1,7 @@
 """
 Test the Secapi mocker
 """
+
 from unittest.mock import MagicMock
 
 import pytest

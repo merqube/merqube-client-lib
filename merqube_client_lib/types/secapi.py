@@ -1,6 +1,7 @@
 """
 Secapi types
 """
+
 from typing import Any
 
 from typing_extensions import NotRequired, TypedDict

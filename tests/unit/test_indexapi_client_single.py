@@ -2,6 +2,7 @@
 Unit tests for indexapi
 There are more in the integration tests
 """
+
 from copy import deepcopy
 from dataclasses import dataclass
 from typing import Callable, cast

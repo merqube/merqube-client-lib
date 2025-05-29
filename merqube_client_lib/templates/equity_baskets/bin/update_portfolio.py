@@ -1,6 +1,7 @@
 """
 Replace the portfolio of an equity basket index (or post future portfolios)
 """
+
 import os
 
 import click
@@ -23,7 +24,7 @@ def _update_portfolio(index_name: str, constituents_csv_path: str, staging: bool
     Creates a new Equity Basket with multiple entries
     """
     client = MerqubeAPIClientSingleIndex(
-        index_name=index_name, token=get_token(), prefix_url="https://staging.api.merqube.com" if staging else None
+        index_name=index_name, token=get_token(), prefix_url="https://api.staging.merqube.com" if staging else None
     )
     payload = {"constituents": read_file(filename=constituents_csv_path)}
     ClientMultiEBPortUpdate.parse_obj(payload)
