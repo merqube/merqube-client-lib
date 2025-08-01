@@ -283,17 +283,22 @@ def test_chunked_ids(monkeypatch):
     assert_frame_equal(left=mult_mult, right=chunked, check_like=True)
 
 
-def test_chunked_names(monkeypatch):
+@pytest.mark.parametrize("no_data", [False, True])
+def test_chunked_names(monkeypatch, no_data):
     """
     There are many permutations of this test in the integration tests.
     However, since the mocking here is painful, we only test one complicated scenario.
     """
     kwargs = {"metrics": TEST_METRICS_NE}
     kwargs["sec_names"] = TEST_NAMES_NE
-
     mult_mult = _get_non_chunked(monkeypatch, **kwargs)
+    if no_data:
+        mult_mult = pd.DataFrame(columns=list(set(mult_mult.columns) - {"eff_ts", "id", "name"}))
+        chunked_data = [[], []]
+    else:
+        chunked_data = chunked_metric
 
-    sm, coll = chunked_gsm_call(monkeypatch, calls=chunked_metric, mock_sec_call=False)
+    sm, coll = chunked_gsm_call(monkeypatch, calls=chunked_data, mock_sec_call=False)
 
     chunked = sm(
         **kwargs,
