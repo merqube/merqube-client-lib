@@ -544,12 +544,14 @@ class _SecAPIClient(_MerqubeApiClientBase):
         # eff1 id1 m1=Y m2=x
         # also:
         # for chunked, we return a consistent sort order of id, eff_ts
-        return (
-            pd.concat(dfs)
-            .groupby(["eff_ts", "id"])
-            .last()
-            .reset_index()
-            .sort_values(["id", "eff_ts"])
-            .reset_index()
-            .drop("index", axis=1)
-        )
+        all_data = pd.concat(dfs)
+        if {"eff_ts", "id"}.issubset(all_data.columns):
+            all_data = (
+                all_data.groupby(["eff_ts", "id"])
+                .last()
+                .reset_index()
+                .sort_values(["id", "eff_ts"])
+                .reset_index()
+                .drop("index", axis=1)
+            )
+        return all_data
